@@ -1,0 +1,25 @@
+{
+  "name": "tirek",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev:api -w @tirek/backend",
+    "dev:student": "npm run dev -w @tirek/student-app",
+    "dev:psychologist": "npm run dev -w @tirek/psychologist-app",
+    "dev:mastra": "npm run dev -w @tirek/backend",
+    "build": "npm run build --workspaces",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx --env-file=.env packages/backend/src/db/seed.ts",
+    "db:studio": "drizzle-kit studio",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  }
+}

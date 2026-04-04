@@ -1,0 +1,20 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@tirek/shared/i18n": path.resolve(__dirname, "../shared/src/i18n/index.ts"),
+      "@tirek/shared/constants": path.resolve(__dirname, "../shared/src/constants/index.ts"),
+      "@tirek/shared/types": path.resolve(__dirname, "../shared/src/types/index.ts"),
+      "@tirek/shared/validators": path.resolve(__dirname, "../shared/src/validators/index.ts"),
+      "@tirek/shared": path.resolve(__dirname, "../shared/src/index.ts"),
+    },
+  },
+  server: {
+    port: 5174,
+  },
+});

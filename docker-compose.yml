@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: tirek-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tirek_user
+      POSTGRES_PASSWORD: tirek_password
+      POSTGRES_DB: tirek_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tirek_user -d tirek_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

@@ -1,0 +1,14 @@
+node_modules
+dist
+.mastra
+.env
+.env.local
+.env.development
+.env.prod
+*.db
+*.db-*
+output/
+.netlify
+.vercel
+.DS_Store
+*.log
