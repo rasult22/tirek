@@ -9,8 +9,9 @@ import { paginated } from "../../shared/pagination.js";
 import { aiChatRepository } from "./ai-chat.repository.js";
 import { mastra } from "../../core/ai/mastra.js";
 import { db } from "../../db/index.js";
-import { users, moodEntries, diagnosticSessions, diagnosticTests } from "../../db/schema.js";
+import { users, moodEntries, diagnosticSessions, diagnosticTests, studentPsychologist } from "../../db/schema.js";
 import { eq, desc, and, gte } from "drizzle-orm";
+import { runMandatoryCrisisCheck } from "../../lib/crisis-keywords.js";
 
 const VALID_MODES = ["talk", "problem", "exam", "discovery"] as const;
 
@@ -111,11 +112,18 @@ export const aiChatService = {
     }
 
     // Save user message
-    await aiChatRepository.createMessage({
+    const userMessage = await aiChatRepository.createMessage({
       sessionId,
       role: "user",
       content: body.content,
     });
+
+    // Mandatory crisis detection — runs on EVERY incoming message BEFORE agent
+    try {
+      await runMandatoryCrisisCheck(body.content, userId, sessionId, userMessage.id);
+    } catch (err) {
+      console.error("Mandatory crisis check error (non-blocking):", err);
+    }
 
     // Build student context for agent awareness
     const studentContext = await buildStudentContext(userId, session.mode);
@@ -164,11 +172,18 @@ export const aiChatService = {
       throw new ValidationError("Message content cannot be empty");
     }
 
-    await aiChatRepository.createMessage({
+    const userMsg = await aiChatRepository.createMessage({
       sessionId,
       role: "user",
       content: body.content,
     });
+
+    // Mandatory crisis detection — runs on EVERY incoming message BEFORE agent
+    try {
+      await runMandatoryCrisisCheck(body.content, userId, sessionId, userMsg.id);
+    } catch (err) {
+      console.error("Mandatory crisis check error (non-blocking):", err);
+    }
 
     let assistantContent: string;
     try {
@@ -222,5 +237,30 @@ export const aiChatService = {
       aiChatRepository.countMessagesBySession(sessionId),
     ]);
     return paginated(messages, total, pagination);
+  },
+
+  async getFlaggedMessages(psychologistId: string, pagination: PaginationParams) {
+    // Get student IDs linked to this psychologist
+    const links = await db
+      .select({ studentId: studentPsychologist.studentId })
+      .from(studentPsychologist)
+      .where(eq(studentPsychologist.psychologistId, psychologistId));
+
+    const studentIds = links.map((l) => l.studentId);
+
+    const { rows, total } = await aiChatRepository.findFlaggedMessages(studentIds, pagination);
+
+    // Truncate content for privacy
+    const data = rows.map((r) => ({
+      messageId: r.messageId,
+      content: r.content.length > 200 ? r.content.slice(0, 200) + "..." : r.content,
+      createdAt: r.createdAt,
+      sessionId: r.sessionId,
+      studentName: r.studentName,
+      studentGrade: r.studentGrade,
+      studentClass: r.studentClass,
+    }));
+
+    return paginated(data, total, pagination);
   },
 };

@@ -13,7 +13,11 @@ interface ScoringRule {
   max: number;
   severity: string;
   label?: string;
+  labelRu?: string;
+  labelKz?: string;
   message?: string;
+  descriptionRu?: string;
+  descriptionKz?: string;
 }
 
 interface ScoringRules {
@@ -73,7 +77,11 @@ export const diagnosticsService = {
   },
 
   async startSession(userId: string, testId: string) {
-    const test = await diagnosticsRepository.findTestById(testId);
+    // Try finding by ID first, then by slug (frontend sends slug)
+    let test = await diagnosticsRepository.findTestById(testId);
+    if (!test) {
+      test = await diagnosticsRepository.findTestBySlug(testId);
+    }
     if (!test) {
       throw new NotFoundError("Test not found");
     }
@@ -81,7 +89,7 @@ export const diagnosticsService = {
     const session = await diagnosticsRepository.createSession({
       id: uuidv4(),
       userId,
-      testId,
+      testId: test.id,
     });
 
     return {
@@ -170,13 +178,13 @@ export const diagnosticsService = {
       scoringRules?.maxScore ?? test.questionCount * 4; // fallback
 
     // Determine severity from thresholds
-    let severity = "low";
+    let severity = "minimal";
     let resultMessage: string | undefined;
     if (scoringRules?.thresholds) {
       for (const threshold of scoringRules.thresholds) {
         if (totalScore >= threshold.min && totalScore <= threshold.max) {
           severity = threshold.severity;
-          resultMessage = threshold.message ?? threshold.label;
+          resultMessage = threshold.descriptionRu ?? threshold.message ?? threshold.labelRu ?? threshold.label;
           break;
         }
       }
@@ -217,7 +225,7 @@ export const diagnosticsService = {
           session.totalScore >= threshold.min &&
           session.totalScore <= threshold.max
         ) {
-          resultMessage = threshold.message ?? threshold.label;
+          resultMessage = threshold.descriptionRu ?? threshold.message ?? threshold.labelRu ?? threshold.label;
           break;
         }
       }

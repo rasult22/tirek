@@ -7,10 +7,10 @@ import type { SessionResult } from "../api/tests.js";
 import type { Severity } from "@tirek/shared";
 
 const SEVERITY_CONFIG: Record<Severity, { emoji: string; bg: string; border: string }> = {
-  minimal: { emoji: "\uD83D\uDE0A", bg: "bg-green-50", border: "border-green-200" },
-  mild: { emoji: "\uD83D\uDE42", bg: "bg-yellow-50", border: "border-yellow-200" },
-  moderate: { emoji: "\uD83E\uDD14", bg: "bg-orange-50", border: "border-orange-200" },
-  severe: { emoji: "\uD83E\uDD17", bg: "bg-red-50", border: "border-red-200" },
+  minimal: { emoji: "😊", bg: "bg-green-50", border: "border-green-200" },
+  mild: { emoji: "🙂", bg: "bg-yellow-50", border: "border-yellow-200" },
+  moderate: { emoji: "🤔", bg: "bg-orange-50", border: "border-orange-200" },
+  severe: { emoji: "🤗", bg: "bg-red-50", border: "border-red-200" },
 };
 
 export function TestResultPage() {

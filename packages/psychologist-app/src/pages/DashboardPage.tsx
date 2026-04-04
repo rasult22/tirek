@@ -223,7 +223,7 @@ export function DashboardPage() {
           {/* Quick actions */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h2 className="text-base font-semibold text-text-main mb-4">
-              Quick Actions
+              {t.psychologist.quickActions}
             </h2>
             <div className="space-y-2">
               {quickActions.map((action) => (
@@ -252,7 +252,7 @@ export function DashboardPage() {
           {/* Mood overview */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h2 className="text-base font-semibold text-text-main mb-4">
-              Mood Overview
+              {t.psychologist.moodOverview}
             </h2>
             {stats?.averageMood != null ? (
               <div className="text-center">

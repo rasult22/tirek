@@ -18,6 +18,9 @@ import { aiChatRouter } from "./modules/ai-chat/ai-chat.routes.js";
 import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
 import { notesRouter } from "./modules/psychologist-notes/psychologist-notes.routes.js";
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
+import { journalRouter } from "./modules/journal/journal.routes.js";
+import { streaksRouter } from "./modules/streaks/streaks.routes.js";
+import { exportRouter } from "./modules/export/export.routes.js";
 
 export const app = new Hono<{ Variables: AppVariables }>();
 
@@ -50,6 +53,8 @@ app.route("/student/tests", diagnosticsRouter);
 app.route("/student/exercises", exercisesRouter);
 app.route("/student/sos", sosStudentRouter);
 app.route("/student/chat", aiChatRouter);
+app.route("/student/journal", journalRouter);
+app.route("/student/streaks", streaksRouter);
 app.route("/student", contentRouter);
 
 // Psychologist routes
@@ -59,6 +64,7 @@ app.route("/psychologist/sos", sosPsychologistRouter);
 app.route("/psychologist/analytics", analyticsRouter);
 app.route("/psychologist", usersRouter);
 app.route("/psychologist", notesRouter);
+app.route("/psychologist/export", exportRouter);
 
 // Shared routes
 app.route("/notifications", notificationsRouter);

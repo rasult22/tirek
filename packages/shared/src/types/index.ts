@@ -106,7 +106,7 @@ export interface Exercise {
   nameRu: string;
   nameKz: string;
   description: string;
-  config: BreathingConfig;
+  config: BreathingConfig | GroundingConfig | PMRConfig;
 }
 
 export interface BreathingConfig {
@@ -117,6 +117,29 @@ export interface BreathingConfig {
   hold2?: number;
   cycles: number;
   shape: "square" | "circle" | "balloon";
+}
+
+export interface GroundingStep {
+  count: number;
+  senseRu: string;
+  senseKz: string;
+  icon: string;
+}
+
+export interface GroundingConfig {
+  steps: GroundingStep[];
+}
+
+export interface PMRStep {
+  muscleGroupRu: string;
+  muscleGroupKz: string;
+  tensionSec: number;
+  holdSec: number;
+  releaseSec: number;
+}
+
+export interface PMRConfig {
+  steps: PMRStep[];
 }
 
 export interface ContentQuote {
@@ -203,4 +226,40 @@ export interface AnalyticsOverview {
   pendingTests: number;
   crisisAlerts: number;
   averageMood: number | null;
+}
+
+export interface JournalEntry {
+  id: string;
+  userId: string;
+  prompt: string | null;
+  content: string;
+  createdAt: string;
+}
+
+export interface DailyPrompt {
+  ru: string;
+  kz: string;
+}
+
+export interface StreakInfo {
+  currentStreak: number;
+  longestStreak: number;
+  lastActiveDate: string | null;
+  freezesAvailable: number;
+}
+
+export interface FlaggedMessage {
+  messageId: number;
+  content: string;
+  createdAt: string;
+  studentName: string;
+  studentGrade: number | null;
+  studentClass: string | null;
+  sessionId: string;
+}
+
+export interface ProgressStats {
+  exercisesCompleted: number;
+  testsCompleted: number;
+  journalEntries: number;
 }

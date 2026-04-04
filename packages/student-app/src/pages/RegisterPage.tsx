@@ -7,12 +7,12 @@ import { authApi } from "../api/auth.js";
 import { useAuthStore } from "../store/auth-store.js";
 
 const AVATARS = [
-  { id: "avatar-1", emoji: "\uD83D\uDE0A", bg: "bg-primary/30" },
-  { id: "avatar-2", emoji: "\uD83E\uDD29", bg: "bg-secondary/40" },
-  { id: "avatar-3", emoji: "\uD83E\uDD8A", bg: "bg-accent/40" },
-  { id: "avatar-4", emoji: "\uD83D\uDC31", bg: "bg-info/40" },
-  { id: "avatar-5", emoji: "\uD83D\uDE80", bg: "bg-primary/20" },
-  { id: "avatar-6", emoji: "\uD83C\uDF3B", bg: "bg-secondary/30" },
+  { id: "avatar-1", emoji: "😊", bg: "bg-primary/30" },
+  { id: "avatar-2", emoji: "🤩", bg: "bg-secondary/40" },
+  { id: "avatar-3", emoji: "🦊", bg: "bg-accent/40" },
+  { id: "avatar-4", emoji: "🐱", bg: "bg-info/40" },
+  { id: "avatar-5", emoji: "🚀", bg: "bg-primary/20" },
+  { id: "avatar-6", emoji: "🌻", bg: "bg-secondary/30" },
 ];
 
 export function RegisterPage() {

@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { ValidationError, ConflictError } from "../../shared/errors.js";
 import { moodRepository } from "./mood.repository.js";
+import { streaksService } from "../streaks/streaks.service.js";
 
 export const moodService = {
   async createEntry(
@@ -38,6 +39,9 @@ export const moodService = {
       note: note ?? null,
       factors: factors ?? null,
     });
+
+    // Record streak activity (fire-and-forget)
+    streaksService.recordActivity(userId).catch(() => {});
 
     return entry;
   },
@@ -93,7 +97,7 @@ export const moodService = {
     const thisWeekAvg = avg(thisWeek);
     const lastWeekAvg = avg(lastWeek);
 
-    let trend: "improving" | "declining" | "neutral" = "neutral";
+    let trend: "improving" | "declining" | "stable" = "stable";
     if (lastWeek.length > 0 && thisWeek.length > 0) {
       const diff = thisWeekAvg - lastWeekAvg;
       if (diff > 0.3) trend = "improving";

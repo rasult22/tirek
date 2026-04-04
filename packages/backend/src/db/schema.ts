@@ -258,7 +258,35 @@ export const psychologistNotes = pgTable("psychologist_notes", {
     .notNull(),
 });
 
-// ── 17. notifications ───────────────────────────────────────────────
+// ── 17. user_streaks ────────────────────────────────────────────────
+export const userStreaks = pgTable("user_streaks", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastActiveDate: text("last_active_date"), // YYYY-MM-DD
+  freezesAvailable: integer("freezes_available").notNull().default(1),
+  freezeUsedDate: text("freeze_used_date"),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ── 18. journal_entries ─────────────────────────────────────────────
+export const journalEntries = pgTable("journal_entries", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  prompt: text("prompt"),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ── 18. notifications ───────────────────────────────────────────────
 export const notifications = pgTable("notifications", {
   id: text("id").primaryKey(),
   userId: text("user_id")

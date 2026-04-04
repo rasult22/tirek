@@ -90,8 +90,9 @@ export const analyticsRepository = {
   async getStudentTestResults(studentId: string) {
     return db
       .select({
-        sessionId: diagnosticSessions.id,
+        id: diagnosticSessions.id,
         testId: diagnosticSessions.testId,
+        testSlug: diagnosticTests.slug,
         testName: diagnosticTests.nameRu,
         startedAt: diagnosticSessions.startedAt,
         completedAt: diagnosticSessions.completedAt,
@@ -206,5 +207,48 @@ export const analyticsRepository = {
         {} as Record<string, number>,
       ),
     };
+  },
+
+  async getMoodDistribution(
+    psychologistId: string,
+    grade?: number,
+    classLetter?: string,
+  ) {
+    const conditions = [
+      eq(studentPsychologist.psychologistId, psychologistId),
+    ];
+    if (grade !== undefined) {
+      conditions.push(eq(users.grade, grade) as any);
+    }
+    if (classLetter !== undefined) {
+      conditions.push(eq(users.classLetter, classLetter) as any);
+    }
+
+    const rows = await db
+      .select({ mood: moodEntries.mood, count: count() })
+      .from(moodEntries)
+      .innerJoin(
+        studentPsychologist,
+        eq(moodEntries.userId, studentPsychologist.studentId),
+      )
+      .innerJoin(users, eq(moodEntries.userId, users.id))
+      .where(
+        and(
+          ...conditions,
+          gte(moodEntries.createdAt, sql`NOW() - INTERVAL '7 days'`),
+        ),
+      )
+      .groupBy(moodEntries.mood);
+
+    let happy = 0;
+    let neutral = 0;
+    let sad = 0;
+    for (const row of rows) {
+      if (row.mood >= 4) happy += row.count;
+      else if (row.mood === 3) neutral += row.count;
+      else sad += row.count;
+    }
+
+    return { happy, neutral, sad };
   },
 };

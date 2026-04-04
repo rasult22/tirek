@@ -9,8 +9,10 @@ import {
   AlertTriangle,
   Loader2,
   SmilePlus,
+  Download,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { exportApi } from "../api/export.js";
 
 export function AnalyticsPage() {
   const t = useT();
@@ -33,9 +35,19 @@ export function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-text-main">
-        {t.psychologist.analytics}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-text-main">
+          {t.psychologist.analytics}
+        </h1>
+        <button
+          onClick={() => exportApi.classCSV(grade ? Number(grade) : undefined, classLetter || undefined)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm
+            font-medium text-text-main hover:bg-gray-50 transition-colors"
+        >
+          <Download size={14} />
+          {t.psychologist.exportReport}
+        </button>
+      </div>
 
       {/* Class selector */}
       <div className="flex flex-wrap gap-3">

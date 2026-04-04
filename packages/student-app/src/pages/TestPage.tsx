@@ -23,7 +23,7 @@ export function TestPage() {
 
   const startMutation = useMutation({
     mutationFn: () => testsApi.start(testId!),
-    onSuccess: (session) => setSessionId(session.id),
+    onSuccess: (session) => setSessionId(session.sessionId ?? session.id),
   });
 
   const answerMutation = useMutation({
@@ -33,7 +33,7 @@ export function TestPage() {
 
   const completeMutation = useMutation({
     mutationFn: () => testsApi.complete(sessionId!),
-    onSuccess: (session) => navigate(`/tests/results/${session.id}`, { replace: true }),
+    onSuccess: (session) => navigate(`/tests/results/${(session as any).sessionId ?? session.id}`, { replace: true }),
   });
 
   useEffect(() => {
@@ -57,12 +57,13 @@ export function TestPage() {
 
   const handleSelect = (value: number) => {
     setAnswers((prev) => ({ ...prev, [currentQ]: value }));
-    if (sessionId) {
-      answerMutation.mutate({ questionIndex: currentQ, answer: value });
-    }
   };
 
   const handleNext = () => {
+    const answer = answers[currentQ];
+    if (answer !== undefined && sessionId) {
+      answerMutation.mutate({ questionIndex: currentQ, answer });
+    }
     if (isLast) {
       completeMutation.mutate();
     } else {

@@ -6,9 +6,9 @@ import { testDefinitions } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
 
 const TEST_ICONS: Record<string, { bg: string; emoji: string }> = {
-  "phq-a": { bg: "bg-primary/15", emoji: "\uD83D\uDC9C" },
-  "gad-7": { bg: "bg-accent/20", emoji: "\uD83E\uDDE1" },
-  rosenberg: { bg: "bg-secondary/20", emoji: "\uD83D\uDC9A" },
+  "phq-a": { bg: "bg-primary/15", emoji: "💜" },
+  "gad-7": { bg: "bg-accent/20", emoji: "🧡" },
+  rosenberg: { bg: "bg-secondary/20", emoji: "💚" },
 };
 
 export function TestsListPage() {
@@ -35,7 +35,7 @@ export function TestsListPage() {
         {/* Test cards */}
         <div className="mt-6 space-y-4">
           {tests.map((test) => {
-            const meta = TEST_ICONS[test.slug] ?? { bg: "bg-gray-100", emoji: "\uD83D\uDCCB" };
+            const meta = TEST_ICONS[test.slug] ?? { bg: "bg-gray-100", emoji: "📋" };
             const name = language === "kz" ? test.nameKz : test.nameRu;
             const desc = language === "kz" ? test.descriptionKz : test.descriptionRu;
 

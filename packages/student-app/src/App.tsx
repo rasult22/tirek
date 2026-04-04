@@ -17,7 +17,9 @@ import { TestPage } from "./pages/TestPage.js";
 import { TestResultPage } from "./pages/TestResultPage.js";
 import { ExercisesListPage } from "./pages/ExercisesListPage.js";
 import { BreathingPage } from "./pages/BreathingPage.js";
+import { ExerciseRouterPage } from "./pages/ExerciseRouterPage.js";
 import { SOSPage } from "./pages/SOSPage.js";
+import { JournalPage } from "./pages/JournalPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
 
 const queryClient = new QueryClient({
@@ -55,7 +57,8 @@ export function App() {
             <Route path="/tests/:testId" element={<ProtectedRoute><TestPage /></ProtectedRoute>} />
             <Route path="/tests/results/:sessionId" element={<ProtectedRoute><TestResultPage /></ProtectedRoute>} />
             <Route path="/exercises" element={<ProtectedRoute><ExercisesListPage /></ProtectedRoute>} />
-            <Route path="/exercises/:id" element={<ProtectedRoute><BreathingPage /></ProtectedRoute>} />
+            <Route path="/exercises/:id" element={<ProtectedRoute><ExerciseRouterPage /></ProtectedRoute>} />
+            <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
             <Route path="/sos" element={<SOSPage />} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />

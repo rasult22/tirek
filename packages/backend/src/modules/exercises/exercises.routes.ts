@@ -16,6 +16,16 @@ exercisesRouter.get("/", async (c) => {
   }
 });
 
+// GET /exercises/stats
+exercisesRouter.get("/stats", async (c) => {
+  try {
+    const result = await exercisesService.getStats(c.var.user.userId);
+    return c.json(result);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 // GET /exercises/history
 exercisesRouter.get("/history", async (c) => {
   try {
@@ -31,7 +41,7 @@ exercisesRouter.get("/history", async (c) => {
 exercisesRouter.post("/:id/complete", async (c) => {
   try {
     const exerciseId = c.req.param("id");
-    const body = await c.req.json();
+    const body = await c.req.json().catch(() => ({}));
     const result = await exercisesService.complete(
       c.var.user.userId,
       exerciseId,

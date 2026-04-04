@@ -24,7 +24,7 @@ export const chatApi = {
   streamMessage: (sessionId: string, content: string) => {
     const token = useAuthStore.getState().token;
     const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
-    return fetch(`${baseUrl}/student/chat/sessions/${sessionId}/message/stream`, {
+    return fetch(`${baseUrl}/student/chat/sessions/${sessionId}/stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

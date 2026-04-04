@@ -3,6 +3,7 @@ import type { AppVariables } from "../../middleware/auth.js";
 import { handleError } from "../../shared/errors.js";
 import { parsePagination } from "../../shared/pagination.js";
 import { sosService } from "./sos.service.js";
+import { aiChatService } from "../ai-chat/ai-chat.service.js";
 
 // ── Student routes (mounted under student prefix) ──────────────────
 const sosStudentRouter = new Hono<{ Variables: AppVariables }>();
@@ -41,6 +42,17 @@ sosPsychologistRouter.patch("/:id/resolve", async (c) => {
       c.req.param("id"),
       body,
     );
+    return c.json(result);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
+// GET /sos/flagged-messages - flagged chat messages
+sosPsychologistRouter.get("/flagged-messages", async (c) => {
+  try {
+    const pagination = parsePagination(c);
+    const result = await aiChatService.getFlaggedMessages(c.var.user.userId, pagination);
     return c.json(result);
   } catch (err) {
     return handleError(c, err);

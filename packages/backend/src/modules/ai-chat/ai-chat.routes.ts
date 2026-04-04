@@ -18,8 +18,8 @@ aiChatRouter.post("/sessions", async (c) => {
   }
 });
 
-// POST /chat/sessions/:id/message/stream - send a message with SSE streaming
-aiChatRouter.post("/sessions/:id/message/stream", async (c) => {
+// POST /chat/sessions/:id/stream - send a message with SSE streaming
+aiChatRouter.post("/sessions/:id/stream", async (c) => {
   try {
     const body = await c.req.json();
     const { textStream, saveAssistantMessage } = await aiChatService.streamMessage(

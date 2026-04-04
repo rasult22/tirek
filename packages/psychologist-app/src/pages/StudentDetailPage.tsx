@@ -16,8 +16,10 @@ import {
   FileText,
   StickyNote,
   Edit3,
+  Download,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { exportApi } from "../api/export.js";
 
 const moodColors: Record<number, string> = {
   1: "bg-danger",
@@ -156,6 +158,14 @@ export function StudentDetailPage() {
             </p>
           </div>
           <StatusBadge status={status} />
+          <button
+            onClick={() => exportApi.studentCSV(id!)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 text-xs
+              font-medium text-text-main hover:bg-gray-50 transition-colors shrink-0"
+          >
+            <Download size={12} />
+            CSV
+          </button>
         </div>
       </div>
 

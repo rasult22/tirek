@@ -35,7 +35,6 @@ export function ChatPage() {
     queryKey: ["chat", "messages", activeSessionId],
     queryFn: () => chatApi.messages(activeSessionId!),
     enabled: !!activeSessionId,
-    refetchInterval: 3000,
   });
 
   const createMutation = useMutation({

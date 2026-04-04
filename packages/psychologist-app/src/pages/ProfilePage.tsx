@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { updateProfile } from "../api/auth.js";
 import type { Language } from "@tirek/shared/i18n";
 import {
   UserCircle,
@@ -10,6 +12,8 @@ import {
   Globe,
   LogOut,
   Check,
+  Pencil,
+  X,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -18,14 +22,31 @@ export function ProfilePage() {
   const { language, setLanguage } = useLanguage();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(user?.name ?? "");
+
+  const saveMutation = useMutation({
+    mutationFn: () => updateProfile({ name: editName }),
+    onSuccess: (data) => {
+      updateUser({ name: data.name });
+      setEditing(false);
+    },
+  });
 
   function handleLogout() {
     logout();
     queryClient.clear();
     navigate("/login", { replace: true });
   }
+
+  const startEdit = () => {
+    setEditName(user?.name ?? "");
+    setEditing(true);
+  };
 
   const languages: { code: Language; label: string }[] = [
     { code: "ru", label: "Русский" },
@@ -42,35 +63,75 @@ export function ProfilePage() {
           <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shrink-0">
             {user?.name?.charAt(0)?.toUpperCase() ?? "P"}
           </div>
-          <div>
+          <div className="flex-1">
             <h2 className="text-lg font-semibold text-text-main">
               {user?.name ?? "Psychologist"}
             </h2>
             <p className="text-sm text-text-light">
               {user?.role === "psychologist"
-                ? "School Psychologist"
+                ? t.psychologist.role ?? "School Psychologist"
                 : user?.role ?? ""}
             </p>
           </div>
+          {!editing && (
+            <button
+              onClick={startEdit}
+              className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              <Pencil size={14} />
+              {t.common.edit}
+            </button>
+          )}
         </div>
 
-        <div className="space-y-4">
-          <InfoRow
-            icon={UserCircle}
-            label={t.auth.name}
-            value={user?.name ?? "\u2014"}
-          />
-          <InfoRow
-            icon={Mail}
-            label={t.auth.email}
-            value={user?.email ?? "\u2014"}
-          />
-          <InfoRow
-            icon={Shield}
-            label="Role"
-            value={user?.role ?? "\u2014"}
-          />
-        </div>
+        {!editing ? (
+          <div className="space-y-4">
+            <InfoRow
+              icon={UserCircle}
+              label={t.auth.name}
+              value={user?.name ?? "\u2014"}
+            />
+            <InfoRow
+              icon={Mail}
+              label={t.auth.email}
+              value={user?.email ?? "\u2014"}
+            />
+            <InfoRow
+              icon={Shield}
+              label={t.psychologist.role ?? "Role"}
+              value={user?.role ?? "\u2014"}
+            />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-text-light mb-1">{t.auth.name}</label>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-text-main focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditing(false)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-text-light hover:bg-gray-50 transition-colors"
+              >
+                <X size={14} />
+                {t.common.cancel}
+              </button>
+              <button
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending || !editName.trim()}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+              >
+                <Check size={14} />
+                {t.common.save}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Language switcher */}

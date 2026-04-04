@@ -28,7 +28,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     refetchInterval: 30_000,
   });
 
-  const crisisCount = activeAlerts?.length ?? 0;
+  const crisisCount = activeAlerts?.data?.length ?? 0;
 
   const navItems = [
     { to: "/", icon: LayoutDashboard, label: t.psychologist.dashboard },

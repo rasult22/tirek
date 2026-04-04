@@ -6,10 +6,10 @@ import { chatApi } from "../api/chat.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
 
 const MODE_EMOJI: Record<string, string> = {
-  talk: "\uD83D\uDCAC",
-  problem: "\uD83E\uDD14",
-  exam: "\uD83D\uDCDA",
-  discovery: "\uD83D\uDD2E",
+  talk: "💬",
+  problem: "🤔",
+  exam: "📚",
+  discovery: "🔮",
 };
 
 export function ChatListPage() {
@@ -87,7 +87,7 @@ export function ChatListPage() {
               className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-xl">
-                {MODE_EMOJI[session.mode] ?? "\uD83D\uDCAC"}
+                {MODE_EMOJI[session.mode] ?? "💬"}
               </div>
               <div className="flex-1 text-left">
                 <p className="text-sm font-bold text-text-main">{modeLabels[session.mode]}</p>

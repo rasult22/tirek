@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../hooks/useLanguage.js";
-import { getActive, getHistory, resolve } from "../api/crisis.js";
+import { getActive, getHistory, resolve, getFlaggedMessages } from "../api/crisis.js";
 import { StatusBadge } from "../components/ui/StatusBadge.js";
 import {
   AlertTriangle,
@@ -14,9 +14,10 @@ import {
   Send,
   Shield,
   History,
+  MessageSquareWarning,
 } from "lucide-react";
 import { clsx } from "clsx";
-import type { SOSEvent } from "@tirek/shared";
+import type { SOSEvent, FlaggedMessage } from "@tirek/shared";
 
 interface ResolveState {
   notes: string;
@@ -29,6 +30,7 @@ export function CrisisPage() {
   const t = useT();
   const queryClient = useQueryClient();
 
+  const [tab, setTab] = useState<"active" | "flagged" | "history">("active");
   const [resolveStates, setResolveStates] = useState<
     Record<string, ResolveState>
   >({});
@@ -42,6 +44,11 @@ export function CrisisPage() {
   const { data: history, isLoading: historyLoading } = useQuery({
     queryKey: ["crisis", "history"],
     queryFn: getHistory,
+  });
+
+  const { data: flagged, isLoading: flaggedLoading } = useQuery({
+    queryKey: ["crisis", "flagged"],
+    queryFn: getFlaggedMessages,
   });
 
   const resolveMutation = useMutation({
@@ -87,25 +94,57 @@ export function CrisisPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold text-text-main">
         {t.psychologist.crisis}
       </h1>
 
-      {/* Active alerts */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle size={18} className="text-danger" />
-          <h2 className="text-lg font-semibold text-text-main">
-            Active Alerts
-          </h2>
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+        <button
+          onClick={() => setTab("active")}
+          className={clsx(
+            "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+            tab === "active" ? "bg-white text-text-main shadow-sm" : "text-text-light hover:text-text-main",
+          )}
+        >
+          <AlertTriangle size={14} />
+          {t.psychologist.activeAlerts}
           {(active?.data?.length ?? 0) > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-danger text-white">
+            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-danger text-white">
               {active!.data.length}
             </span>
           )}
-        </div>
+        </button>
+        <button
+          onClick={() => setTab("flagged")}
+          className={clsx(
+            "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+            tab === "flagged" ? "bg-white text-text-main shadow-sm" : "text-text-light hover:text-text-main",
+          )}
+        >
+          <MessageSquareWarning size={14} />
+          {t.psychologist.flaggedMessages}
+          {(flagged?.data?.length ?? 0) > 0 && (
+            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-warning text-white">
+              {flagged!.data.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab("history")}
+          className={clsx(
+            "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+            tab === "history" ? "bg-white text-text-main shadow-sm" : "text-text-light hover:text-text-main",
+          )}
+        >
+          <History size={14} />
+          {t.psychologist.resolvedHistory}
+        </button>
+      </div>
 
+      {/* Active alerts */}
+      {tab === "active" && <section>
         {activeLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 size={24} className="animate-spin text-text-light" />
@@ -261,16 +300,54 @@ export function CrisisPage() {
             </p>
           </div>
         )}
-      </section>
+      </section>}
+
+      {/* Flagged messages */}
+      {tab === "flagged" && <section>
+        {flaggedLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 size={24} className="animate-spin text-text-light" />
+          </div>
+        ) : flagged && flagged.data.length > 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="divide-y divide-gray-50">
+              {flagged.data.map((msg: FlaggedMessage) => (
+                <div key={msg.messageId} className="px-5 py-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <MessageSquareWarning size={16} className="text-warning" />
+                      <span className="text-sm font-semibold text-text-main">
+                        {msg.studentName}
+                      </span>
+                      {msg.studentGrade && (
+                        <span className="text-xs text-text-light">
+                          {msg.studentGrade}{msg.studentClass ?? ""}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-text-light">
+                      {new Date(msg.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-main bg-warning/5 rounded-lg p-3 border border-warning/20">
+                    {msg.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+            <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
+              <Shield size={24} className="text-success" />
+            </div>
+            <p className="text-sm text-text-light">{t.common.noData}</p>
+          </div>
+        )}
+      </section>}
 
       {/* History */}
-      <section>
-        <div className="flex items-center gap-2 mb-4">
-          <History size={18} className="text-text-light" />
-          <h2 className="text-lg font-semibold text-text-main">
-            Resolved History
-          </h2>
-        </div>
+      {tab === "history" && <section>
 
         {historyLoading ? (
           <div className="flex justify-center py-8">
@@ -325,7 +402,7 @@ export function CrisisPage() {
             <p className="text-sm text-text-light">{t.common.noData}</p>
           </div>
         )}
-      </section>
+      </section>}
     </div>
   );
 }

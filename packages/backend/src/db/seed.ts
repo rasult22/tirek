@@ -1,5 +1,6 @@
+import { eq } from "drizzle-orm";
 import { db } from "./index.js";
-import { users, diagnosticTests, exercises, contentQuotes } from "./schema.js";
+import { users, inviteCodes, diagnosticTests, exercises, contentQuotes, studentPsychologist } from "./schema.js";
 import { testDefinitions } from "../../../shared/src/constants/test-definitions.js";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
@@ -8,22 +9,75 @@ async function seed() {
   console.log("🌱 Seeding database...");
 
   // ── 1. Demo psychologist ────────────────────────────────────────────
-  const psychologistId = uuidv4();
   const passwordHash = await bcrypt.hash("demo123456", 10);
 
-  await db
-    .insert(users)
-    .values({
+  // Check if psychologist already exists
+  const [existingPsych] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, "psychologist@tirek.kz"))
+    .limit(1);
+
+  let psychologistId: string;
+  if (existingPsych) {
+    psychologistId = existingPsych.id;
+  } else {
+    psychologistId = uuidv4();
+    await db.insert(users).values({
       id: psychologistId,
       email: "psychologist@tirek.kz",
       passwordHash,
       name: "Айгуль Нурланова",
       role: "psychologist",
       language: "ru",
+    });
+  }
+
+  console.log("  ✓ Demo psychologist: psychologist@tirek.kz / demo123456");
+
+  // ── 1b. Demo student + invite code ─────────────────────────────────
+  await db
+    .insert(inviteCodes)
+    .values({
+      id: uuidv4(),
+      code: "TEST-0001",
+      psychologistId,
+      grade: 9,
+      classLetter: "А",
     })
     .onConflictDoNothing();
 
-  console.log("  ✓ Demo psychologist: psychologist@tirek.kz / demo123456");
+  const [existingStudent] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, "student@tirek.kz"))
+    .limit(1);
+
+  let studentId: string;
+  if (existingStudent) {
+    studentId = existingStudent.id;
+  } else {
+    studentId = uuidv4();
+    await db.insert(users).values({
+      id: studentId,
+      email: "student@tirek.kz",
+      passwordHash,
+      name: "Алия Сериков",
+      role: "student",
+      language: "ru",
+      avatarId: "avatar-1",
+      grade: 9,
+      classLetter: "А",
+    });
+  }
+
+  // Link student to psychologist
+  await db
+    .insert(studentPsychologist)
+    .values({ studentId, psychologistId })
+    .onConflictDoNothing();
+
+  console.log("  ✓ Demo student: student@tirek.kz / demo123456");
 
   // ── 2. Diagnostic tests ─────────────────────────────────────────────
   for (const [slug, def] of Object.entries(testDefinitions)) {
@@ -77,12 +131,49 @@ async function seed() {
       description: "Глубокое дыхание животом",
       config: { inhale: 4, exhale: 6, cycles: 5, shape: "balloon" },
     },
+    {
+      id: uuidv4(),
+      type: "grounding",
+      slug: "grounding-54321",
+      nameRu: "Заземление 5-4-3-2-1",
+      nameKz: "5-4-3-2-1 жерлеу техникасы",
+      description: "Техника заземления через 5 чувств",
+      config: {
+        steps: [
+          { count: 5, senseRu: "вещей, которые ты видишь", senseKz: "көретін заттар", icon: "eye" },
+          { count: 4, senseRu: "звука, которые ты слышишь", senseKz: "еститін дыбыстар", icon: "ear" },
+          { count: 3, senseRu: "ощущения (прикосновение)", senseKz: "сезетін нәрселер", icon: "hand" },
+          { count: 2, senseRu: "запаха", senseKz: "иістер", icon: "flower" },
+          { count: 1, senseRu: "вкус", senseKz: "дәм", icon: "apple" },
+        ],
+      },
+    },
+    {
+      id: uuidv4(),
+      type: "relaxation",
+      slug: "pmr",
+      nameRu: "Мышечная релаксация",
+      nameKz: "Бұлшықет релаксациясы",
+      description: "Напряжение → удержание → расслабление мышц",
+      config: {
+        steps: [
+          { muscleGroupRu: "Кисти рук", muscleGroupKz: "Қол ұшы", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+          { muscleGroupRu: "Предплечья", muscleGroupKz: "Білек", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+          { muscleGroupRu: "Плечи", muscleGroupKz: "Иық", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+          { muscleGroupRu: "Лицо", muscleGroupKz: "Бет", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+          { muscleGroupRu: "Шея", muscleGroupKz: "Мойын", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+          { muscleGroupRu: "Живот", muscleGroupKz: "Іш", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+          { muscleGroupRu: "Бёдра", muscleGroupKz: "Сан", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+          { muscleGroupRu: "Стопы", muscleGroupKz: "Табан", tensionSec: 5, holdSec: 5, releaseSec: 10 },
+        ],
+      },
+    },
   ];
 
   for (const ex of exerciseData) {
     await db.insert(exercises).values(ex).onConflictDoNothing();
   }
-  console.log("  ✓ 3 breathing exercises");
+  console.log("  ✓ 5 exercises (3 breathing + 1 grounding + 1 relaxation)");
 
   // ── 4. Motivational quotes ──────────────────────────────────────────
   const quotes = [

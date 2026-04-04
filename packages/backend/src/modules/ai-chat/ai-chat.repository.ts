@@ -1,6 +1,6 @@
-import { eq, desc, asc, sql, count as dbCount } from "drizzle-orm";
+import { eq, desc, asc, sql, count as dbCount, inArray } from "drizzle-orm";
 import { db } from "../../db/index.js";
-import { chatSessions, chatMessages } from "../../db/schema.js";
+import { chatSessions, chatMessages, users } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 
 export const aiChatRepository = {
@@ -71,5 +71,35 @@ export const aiChatRepository = {
       .where(eq(chatSessions.id, sessionId))
       .returning();
     return session;
+  },
+
+  async findFlaggedMessages(studentIds: string[], pagination: PaginationParams) {
+    if (studentIds.length === 0) return { rows: [], total: 0 };
+
+    const rows = await db
+      .select({
+        messageId: chatMessages.id,
+        content: chatMessages.content,
+        createdAt: chatMessages.createdAt,
+        sessionId: chatSessions.id,
+        studentName: users.name,
+        studentGrade: users.grade,
+        studentClass: users.classLetter,
+      })
+      .from(chatMessages)
+      .innerJoin(chatSessions, eq(chatMessages.sessionId, chatSessions.id))
+      .innerJoin(users, eq(chatSessions.userId, users.id))
+      .where(eq(chatMessages.flagged, true))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(pagination.limit)
+      .offset(pagination.offset);
+
+    const [countRow] = await db
+      .select({ value: dbCount() })
+      .from(chatMessages)
+      .innerJoin(chatSessions, eq(chatMessages.sessionId, chatSessions.id))
+      .where(eq(chatMessages.flagged, true));
+
+    return { rows, total: Number(countRow?.value ?? 0) };
   },
 };

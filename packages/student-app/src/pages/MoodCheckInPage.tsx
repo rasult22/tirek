@@ -8,12 +8,12 @@ import { moodLevels } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
 
 const FACTORS = [
-  { key: "school", emoji: "\uD83D\uDCDA" },
-  { key: "friends", emoji: "\uD83D\uDC6B" },
-  { key: "family", emoji: "\uD83C\uDFE0" },
-  { key: "health", emoji: "\uD83D\uDCAA" },
-  { key: "social", emoji: "\uD83D\uDCF1" },
-  { key: "other", emoji: "\uD83D\uDCA1" },
+  { key: "school", emoji: "📚" },
+  { key: "friends", emoji: "👫" },
+  { key: "family", emoji: "🏠" },
+  { key: "health", emoji: "💪" },
+  { key: "social", emoji: "📱" },
+  { key: "other", emoji: "💡" },
 ] as const;
 
 function SliderRow({

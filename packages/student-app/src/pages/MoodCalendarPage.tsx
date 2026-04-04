@@ -15,7 +15,14 @@ const MOOD_COLORS: Record<number, string> = {
   5: "bg-emerald-400",
 };
 
-const WEEKDAYS_RU = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const FACTOR_EMOJI: Record<string, string> = {
+  school: "\uD83D\uDCDA",
+  friends: "\uD83D\uDC6B",
+  family: "\uD83C\uDFE0",
+  health: "\uD83D\uDCAA",
+  social: "\uD83D\uDCF1",
+  other: "\uD83D\uDCA1",
+};
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -70,10 +77,14 @@ export function MoodCalendarPage() {
     else setMonth(month + 1);
   };
 
-  const monthNames = [
-    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
-  ];
+  const factorLabels: Record<string, string> = {
+    school: t.mood.factorSchool,
+    friends: t.mood.factorFriends,
+    family: t.mood.factorFamily,
+    health: t.mood.factorHealth,
+    social: t.mood.factorSocial,
+    other: t.mood.factorOther,
+  };
 
   return (
     <AppLayout>
@@ -95,7 +106,7 @@ export function MoodCalendarPage() {
             <ChevronLeft size={20} className="text-text-main" />
           </button>
           <h2 className="text-base font-bold text-text-main">
-            {monthNames[month]} {year}
+            {t.mood.monthNames[month]} {year}
           </h2>
           <button onClick={nextMonth} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm">
             <ChevronRight size={20} className="text-text-main" />
@@ -106,7 +117,7 @@ export function MoodCalendarPage() {
         <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
           {/* Weekday headers */}
           <div className="mb-2 grid grid-cols-7 gap-1 text-center">
-            {WEEKDAYS_RU.map((d) => (
+            {t.mood.weekdays.map((d) => (
               <span key={d} className="text-[10px] font-bold uppercase text-text-light">{d}</span>
             ))}
           </div>
@@ -142,7 +153,7 @@ export function MoodCalendarPage() {
         </div>
 
         {/* Insights */}
-        {insights && (
+        {insights && insights.weeklyAverage != null && (
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-white p-4 shadow-sm">
               <p className="text-[10px] font-bold uppercase text-text-light">{t.mood.weeklyAverage}</p>
@@ -159,12 +170,32 @@ export function MoodCalendarPage() {
               <p className="text-[10px] font-bold uppercase text-text-light">{t.mood.trend}</p>
               <div className="mt-1 flex items-center gap-2">
                 {insights.trend === "improving" && <TrendingUp size={24} className="text-secondary" />}
-                {insights.trend === "stable" && <Minus size={24} className="text-info" />}
                 {insights.trend === "declining" && <TrendingDown size={24} className="text-danger" />}
+                {(insights.trend === "stable" || insights.trend === "neutral") && <Minus size={24} className="text-info" />}
                 <span className="text-sm font-bold text-text-main">
-                  {insights.trend === "improving" ? t.mood.trendUp : insights.trend === "stable" ? t.mood.trendStable : t.mood.trendDown}
+                  {insights.trend === "improving" ? t.mood.trendUp : insights.trend === "declining" ? t.mood.trendDown : t.mood.trendStable}
                 </span>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top factors */}
+        {insights && Array.isArray(insights.topFactors) && insights.topFactors.length > 0 && (
+          <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+            <p className="text-[10px] font-bold uppercase text-text-light mb-3">{t.mood.topFactors}</p>
+            <div className="space-y-2">
+              {insights.topFactors.map((f: { factor: string; count: number }) => (
+                <div key={f.factor} className="flex items-center gap-3">
+                  <span className="text-lg">{FACTOR_EMOJI[f.factor] ?? "\u2753"}</span>
+                  <span className="text-sm font-medium text-text-main flex-1">
+                    {factorLabels[f.factor] ?? f.factor}
+                  </span>
+                  <span className="text-xs font-bold text-text-light bg-gray-100 rounded-full px-2 py-0.5">
+                    {f.count}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -9,7 +9,7 @@ export const moodApi = {
     stressLevel?: number | null;
     note?: string | null;
     factors?: string[] | null;
-  }) => apiFetch<MoodEntry>("/student/mood/", { method: "POST", body: JSON.stringify(data) }),
+  }) => apiFetch<MoodEntry>("/student/mood", { method: "POST", body: JSON.stringify(data) }),
 
   today: () => apiFetch<MoodEntry | null>("/student/mood/today"),
 

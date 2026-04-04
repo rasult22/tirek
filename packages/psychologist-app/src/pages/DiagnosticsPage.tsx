@@ -10,7 +10,9 @@ import {
   ClipboardList,
   Loader2,
   Calendar,
+  Download,
 } from "lucide-react";
+import { exportApi } from "../api/export.js";
 
 export function DiagnosticsPage() {
   const t = useT();
@@ -44,14 +46,24 @@ export function DiagnosticsPage() {
         <h1 className="text-2xl font-bold text-text-main">
           {t.psychologist.diagnostics}
         </h1>
-        <button
-          onClick={() => navigate("/diagnostics/assign")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-white text-sm
-            font-semibold hover:bg-primary-dark transition-colors"
-        >
-          <ClipboardPlus size={16} />
-          {t.psychologist.assignTest}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportApi.classCSV(grade ? Number(grade) : undefined)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm
+              font-medium text-text-main hover:bg-gray-50 transition-colors"
+          >
+            <Download size={14} />
+            {t.psychologist.exportReport}
+          </button>
+          <button
+            onClick={() => navigate("/diagnostics/assign")}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-white text-sm
+              font-semibold hover:bg-primary-dark transition-colors"
+          >
+            <ClipboardPlus size={16} />
+            {t.psychologist.assignTest}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -182,7 +194,7 @@ export function DiagnosticsPage() {
                   <tr
                     key={row.id}
                     className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/students/${row.userId}`)}
+                    onClick={() => navigate(`/students/${row.studentId}`)}
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
