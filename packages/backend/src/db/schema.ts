@@ -7,6 +7,7 @@ import {
   serial,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // ── 1. schools ──────────────────────────────────────────────────────
@@ -273,6 +274,23 @@ export const userStreaks = pgTable("user_streaks", {
     .notNull(),
 });
 
+// ── user_plants ────────────────────────────────────────────────────
+export const userPlants = pgTable("user_plants", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id),
+  growthPoints: integer("growth_points").notNull().default(0),
+  stage: integer("stage").notNull().default(1), // 1=sprout, 2=bush, 3=tree, 4=blooming
+  name: text("name"),
+  lastWateredAt: timestamp("last_watered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // ── 18. journal_entries ─────────────────────────────────────────────
 export const journalEntries = pgTable("journal_entries", {
   id: text("id").primaryKey(),
@@ -298,6 +316,82 @@ export const notifications = pgTable("notifications", {
   read: boolean("read").default(false),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ── 19. conversations (direct chat) ────────────────────────────────
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: text("id").primaryKey(),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => users.id),
+    psychologistId: text("psychologist_id")
+      .notNull()
+      .references(() => users.id),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    uniquePair: unique().on(t.studentId, t.psychologistId),
+  }),
+);
+
+// ── 20. direct_messages ────────────────────────────────────────────
+export const directMessages = pgTable("direct_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: text("conversation_id")
+    .notNull()
+    .references(() => conversations.id),
+  senderId: text("sender_id")
+    .notNull()
+    .references(() => users.id),
+  content: text("content").notNull(),
+  flagged: boolean("flagged").default(false),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ── 21. appointment_slots ─────────────────────────────────────────
+export const appointmentSlots = pgTable("appointment_slots", {
+  id: text("id").primaryKey(),
+  psychologistId: text("psychologist_id")
+    .notNull()
+    .references(() => users.id),
+  date: text("date").notNull(), // YYYY-MM-DD
+  startTime: text("start_time").notNull(), // HH:mm
+  endTime: text("end_time").notNull(), // HH:mm
+  isBooked: boolean("is_booked").default(false).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ── 22. appointments ──────────────────────────────────────────────
+export const appointments = pgTable("appointments", {
+  id: text("id").primaryKey(),
+  slotId: text("slot_id")
+    .notNull()
+    .references(() => appointmentSlots.id),
+  studentId: text("student_id")
+    .notNull()
+    .references(() => users.id),
+  psychologistId: text("psychologist_id")
+    .notNull()
+    .references(() => users.id),
+  status: text("status").notNull().default("scheduled"), // scheduled | confirmed | cancelled | completed
+  studentNote: text("student_note"),
+  psychologistNote: text("psychologist_note"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });

@@ -20,7 +20,16 @@ import { notesRouter } from "./modules/psychologist-notes/psychologist-notes.rou
 import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { journalRouter } from "./modules/journal/journal.routes.js";
 import { streaksRouter } from "./modules/streaks/streaks.routes.js";
+import { virtualPlantRouter } from "./modules/virtual-plant/virtual-plant.routes.js";
 import { exportRouter } from "./modules/export/export.routes.js";
+import {
+  directChatStudentRouter,
+  directChatPsychologistRouter,
+} from "./modules/direct-chat/direct-chat.routes.js";
+import {
+  appointmentsStudentRouter,
+  appointmentsPsychologistRouter,
+} from "./modules/appointments/appointments.routes.js";
 
 export const app = new Hono<{ Variables: AppVariables }>();
 
@@ -55,6 +64,9 @@ app.route("/student/sos", sosStudentRouter);
 app.route("/student/chat", aiChatRouter);
 app.route("/student/journal", journalRouter);
 app.route("/student/streaks", streaksRouter);
+app.route("/student/plant", virtualPlantRouter);
+app.route("/student/direct-chat", directChatStudentRouter);
+app.route("/student/appointments", appointmentsStudentRouter);
 app.route("/student", contentRouter);
 
 // Psychologist routes
@@ -64,6 +76,8 @@ app.route("/psychologist/sos", sosPsychologistRouter);
 app.route("/psychologist/analytics", analyticsRouter);
 app.route("/psychologist", usersRouter);
 app.route("/psychologist", notesRouter);
+app.route("/psychologist/direct-chat", directChatPsychologistRouter);
+app.route("/psychologist/appointments", appointmentsPsychologistRouter);
 app.route("/psychologist/export", exportRouter);
 
 // Shared routes

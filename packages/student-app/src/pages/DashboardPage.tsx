@@ -1,13 +1,15 @@
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, ClipboardList, Wind, CalendarDays, CheckCircle2, Sparkles, Flame, BookOpen, Trophy } from "lucide-react";
+import { MessageCircle, ClipboardList, Wind, CalendarDays, Calendar, CheckCircle2, Sparkles, Flame, BookOpen, Trophy, Mail } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { moodApi } from "../api/mood.js";
 import { contentApi } from "../api/content.js";
 import { streaksApi } from "../api/streaks.js";
+import { plantApi } from "../api/plant.js";
 import { exercisesApi } from "../api/exercises.js";
+import { appointmentsApi } from "../api/appointments.js";
 import { moodLevels } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
 
@@ -31,9 +33,19 @@ export function DashboardPage() {
     queryFn: streaksApi.get,
   });
 
+  const { data: plant } = useQuery({
+    queryKey: ["plant"],
+    queryFn: plantApi.get,
+  });
+
   const { data: stats } = useQuery({
     queryKey: ["progress-stats"],
     queryFn: exercisesApi.stats,
+  });
+
+  const { data: nextAppointment } = useQuery({
+    queryKey: ["appointments", "next"],
+    queryFn: appointmentsApi.next,
   });
 
   const quickLinks = [
@@ -41,7 +53,9 @@ export function DashboardPage() {
     { to: "/tests", icon: ClipboardList, label: t.nav.tests, bg: "bg-secondary/20", color: "text-secondary" },
     { to: "/exercises", icon: Wind, label: t.nav.exercises, bg: "bg-accent/20", color: "text-accent" },
     { to: "/journal", icon: BookOpen, label: t.nav.journal, bg: "bg-amber-100", color: "text-amber-600" },
+    { to: "/messages", icon: Mail, label: t.directChat.title, bg: "bg-green-100", color: "text-green-600" },
     { to: "/mood/calendar", icon: CalendarDays, label: t.mood.calendar, bg: "bg-info/20", color: "text-info" },
+    { to: "/appointments", icon: Calendar, label: t.nav.appointments, bg: "bg-purple-100", color: "text-purple-600" },
   ];
 
   return (
@@ -89,6 +103,61 @@ export function DashboardPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Plant widget */}
+        {plant && (
+          <Link
+            to="/plant"
+            className={`mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-green-100 to-emerald-50 p-4 transition-shadow hover:shadow-md ${
+              plant.isSleeping ? "opacity-70 grayscale-[30%]" : ""
+            }`}
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-200/60 text-2xl">
+              {plant.stage === 1 ? "🌱" : plant.stage === 2 ? "🌿" : plant.stage === 3 ? "🌳" : "🌸"}
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-bold text-text-main">
+                {plant.name ?? t.plant.unnamed}
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-green-200/60">
+                <div
+                  className="h-full rounded-full bg-green-500 transition-all duration-500"
+                  style={{
+                    width: `${plant.stage >= 4 ? 100 : Math.max(Math.round(((plant.growthPoints - [0, 50, 150, 300][plant.stage - 1]) / (plant.nextStageThreshold - [0, 50, 150, 300][plant.stage - 1])) * 100), 3)}%`,
+                  }}
+                />
+              </div>
+              <div className="mt-0.5 text-xs text-text-light">
+                {plant.isSleeping
+                  ? `💤 ${t.plant.sleeping}`
+                  : plant.stage >= 4
+                    ? t.plant.maxStage
+                    : `${t.plant.pointsToNext}: ${plant.pointsToNextStage}`}
+              </div>
+            </div>
+          </Link>
+        )}
+
+        {/* Next appointment widget */}
+        {nextAppointment && (
+          <Link
+            to="/appointments"
+            className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-purple-100 to-indigo-50 p-4"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-200/60">
+              <CalendarDays size={26} className="text-purple-500" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-bold uppercase tracking-wide text-purple-600/70">
+                {t.appointments.nextAppointment}
+              </div>
+              <div className="mt-0.5 text-sm font-bold text-text-main">
+                {nextAppointment.date} &middot; {nextAppointment.startTime}–{nextAppointment.endTime}
+              </div>
+              <div className="text-xs text-text-light">{nextAppointment.psychologistName}</div>
+            </div>
+          </Link>
         )}
 
         {/* Quote of the day */}

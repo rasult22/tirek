@@ -1,7 +1,7 @@
 # Tirek — План доработок MVP
 
 > Последнее обновление: 2026-04-05
-> Статус: P0 завершён, P1 завершён, P2 следующий
+> Статус: P0 завершён, P1 завершён, P2 в процессе
 
 ---
 
@@ -104,16 +104,36 @@
 
 > Фичи для Фазы 2, не блокируют демо.
 
-### P2-1. Чат ученик ↔ психолог
-- Прямая переписка (не AI-чат)
-- Новый модуль: таблицы, роуты, UI в обоих приложениях
+### P2-1. Чат ученик ↔ психолог ✅
+- **Статус:** Завершено
+- **Детали:**
+  - DB: таблицы `conversations` + `direct_messages` с crisis detection
+  - Backend: модуль `direct-chat/` (repository, service, routes) для обоих ролей
+  - Student-app: страницы DirectChatListPage + DirectChatPage, BottomNav badge, Dashboard quick link
+  - Psychologist-app: страницы DirectChatListPage + DirectChatPage, Sidebar badge, StudentDetailPage кнопка
+  - Polling: 5сек на активном чате, 30сек для unread count
+  - Notifications: type "direct_message" с навигацией к беседе
 
-### P2-2. Запись на приём
-- Управление слотами (psychologist) + выбор слота (student)
+### P2-2. Запись на приём ✅
+- **Статус:** Завершено
+- **Детали:**
+  - DB: таблицы `appointment_slots` + `appointments`
+  - Backend: модуль `appointments/` (repository, service, routes) для обоих ролей
+  - Student-app: AppointmentsPage (полоска дат + доступные слоты + booking modal), Dashboard виджет + quickLink
+  - Psychologist-app: SlotsManagementPage (создание/удаление слотов + repeat weekly), AppointmentsListPage (список записей + confirm/cancel/complete), Sidebar пункт
+  - Notifications: type "appointment" при booking/cancel/confirm
+  - i18n: ru + kz
 
-### P2-3. Виртуальный персонаж
-- Растение/питомец, растёт при использовании приложения
-- Визуальные состояния: росток → куст → дерево → цветущее дерево
+### P2-3. Виртуальный персонаж ✅
+- **Статус:** Завершено
+- **Детали:**
+  - DB: таблица `user_plants` (userId PK, growthPoints, stage 1-4, name, lastWateredAt)
+  - Backend: модуль `virtual-plant/` (repository, service, routes) — GET + PATCH /name
+  - Механика роста: mood +10, exercises +15, journal +10 очков (fire-and-forget)
+  - Пороги стадий: росток (0-49), кустик (50-149), дерево (150-299), цветущее дерево (300+)
+  - "Сон" при неактивности 2+ дня (визуальный, БЕЗ штрафов)
+  - Student-app: виджет на Dashboard + отдельная страница /plant с редактированием имени
+  - i18n: ru + kz (18 ключей)
 
 ### P2-4. Достижения/значки
 - "Первая медитация", "7 дней подряд", "Мастер дыхания" и т.д.

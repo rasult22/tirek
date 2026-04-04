@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useNavigate } from "react-router";
 import { Sidebar } from "./Sidebar.js";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getNotifications, getUnreadCount, markRead } from "../../api/notifications.js";
@@ -16,6 +17,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [notifOpen, setNotifOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: unread } = useQuery({
     queryKey: ["notifications", "count"],
@@ -99,6 +101,10 @@ export function AppLayout({ children }: AppLayoutProps) {
                           )}
                           onClick={() => {
                             if (!n.read) markReadMutation.mutate(n.id);
+                            if (n.type === "direct_message" && n.metadata?.conversationId) {
+                              setNotifOpen(false);
+                              navigate(`/messages/${n.metadata.conversationId}`);
+                            }
                           }}
                         >
                           <div className="flex items-start gap-2">
@@ -108,6 +114,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                                 n.type === "crisis" && "bg-danger",
                                 n.type === "reminder" && "bg-warning",
                                 n.type === "assignment" && "bg-primary",
+                                n.type === "direct_message" && "bg-green-500",
                                 n.type === "system" && "bg-secondary",
                               )}
                             />

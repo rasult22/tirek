@@ -5,6 +5,7 @@ import {
   studentPsychologist,
   users,
   chatMessages,
+  directMessages,
 } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
@@ -198,6 +199,78 @@ export async function runMandatoryCrisisCheck(
       }
     } catch (error) {
       console.error("Mandatory crisis check — failed to create SOS/notifications:", error);
+    }
+  }
+
+  return { detected: true, severity, markers };
+}
+
+/**
+ * Run crisis check on student messages in direct chat.
+ * Same logic as runMandatoryCrisisCheck but flags direct_messages table.
+ */
+export async function runDirectChatCrisisCheck(
+  message: string,
+  userId: string,
+  conversationId: string,
+  messageId: number,
+): Promise<{ detected: boolean; severity?: CrisisSeverity; markers?: string[] }> {
+  const result = detectMarkers(message);
+
+  if (!result) {
+    return { detected: false };
+  }
+
+  const { severity, markers } = result;
+
+  if (severity === "high" || severity === "medium") {
+    const sosLevel = severity === "high" ? 2 : 1;
+    const sosId = uuidv4();
+
+    try {
+      // Flag the direct message
+      await db
+        .update(directMessages)
+        .set({ flagged: true })
+        .where(eq(directMessages.id, messageId));
+
+      // Create SOS event
+      await db.insert(sosEvents).values({
+        id: sosId,
+        userId,
+        level: sosLevel,
+        notes: `Auto-detected crisis in direct chat conversation ${conversationId}. Markers: ${markers.join(", ")}`,
+      });
+
+      // Find linked psychologists and notify
+      const linkedPsychologists = await db
+        .select({
+          psychologistId: studentPsychologist.psychologistId,
+        })
+        .from(studentPsychologist)
+        .innerJoin(users, eq(users.id, studentPsychologist.psychologistId))
+        .where(eq(studentPsychologist.studentId, userId));
+
+      for (const psych of linkedPsychologists) {
+        await db.insert(notifications).values({
+          id: uuidv4(),
+          userId: psych.psychologistId,
+          type: "sos_alert",
+          title:
+            severity === "high"
+              ? "🚨 СРОЧНО: Обнаружены критические маркеры кризиса"
+              : "⚠️ Внимание: Обнаружены маркеры кризиса",
+          body: `У ученика обнаружены признаки кризисной ситуации (уровень: ${severity}). Требуется внимание специалиста.`,
+          metadata: {
+            sosEventId: sosId,
+            conversationId,
+            severity,
+            markers,
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Direct chat crisis check — failed to create SOS/notifications:", error);
     }
   }
 

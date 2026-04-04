@@ -11,8 +11,11 @@ import {
   KeyRound,
   BarChart3,
   UserCircle,
+  MessageSquare,
+  Calendar,
   X,
 } from "lucide-react";
+import { directChatApi } from "../../api/direct-chat.js";
 
 interface SidebarProps {
   open: boolean;
@@ -30,9 +33,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   const crisisCount = activeAlerts?.data?.length ?? 0;
 
+  const { data: directUnread } = useQuery({
+    queryKey: ["direct-chat", "unread-count"],
+    queryFn: directChatApi.unreadCount,
+    refetchInterval: 30_000,
+  });
+  const unreadDirectCount = directUnread?.count ?? 0;
+
   const navItems = [
     { to: "/", icon: LayoutDashboard, label: t.psychologist.dashboard },
     { to: "/students", icon: Users, label: t.psychologist.students },
+    { to: "/messages", icon: MessageSquare, label: t.psychologist.messages, badge: unreadDirectCount },
+    { to: "/appointments", icon: Calendar, label: t.psychologist.appointments },
     { to: "/diagnostics", icon: ClipboardList, label: t.psychologist.diagnostics },
     { to: "/crisis", icon: AlertTriangle, label: t.psychologist.crisis, badge: crisisCount },
     { to: "/invite-codes", icon: KeyRound, label: t.psychologist.inviteCodes },

@@ -17,9 +17,11 @@ import {
   StickyNote,
   Edit3,
   Download,
+  MessageSquare,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { exportApi } from "../api/export.js";
+import { directChatApi } from "../api/direct-chat.js";
 
 const moodColors: Record<number, string> = {
   1: "bg-danger",
@@ -158,6 +160,18 @@ export function StudentDetailPage() {
             </p>
           </div>
           <StatusBadge status={status} />
+          <button
+            onClick={() => {
+              directChatApi.createConversation(id!).then((conv) => {
+                navigate(`/messages/${conv.id}`);
+              });
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-primary text-xs
+              font-medium text-primary hover:bg-primary/5 transition-colors shrink-0"
+          >
+            <MessageSquare size={12} />
+            {t.directChat.writeToStudent}
+          </button>
           <button
             onClick={() => exportApi.studentCSV(id!)}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 text-xs

@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ValidationError, ConflictError } from "../../shared/errors.js";
 import { moodRepository } from "./mood.repository.js";
 import { streaksService } from "../streaks/streaks.service.js";
+import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
 
 export const moodService = {
   async createEntry(
@@ -42,6 +43,7 @@ export const moodService = {
 
     // Record streak activity (fire-and-forget)
     streaksService.recordActivity(userId).catch(() => {});
+    virtualPlantService.addPoints(userId, 10).catch(() => {});
 
     return entry;
   },

@@ -15,6 +15,10 @@ import { CrisisPage } from "./pages/CrisisPage.js";
 import { InviteCodesPage } from "./pages/InviteCodesPage.js";
 import { AnalyticsPage } from "./pages/AnalyticsPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
+import { DirectChatListPage } from "./pages/DirectChatListPage.js";
+import { DirectChatPage } from "./pages/DirectChatPage.js";
+import { AppointmentsListPage } from "./pages/AppointmentsListPage.js";
+import { SlotsManagementPage } from "./pages/SlotsManagementPage.js";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -49,6 +53,10 @@ export function App() {
             <Route path="/students/:id" element={<ProtectedRoute><StudentDetailPage /></ProtectedRoute>} />
             <Route path="/diagnostics" element={<ProtectedRoute><DiagnosticsPage /></ProtectedRoute>} />
             <Route path="/diagnostics/assign" element={<ProtectedRoute><AssignTestPage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><DirectChatListPage /></ProtectedRoute>} />
+            <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
+            <Route path="/appointments" element={<ProtectedRoute><AppointmentsListPage /></ProtectedRoute>} />
+            <Route path="/appointments/slots" element={<ProtectedRoute><SlotsManagementPage /></ProtectedRoute>} />
             <Route path="/crisis" element={<ProtectedRoute><CrisisPage /></ProtectedRoute>} />
             <Route path="/invite-codes" element={<ProtectedRoute><InviteCodesPage /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />

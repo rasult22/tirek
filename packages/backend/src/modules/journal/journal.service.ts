@@ -4,6 +4,7 @@ import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { journalRepository } from "./journal.repository.js";
 import { streaksService } from "../streaks/streaks.service.js";
+import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
 
 const DAILY_PROMPTS = [
   { ru: "Сегодня я чувствую…", kz: "Бүгін мен сезінемін…" },
@@ -30,6 +31,7 @@ export const journalService = {
 
     // Record streak activity (fire-and-forget)
     streaksService.recordActivity(userId).catch(() => {});
+    virtualPlantService.addPoints(userId, 10).catch(() => {});
 
     return entry;
   },

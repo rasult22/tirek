@@ -21,6 +21,10 @@ import { ExerciseRouterPage } from "./pages/ExerciseRouterPage.js";
 import { SOSPage } from "./pages/SOSPage.js";
 import { JournalPage } from "./pages/JournalPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
+import { DirectChatListPage } from "./pages/DirectChatListPage.js";
+import { DirectChatPage } from "./pages/DirectChatPage.js";
+import { AppointmentsPage } from "./pages/AppointmentsPage.js";
+import { VirtualPlantPage } from "./pages/VirtualPlantPage.js";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -59,6 +63,10 @@ export function App() {
             <Route path="/exercises" element={<ProtectedRoute><ExercisesListPage /></ProtectedRoute>} />
             <Route path="/exercises/:id" element={<ProtectedRoute><ExerciseRouterPage /></ProtectedRoute>} />
             <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><DirectChatListPage /></ProtectedRoute>} />
+            <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
+            <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
+            <Route path="/plant" element={<ProtectedRoute><VirtualPlantPage /></ProtectedRoute>} />
             <Route path="/sos" element={<SOSPage />} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />

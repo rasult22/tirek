@@ -194,10 +194,11 @@ export interface InviteCode {
 export interface Notification {
   id: string;
   userId: string;
-  type: "crisis" | "reminder" | "assignment" | "system";
+  type: "crisis" | "reminder" | "assignment" | "system" | "direct_message" | "appointment";
   title: string;
   body: string;
   read: boolean;
+  metadata?: Record<string, unknown>;
   createdAt: string;
 }
 
@@ -248,6 +249,19 @@ export interface StreakInfo {
   freezesAvailable: number;
 }
 
+export type PlantStage = 1 | 2 | 3 | 4;
+
+export interface PlantInfo {
+  growthPoints: number;
+  stage: PlantStage;
+  name: string | null;
+  lastWateredAt: string | null;
+  isSleeping: boolean;
+  pointsToNextStage: number;
+  nextStageThreshold: number;
+  createdAt: string;
+}
+
 export interface FlaggedMessage {
   messageId: number;
   content: string;
@@ -262,4 +276,73 @@ export interface ProgressStats {
   exercisesCompleted: number;
   testsCompleted: number;
   journalEntries: number;
+}
+
+export interface Conversation {
+  id: string;
+  studentId: string;
+  psychologistId: string;
+  lastMessageAt: string | null;
+  createdAt: string;
+  otherUser: {
+    id: string;
+    name: string;
+    avatarId: string | null;
+  };
+  lastMessage: {
+    content: string;
+    createdAt: string;
+    senderId: string;
+  } | null;
+  unreadCount: number;
+}
+
+export interface DirectMessage {
+  id: number;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export type AppointmentStatus = "scheduled" | "confirmed" | "cancelled" | "completed";
+
+export interface AppointmentSlot {
+  id: string;
+  psychologistId: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  isBooked: boolean;
+  createdAt: string;
+}
+
+export interface Appointment {
+  id: string;
+  slotId: string;
+  studentId: string;
+  psychologistId: string;
+  status: AppointmentStatus;
+  studentNote: string | null;
+  psychologistNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Joined fields
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  psychologistName?: string;
+  studentName?: string;
+  studentGrade?: number | null;
+  studentClassLetter?: string | null;
+}
+
+export interface UpcomingAppointment {
+  id: string;
+  status: AppointmentStatus;
+  date: string;
+  startTime: string;
+  endTime: string;
+  psychologistName: string;
 }
