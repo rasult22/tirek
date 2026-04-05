@@ -15,10 +15,10 @@ import { appointmentsApi } from "../api/appointments.js";
 import type { Appointment } from "@tirek/shared";
 
 const statusColors: Record<string, string> = {
-  scheduled: "bg-amber-100 text-amber-700",
-  confirmed: "bg-green-100 text-green-700",
-  cancelled: "bg-gray-100 text-gray-500",
-  completed: "bg-blue-100 text-blue-700",
+  scheduled: "bg-amber-100 dark:bg-amber-900/30 text-amber-700",
+  confirmed: "bg-green-100 dark:bg-green-900/30 text-green-700",
+  cancelled: "bg-surface-secondary text-gray-500",
+  completed: "bg-blue-100 dark:bg-blue-900/30 text-blue-700",
 };
 
 export function AppointmentsListPage() {
@@ -88,7 +88,7 @@ export function AppointmentsListPage() {
             className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
               tab === key
                 ? "bg-primary text-white"
-                : "bg-gray-100 text-text-light hover:bg-gray-200"
+                : "bg-surface-secondary text-text-light hover:bg-surface-hover"
             }`}
           >
             {key === "upcoming"
@@ -146,7 +146,7 @@ function AppointmentCard({
   isPending: boolean;
 }) {
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-sm">
+    <div className="rounded-2xl bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
@@ -182,12 +182,12 @@ function AppointmentCard({
 
       {/* Action buttons */}
       {(appt.status === "scheduled" || appt.status === "confirmed") && (
-        <div className="mt-3 flex gap-2 border-t border-gray-100 pt-3">
+        <div className="mt-3 flex gap-2 border-t border-border-light pt-3">
           {appt.status === "scheduled" && (
             <button
               onClick={() => onStatusChange(appt.id, "confirmed")}
               disabled={isPending}
-              className="flex items-center gap-1 rounded-lg bg-green-100 px-3 py-1.5 text-xs font-bold text-green-700 hover:bg-green-200 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg bg-green-100 dark:bg-green-900/30 px-3 py-1.5 text-xs font-bold text-green-700 hover:bg-green-200 dark:hover:bg-green-800/40 disabled:opacity-50"
             >
               <Check size={12} />
               {t.appointments.confirm}
@@ -197,7 +197,7 @@ function AppointmentCard({
             <button
               onClick={() => onStatusChange(appt.id, "completed")}
               disabled={isPending}
-              className="flex items-center gap-1 rounded-lg bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800/40 disabled:opacity-50"
             >
               <CheckCircle2 size={12} />
               {t.appointments.complete}
@@ -210,7 +210,7 @@ function AppointmentCard({
               }
             }}
             disabled={isPending}
-            className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+            className="flex items-center gap-1 rounded-lg bg-surface-secondary px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-surface-hover disabled:opacity-50"
           >
             <X size={12} />
             {t.appointments.cancel}

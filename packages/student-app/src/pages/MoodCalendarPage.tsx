@@ -93,7 +93,7 @@ export function MoodCalendarPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -102,19 +102,19 @@ export function MoodCalendarPage() {
 
         {/* Month navigation */}
         <div className="mt-6 flex items-center justify-between">
-          <button onClick={prevMonth} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm">
+          <button onClick={prevMonth} className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface shadow-sm">
             <ChevronLeft size={20} className="text-text-main" />
           </button>
           <h2 className="text-base font-bold text-text-main">
             {t.mood.monthNames[month]} {year}
           </h2>
-          <button onClick={nextMonth} className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm">
+          <button onClick={nextMonth} className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface shadow-sm">
             <ChevronRight size={20} className="text-text-main" />
           </button>
         </div>
 
         {/* Calendar grid */}
-        <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="mt-4 rounded-2xl bg-surface p-4 shadow-sm">
           {/* Weekday headers */}
           <div className="mb-2 grid grid-cols-7 gap-1 text-center">
             {t.mood.weekdays.map((d) => (
@@ -142,7 +142,7 @@ export function MoodCalendarPage() {
                       ? `${MOOD_COLORS[moodVal]} text-white shadow-sm hover:scale-105`
                       : isToday
                         ? "bg-primary/10 text-primary-dark"
-                        : "text-text-light hover:bg-gray-50"
+                        : "text-text-light hover:bg-surface-hover"
                   }`}
                 >
                   {day}
@@ -155,7 +155,7 @@ export function MoodCalendarPage() {
         {/* Insights */}
         {insights && insights.weeklyAverage != null && (
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="rounded-2xl bg-surface p-4 shadow-sm">
               <p className="text-[10px] font-bold uppercase text-text-light">{t.mood.weeklyAverage}</p>
               <div className="mt-1 flex items-center gap-2">
                 <span className="text-2xl">
@@ -166,7 +166,7 @@ export function MoodCalendarPage() {
                 </span>
               </div>
             </div>
-            <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="rounded-2xl bg-surface p-4 shadow-sm">
               <p className="text-[10px] font-bold uppercase text-text-light">{t.mood.trend}</p>
               <div className="mt-1 flex items-center gap-2">
                 {insights.trend === "improving" && <TrendingUp size={24} className="text-secondary" />}
@@ -182,7 +182,7 @@ export function MoodCalendarPage() {
 
         {/* Top factors */}
         {insights && Array.isArray(insights.topFactors) && insights.topFactors.length > 0 && (
-          <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+          <div className="mt-4 rounded-2xl bg-surface p-4 shadow-sm">
             <p className="text-[10px] font-bold uppercase text-text-light mb-3">{t.mood.topFactors}</p>
             <div className="space-y-2">
               {insights.topFactors.map((f: { factor: string; count: number }) => (
@@ -191,7 +191,7 @@ export function MoodCalendarPage() {
                   <span className="text-sm font-medium text-text-main flex-1">
                     {factorLabels[f.factor] ?? f.factor}
                   </span>
-                  <span className="text-xs font-bold text-text-light bg-gray-100 rounded-full px-2 py-0.5">
+                  <span className="text-xs font-bold text-text-light bg-surface-secondary rounded-full px-2 py-0.5">
                     {f.count}
                   </span>
                 </div>
@@ -204,7 +204,7 @@ export function MoodCalendarPage() {
         {selectedDate && selectedMood && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 sm:items-center" onClick={() => setSelectedDate(null)}>
             <div
-              className="w-full max-w-md rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl"
+              className="w-full max-w-md rounded-t-3xl bg-surface p-6 shadow-2xl sm:rounded-3xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">

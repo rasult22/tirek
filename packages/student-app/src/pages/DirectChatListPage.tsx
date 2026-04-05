@@ -84,7 +84,7 @@ export function DirectChatListPage() {
               <button
                 key={conv.id}
                 onClick={() => navigate(`/messages/${conv.id}`)}
-                className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+                className="flex w-full items-center gap-3 rounded-2xl bg-surface p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/15">
                   <UserCircle size={24} className="text-primary-dark" />

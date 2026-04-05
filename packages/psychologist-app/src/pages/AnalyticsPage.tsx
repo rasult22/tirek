@@ -41,8 +41,8 @@ export function AnalyticsPage() {
         </h1>
         <button
           onClick={() => exportApi.classCSV(grade ? Number(grade) : undefined, classLetter || undefined)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm
-            font-medium text-text-main hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-input-border text-sm
+            font-medium text-text-main hover:bg-surface-hover transition-colors"
         >
           <Download size={14} />
           {t.psychologist.exportReport}
@@ -58,7 +58,7 @@ export function AnalyticsPage() {
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-            className="h-10 px-3 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+            className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
           >
             <option value="">All grades</option>
@@ -76,7 +76,7 @@ export function AnalyticsPage() {
           <select
             value={classLetter}
             onChange={(e) => setClassLetter(e.target.value)}
-            className="h-10 px-3 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+            className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
           >
             <option value="">All</option>
@@ -134,7 +134,7 @@ export function AnalyticsPage() {
           {/* Distribution charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Mood distribution */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
               <h2 className="text-base font-semibold text-text-main mb-4">
                 Mood Distribution
               </h2>
@@ -159,7 +159,7 @@ export function AnalyticsPage() {
             </div>
 
             {/* Risk distribution */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
               <h2 className="text-base font-semibold text-text-main mb-4">
                 Risk Zone Distribution
               </h2>
@@ -185,7 +185,7 @@ export function AnalyticsPage() {
           </div>
         </>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-8 text-center">
           <BarChart3 size={40} className="text-text-light mx-auto mb-3" />
           <p className="text-sm text-text-light">{t.common.noData}</p>
         </div>
@@ -210,7 +210,7 @@ function StatCard({
   iconColor: string;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+    <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-text-light font-medium">{label}</p>
@@ -236,14 +236,14 @@ function MoodBar({
 }) {
   const total = distribution.happy + distribution.neutral + distribution.sad;
   if (total === 0) {
-    return <div className="w-full h-6 rounded-full bg-gray-100" />;
+    return <div className="w-full h-6 rounded-full bg-surface-secondary" />;
   }
   const hp = (distribution.happy / total) * 100;
   const np = (distribution.neutral / total) * 100;
   const sp = (distribution.sad / total) * 100;
 
   return (
-    <div className="w-full h-6 rounded-full bg-gray-100 overflow-hidden flex">
+    <div className="w-full h-6 rounded-full bg-surface-secondary overflow-hidden flex">
       {hp > 0 && (
         <div
           className="bg-success h-full transition-all"
@@ -274,14 +274,14 @@ function RiskBar({
   const total =
     distribution.normal + distribution.attention + distribution.crisis;
   if (total === 0) {
-    return <div className="w-full h-6 rounded-full bg-gray-100" />;
+    return <div className="w-full h-6 rounded-full bg-surface-secondary" />;
   }
   const np = (distribution.normal / total) * 100;
   const ap = (distribution.attention / total) * 100;
   const cp = (distribution.crisis / total) * 100;
 
   return (
-    <div className="w-full h-6 rounded-full bg-gray-100 overflow-hidden flex">
+    <div className="w-full h-6 rounded-full bg-surface-secondary overflow-hidden flex">
       {np > 0 && (
         <div
           className="bg-success h-full transition-all"

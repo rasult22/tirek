@@ -33,7 +33,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-6">
       {/* Language toggle */}
-      <div className="absolute right-4 top-4 flex overflow-hidden rounded-full border border-primary/30 bg-white text-sm font-semibold">
+      <div className="absolute right-4 top-4 flex overflow-hidden rounded-full border border-primary/30 bg-surface text-sm font-semibold">
         {(["ru", "kz"] as Language[]).map((lang) => (
           <button
             key={lang}
@@ -66,7 +66,7 @@ export function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t.auth.email}
             required
-            className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-2xl border border-border bg-surface py-3.5 pl-11 pr-4 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
@@ -78,7 +78,7 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t.auth.password}
             required
-            className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-11 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-2xl border border-border bg-surface py-3.5 pl-11 pr-11 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
           <button
             type="button"

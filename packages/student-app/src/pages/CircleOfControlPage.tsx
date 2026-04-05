@@ -92,7 +92,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
         <div className="mt-8 flex gap-3">
           <button
             onClick={handleReset}
-            className="rounded-2xl bg-white px-6 py-3 text-sm font-bold text-text-main shadow-sm"
+            className="rounded-2xl bg-surface px-6 py-3 text-sm font-bold text-text-main shadow-sm"
           >
             {t.common.next}
           </button>
@@ -115,7 +115,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowHistory(false)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
             >
               <ArrowLeft size={20} className="text-text-main" />
             </button>
@@ -134,7 +134,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
               return (
                 <div
                   key={entry.id}
-                  className="rounded-2xl bg-white p-4 shadow-sm"
+                  className="rounded-2xl bg-surface p-4 shadow-sm"
                 >
                   <div className="flex items-start justify-between">
                     <span className="text-xs text-text-light">
@@ -185,7 +185,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/exercises")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -195,7 +195,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
         </div>
         <button
           onClick={() => setShowHistory(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
         >
           <BookOpen size={18} className="text-text-light" />
         </button>
@@ -207,7 +207,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
 
       <div className="flex-1 px-5 pt-5">
         {/* Can control zone */}
-        <div className="rounded-2xl border-2 border-green-200 bg-green-50/50 p-4">
+        <div className="rounded-2xl border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30 p-4">
           <h3 className="text-sm font-bold text-green-700">
             ✅ {t.cbt.canControl}
           </h3>
@@ -215,7 +215,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
             {canControl.map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between rounded-xl bg-white px-3 py-2"
+                className="flex items-center justify-between rounded-xl bg-surface px-3 py-2"
               >
                 <span className="text-sm text-text-main">{item}</span>
                 <button
@@ -233,12 +233,12 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
               onChange={(e) => setInputCan(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addItem("can")}
               placeholder={t.cbt.itemPlaceholder}
-              className="flex-1 rounded-xl bg-white px-3 py-2 text-sm text-text-main placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-green-300"
+              className="flex-1 rounded-xl bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-green-300"
             />
             <button
               onClick={() => addItem("can")}
               disabled={!inputCan.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-500 text-white disabled:bg-gray-200 disabled:text-gray-400"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-500 text-white disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
             >
               <Plus size={18} />
             </button>
@@ -246,7 +246,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
         </div>
 
         {/* Cannot control zone */}
-        <div className="mt-4 rounded-2xl border-2 border-gray-200 bg-gray-50/50 p-4">
+        <div className="mt-4 rounded-2xl border-2 border-border bg-surface-secondary/50 p-4">
           <h3 className="text-sm font-bold text-gray-600">
             ⛔ {t.cbt.cannotControl}
           </h3>
@@ -254,7 +254,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
             {cannotControl.map((item, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between rounded-xl bg-white px-3 py-2"
+                className="flex items-center justify-between rounded-xl bg-surface px-3 py-2"
               >
                 <span className="text-sm text-text-main">{item}</span>
                 <button
@@ -272,12 +272,12 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
               onChange={(e) => setInputCannot(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addItem("cannot")}
               placeholder={t.cbt.itemPlaceholder}
-              className="flex-1 rounded-xl bg-white px-3 py-2 text-sm text-text-main placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-gray-300"
+              className="flex-1 rounded-xl bg-surface px-3 py-2 text-sm text-text-main placeholder:text-text-light/50 focus:outline-none focus:ring-2 focus:ring-gray-300"
             />
             <button
               onClick={() => addItem("cannot")}
               disabled={!inputCannot.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-500 text-white disabled:bg-gray-200 disabled:text-gray-400"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary0 text-white disabled:bg-gray-200 disabled:text-gray-400"
             >
               <Plus size={18} />
             </button>

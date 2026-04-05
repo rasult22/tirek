@@ -100,12 +100,12 @@ export function CrisisPage() {
       </h1>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+      <div className="flex gap-1 bg-surface-secondary p-1 rounded-lg">
         <button
           onClick={() => setTab("active")}
           className={clsx(
             "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-            tab === "active" ? "bg-white text-text-main shadow-sm" : "text-text-light hover:text-text-main",
+            tab === "active" ? "bg-surface text-text-main shadow-sm" : "text-text-light hover:text-text-main",
           )}
         >
           <AlertTriangle size={14} />
@@ -120,7 +120,7 @@ export function CrisisPage() {
           onClick={() => setTab("flagged")}
           className={clsx(
             "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-            tab === "flagged" ? "bg-white text-text-main shadow-sm" : "text-text-light hover:text-text-main",
+            tab === "flagged" ? "bg-surface text-text-main shadow-sm" : "text-text-light hover:text-text-main",
           )}
         >
           <MessageSquareWarning size={14} />
@@ -135,7 +135,7 @@ export function CrisisPage() {
           onClick={() => setTab("history")}
           className={clsx(
             "flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-            tab === "history" ? "bg-white text-text-main shadow-sm" : "text-text-light hover:text-text-main",
+            tab === "history" ? "bg-surface text-text-main shadow-sm" : "text-text-light hover:text-text-main",
           )}
         >
           <History size={14} />
@@ -156,7 +156,7 @@ export function CrisisPage() {
               return (
                 <div
                   key={alert.id}
-                  className="bg-white rounded-xl border-2 border-danger/30 shadow-sm overflow-hidden"
+                  className="bg-surface rounded-xl border-2 border-danger/30 shadow-sm overflow-hidden"
                 >
                   {/* Alert header */}
                   <div className="bg-danger/5 px-5 py-4 flex items-center gap-4">
@@ -204,7 +204,7 @@ export function CrisisPage() {
                               contactedStudent: e.target.checked,
                             })
                           }
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                          className="w-4 h-4 rounded border-input-border text-primary focus:ring-primary/30"
                         />
                         <Phone size={14} className="text-text-light" />
                         <span className="text-sm text-text-main">
@@ -220,7 +220,7 @@ export function CrisisPage() {
                               contactedParent: e.target.checked,
                             })
                           }
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                          className="w-4 h-4 rounded border-input-border text-primary focus:ring-primary/30"
                         />
                         <Users size={14} className="text-text-light" />
                         <span className="text-sm text-text-main">
@@ -236,7 +236,7 @@ export function CrisisPage() {
                               documented: e.target.checked,
                             })
                           }
-                          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/30"
+                          className="w-4 h-4 rounded border-input-border text-primary focus:ring-primary/30"
                         />
                         <FileText size={14} className="text-text-light" />
                         <span className="text-sm text-text-main">
@@ -254,7 +254,7 @@ export function CrisisPage() {
                         }
                         rows={3}
                         placeholder="Resolution notes..."
-                        className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm
+                        className="w-full px-3 py-2 rounded-lg border border-input-border bg-surface text-sm
                           text-text-main placeholder:text-text-light resize-none
                           focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                       />
@@ -288,7 +288,7 @@ export function CrisisPage() {
             })}
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+          <div className="bg-surface rounded-xl border border-border shadow-sm p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
               <Shield size={24} className="text-success" />
             </div>
@@ -309,7 +309,7 @@ export function CrisisPage() {
             <Loader2 size={24} className="animate-spin text-text-light" />
           </div>
         ) : flagged && flagged.data.length > 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
             <div className="divide-y divide-gray-50">
               {flagged.data.map((msg: FlaggedMessage) => (
                 <div key={msg.messageId} className="px-5 py-4">
@@ -337,7 +337,7 @@ export function CrisisPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+          <div className="bg-surface rounded-xl border border-border shadow-sm p-8 text-center">
             <div className="w-14 h-14 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-3">
               <Shield size={24} className="text-success" />
             </div>
@@ -354,14 +354,14 @@ export function CrisisPage() {
             <Loader2 size={24} className="animate-spin text-text-light" />
           </div>
         ) : history && history.data.length > 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
             <div className="divide-y divide-gray-50">
               {history.data.map((event: SOSEvent) => (
                 <div
                   key={event.id}
                   className="flex items-center gap-4 px-5 py-3.5"
                 >
-                  <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-surface-secondary flex items-center justify-center shrink-0">
                     <CheckCircle size={16} className="text-success" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -398,7 +398,7 @@ export function CrisisPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+          <div className="bg-surface rounded-xl border border-border shadow-sm p-8 text-center">
             <p className="text-sm text-text-light">{t.common.noData}</p>
           </div>
         )}

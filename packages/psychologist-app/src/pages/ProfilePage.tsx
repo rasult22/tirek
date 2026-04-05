@@ -14,12 +14,17 @@ import {
   Check,
   Pencil,
   X,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
+import { useTheme } from "../hooks/useTheme.js";
 import { clsx } from "clsx";
 
 export function ProfilePage() {
   const t = useT();
   const { language, setLanguage } = useLanguage();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -58,7 +63,7 @@ export function ProfilePage() {
       <h1 className="text-2xl font-bold text-text-main">{t.profile.title}</h1>
 
       {/* User info card */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shrink-0">
             {user?.name?.charAt(0)?.toUpperCase() ?? "P"}
@@ -110,13 +115,13 @@ export function ProfilePage() {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-4 py-2.5 text-sm text-text-main focus:border-primary focus:outline-none"
+                className="w-full rounded-lg border border-border px-4 py-2.5 text-sm text-text-main focus:border-primary focus:outline-none"
               />
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setEditing(false)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-text-light hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium text-text-light hover:bg-surface-hover transition-colors"
               >
                 <X size={14} />
                 {t.common.cancel}
@@ -135,7 +140,7 @@ export function ProfilePage() {
       </div>
 
       {/* Language switcher */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
           <Globe size={18} className="text-text-light" />
           <h2 className="text-base font-semibold text-text-main">
@@ -151,11 +156,46 @@ export function ProfilePage() {
                 "flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
                 language === lang.code
                   ? "border-primary bg-primary/5 text-primary"
-                  : "border-gray-200 text-text-light hover:border-gray-300",
+                  : "border-border text-text-light hover:border-gray-300",
               )}
             >
               {language === lang.code && <Check size={14} />}
               {lang.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Theme switcher */}
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
+        <div className="flex items-center gap-2 mb-4">
+          {resolvedTheme === "dark" ? (
+            <Moon size={18} className="text-text-light" />
+          ) : (
+            <Sun size={18} className="text-text-light" />
+          )}
+          <h2 className="text-base font-semibold text-text-main">
+            {t.profile.theme}
+          </h2>
+        </div>
+        <div className="flex gap-3">
+          {([
+            { key: "light" as const, label: t.profile.themeLight },
+            { key: "dark" as const, label: t.profile.themeDark },
+            { key: "system" as const, label: t.profile.themeSystem },
+          ]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTheme(key)}
+              className={clsx(
+                "flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
+                theme === key
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-border text-text-light hover:border-gray-300",
+              )}
+            >
+              {theme === key && <Check size={14} />}
+              {label}
             </button>
           ))}
         </div>
@@ -184,7 +224,7 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+    <div className="flex items-center gap-3 py-2 border-b border-border-light last:border-0">
       <Icon size={16} className="text-text-light shrink-0" />
       <span className="text-sm text-text-light w-32">{label}</span>
       <span className="text-sm font-medium text-text-main">{value}</span>

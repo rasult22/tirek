@@ -114,7 +114,7 @@ export function StudentsListPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.common.search + "..."}
-            className="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-300 bg-white text-sm
+            className="w-full h-10 pl-9 pr-3 rounded-lg border border-input-border bg-surface text-sm
               text-text-main placeholder:text-text-light
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
@@ -129,7 +129,7 @@ export function StudentsListPage() {
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-            className="h-10 pl-8 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+            className="h-10 pl-8 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
           >
             <option value="">{t.auth.selectGrade}</option>
@@ -145,7 +145,7 @@ export function StudentsListPage() {
         <select
           value={classLetter}
           onChange={(e) => setClassLetter(e.target.value)}
-          className="h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+          className="h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         >
           <option value="">{t.auth.selectClass}</option>
@@ -158,7 +158,7 @@ export function StudentsListPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 size={28} className="animate-spin text-text-light" />
@@ -172,7 +172,7 @@ export function StudentsListPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
+                <tr className="border-b border-border-light bg-surface-secondary/50">
                   <th
                     className="text-left px-5 py-3 font-semibold text-text-light cursor-pointer select-none"
                     onClick={() => toggleSort("name")}
@@ -214,7 +214,7 @@ export function StudentsListPage() {
                 {filteredAndSorted.map((student) => (
                   <tr
                     key={student.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
+                    className="border-b border-border-light hover:bg-surface-hover/50 cursor-pointer transition-colors"
                     onClick={() => navigate(`/students/${student.id}`)}
                   >
                     <td className="px-5 py-3.5">

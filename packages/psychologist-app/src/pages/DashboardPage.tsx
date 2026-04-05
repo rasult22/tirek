@@ -114,7 +114,7 @@ export function DashboardPage() {
           <div
             key={card.label}
             className={clsx(
-              "bg-white rounded-xl border-l-4 p-5 shadow-sm",
+              "bg-surface rounded-xl border-l-4 p-5 shadow-sm",
               card.color,
             )}
           >
@@ -147,8 +147,8 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Crisis alerts */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div className="bg-surface rounded-xl border border-border shadow-sm">
+            <div className="flex items-center justify-between p-5 border-b border-border-light">
               <div className="flex items-center gap-2">
                 <AlertTriangle size={18} className="text-danger" />
                 <h2 className="text-base font-semibold text-text-main">
@@ -221,7 +221,7 @@ export function DashboardPage() {
         {/* Quick actions + mood overview */}
         <div className="space-y-6">
           {/* Quick actions */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
             <h2 className="text-base font-semibold text-text-main mb-4">
               {t.psychologist.quickActions}
             </h2>
@@ -230,7 +230,7 @@ export function DashboardPage() {
                 <button
                   key={action.to}
                   onClick={() => navigate(action.to)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-surface-hover transition-colors text-left"
                 >
                   <div
                     className={clsx(
@@ -250,7 +250,7 @@ export function DashboardPage() {
           </div>
 
           {/* Mood overview */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
             <h2 className="text-base font-semibold text-text-main mb-4">
               {t.psychologist.moodOverview}
             </h2>

@@ -78,7 +78,7 @@ export function TestPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/tests")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -113,14 +113,14 @@ export function TestPage() {
               className={`flex w-full items-center gap-3 rounded-2xl border-2 px-5 py-4 text-left transition-all ${
                 currentAnswer === opt.value
                   ? "border-primary-dark bg-primary/10 shadow-sm"
-                  : "border-gray-100 bg-white hover:border-gray-200"
+                  : "border-border-light bg-surface hover:border-border"
               }`}
             >
               <div
                 className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
                   currentAnswer === opt.value
                     ? "border-primary-dark bg-primary-dark"
-                    : "border-gray-300"
+                    : "border-input-border"
                 }`}
               >
                 {currentAnswer === opt.value && <Check size={14} className="text-white" />}

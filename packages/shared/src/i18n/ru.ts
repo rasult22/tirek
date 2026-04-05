@@ -202,6 +202,10 @@ export const ru = {
     title: "Профиль",
     language: "Язык",
     changeLanguage: "Сменить язык",
+    theme: "Тема оформления",
+    themeLight: "Светлая",
+    themeDark: "Тёмная",
+    themeSystem: "Системная",
   },
   journal: {
     title: "Дневник",

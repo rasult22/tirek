@@ -58,11 +58,11 @@ export function DashboardPage() {
     { to: "/chat", icon: MessageCircle, label: t.nav.chat, bg: "bg-primary/15", color: "text-primary-dark" },
     { to: "/tests", icon: ClipboardList, label: t.nav.tests, bg: "bg-secondary/20", color: "text-secondary" },
     { to: "/exercises", icon: Wind, label: t.nav.exercises, bg: "bg-accent/20", color: "text-accent" },
-    { to: "/journal", icon: BookOpen, label: t.nav.journal, bg: "bg-amber-100", color: "text-amber-600" },
-    { to: "/messages", icon: Mail, label: t.directChat.title, bg: "bg-green-100", color: "text-green-600" },
+    { to: "/journal", icon: BookOpen, label: t.nav.journal, bg: "bg-amber-100 dark:bg-amber-900/30", color: "text-amber-600" },
+    { to: "/messages", icon: Mail, label: t.directChat.title, bg: "bg-green-100 dark:bg-green-900/30", color: "text-green-600" },
     { to: "/mood/calendar", icon: CalendarDays, label: t.mood.calendar, bg: "bg-info/20", color: "text-info" },
-    { to: "/appointments", icon: Calendar, label: t.nav.appointments, bg: "bg-purple-100", color: "text-purple-600" },
-    { to: "/achievements", icon: Award, label: t.achievements.title, bg: "bg-yellow-100", color: "text-yellow-600" },
+    { to: "/appointments", icon: Calendar, label: t.nav.appointments, bg: "bg-purple-100 dark:bg-purple-900/30", color: "text-purple-600" },
+    { to: "/achievements", icon: Award, label: t.achievements.title, bg: "bg-yellow-100 dark:bg-yellow-900/30", color: "text-yellow-600" },
   ];
 
   return (
@@ -93,8 +93,8 @@ export function DashboardPage() {
 
         {/* Streak widget */}
         {streak && streak.currentStreak > 0 && (
-          <div className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-orange-100 to-amber-50 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-200/60">
+          <div className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-orange-100 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/20 p-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-200/60 dark:bg-orange-800/30">
               <Flame size={26} className="text-orange-500" />
             </div>
             <div className="flex-1">
@@ -116,18 +116,18 @@ export function DashboardPage() {
         {plant && (
           <Link
             to="/plant"
-            className={`mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-green-100 to-emerald-50 p-4 transition-shadow hover:shadow-md ${
+            className={`mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-green-100 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/20 p-4 transition-shadow hover:shadow-md ${
               plant.isSleeping ? "opacity-70 grayscale-[30%]" : ""
             }`}
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-200/60 text-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-200/60 dark:bg-green-800/30 text-2xl">
               {plant.stage === 1 ? "🌱" : plant.stage === 2 ? "🌿" : plant.stage === 3 ? "🌳" : "🌸"}
             </div>
             <div className="flex-1">
               <div className="text-sm font-bold text-text-main">
                 {plant.name ?? t.plant.unnamed}
               </div>
-              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-green-200/60">
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-green-200/60 dark:bg-green-800/30">
                 <div
                   className="h-full rounded-full bg-green-500 transition-all duration-500"
                   style={{
@@ -150,9 +150,9 @@ export function DashboardPage() {
         {achievementsSummary && achievementsSummary.totalCount > 0 && (
           <Link
             to="/achievements"
-            className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-yellow-100 to-amber-50 p-4 transition-shadow hover:shadow-md"
+            className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-yellow-100 to-amber-50 dark:from-yellow-950/40 dark:to-amber-950/20 p-4 transition-shadow hover:shadow-md"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-200/60">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-200/60 dark:bg-yellow-800/30">
               {achievementsSummary.recentAchievements.length > 0 ? (
                 <span className="text-2xl">{achievementsSummary.recentAchievements[0].achievement.emoji}</span>
               ) : (
@@ -179,9 +179,9 @@ export function DashboardPage() {
         {nextAppointment && (
           <Link
             to="/appointments"
-            className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-purple-100 to-indigo-50 p-4"
+            className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-purple-100 to-indigo-50 dark:from-purple-950/40 dark:to-indigo-950/20 p-4"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-200/60">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-200/60 dark:bg-purple-800/30">
               <CalendarDays size={26} className="text-purple-500" />
             </div>
             <div className="flex-1">
@@ -247,17 +247,17 @@ export function DashboardPage() {
               {t.dashboard.progress}
             </h2>
             <div className="grid grid-cols-3 gap-3">
-              <div className="flex flex-col items-center rounded-2xl bg-white p-3 shadow-sm">
+              <div className="flex flex-col items-center rounded-2xl bg-surface p-3 shadow-sm">
                 <Wind size={20} className="text-accent" />
                 <span className="mt-1 text-lg font-extrabold text-text-main">{stats.exercisesCompleted}</span>
                 <span className="text-[10px] text-text-light">{t.dashboard.exercisesDone}</span>
               </div>
-              <div className="flex flex-col items-center rounded-2xl bg-white p-3 shadow-sm">
+              <div className="flex flex-col items-center rounded-2xl bg-surface p-3 shadow-sm">
                 <ClipboardList size={20} className="text-secondary" />
                 <span className="mt-1 text-lg font-extrabold text-text-main">{stats.testsCompleted}</span>
                 <span className="text-[10px] text-text-light">{t.dashboard.testsPassed}</span>
               </div>
-              <div className="flex flex-col items-center rounded-2xl bg-white p-3 shadow-sm">
+              <div className="flex flex-col items-center rounded-2xl bg-surface p-3 shadow-sm">
                 <BookOpen size={20} className="text-amber-500" />
                 <span className="mt-1 text-lg font-extrabold text-text-main">{stats.journalEntries}</span>
                 <span className="text-[10px] text-text-light">{t.dashboard.journalEntries}</span>
@@ -276,7 +276,7 @@ export function DashboardPage() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-white p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+                className="flex flex-col items-center gap-2 rounded-2xl bg-surface p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
               >
                 <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${item.bg}`}>
                   <item.icon size={24} className={item.color} />

@@ -57,7 +57,7 @@ export function DirectChatListPage() {
             <button
               key={conv.id}
               onClick={() => navigate(`/messages/${conv.id}`)}
-              className="flex w-full items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md"
+              className="flex w-full items-center gap-4 rounded-xl border border-border bg-surface p-4 shadow-sm transition-all hover:shadow-md"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary font-bold shrink-0">
                 {conv.otherUser.name.charAt(0).toUpperCase()}

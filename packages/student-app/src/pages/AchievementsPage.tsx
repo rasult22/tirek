@@ -51,7 +51,7 @@ export function AchievementsPage() {
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} />
           </Link>
@@ -71,7 +71,7 @@ export function AchievementsPage() {
                 {data.earnedCount} / {data.totalCount}
               </span>
             </div>
-            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-amber-200/60">
+            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-amber-200/60 dark:bg-amber-800/30">
               <div
                 className="h-full rounded-full bg-amber-500 transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
@@ -108,7 +108,7 @@ export function AchievementsPage() {
                     return (
                       <div
                         key={item.achievement.slug}
-                        className={`relative flex flex-col items-center rounded-2xl bg-white p-4 shadow-sm transition-all ${
+                        className={`relative flex flex-col items-center rounded-2xl bg-surface p-4 shadow-sm transition-all ${
                           item.earned
                             ? ""
                             : "opacity-50 grayscale"

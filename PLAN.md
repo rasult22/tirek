@@ -161,9 +161,20 @@
   - Psychologist-app: вкладка "КПТ" на StudentDetailPage с read-only записями
   - i18n: ru + kz (~60 ключей, 10 когнитивных искажений)
 
-### P2-6. Тёмная тема
-- Переключатель в настройках обоих приложений
-- Tailwind dark mode
+### P2-6. Тёмная тема ✅
+- **Статус:** Завершено
+- **Детали:**
+  - CSS: `@custom-variant dark`, семантические токены (surface, border, input-border) в `:root` и `.dark`
+  - Student-app: тёплая тёмная палитра (#1A1614 bg, #252019 surface, #E8E0D8 text)
+  - Psychologist-app: холодная тёмная палитра (#0F1117 bg, #1A1D27 surface, #E2E8F0 text)
+  - ThemeProvider (Context + localStorage "tirek-theme") в обоих apps
+  - Anti-FOUC script в index.html (синхронный, до React)
+  - 3 режима: Светлая / Тёмная / Системная (prefers-color-scheme)
+  - Переключатель в ProfilePage обоих приложений
+  - ~400 замен bg-white→bg-surface, border-gray→border-border и т.д. в ~47 файлах
+  - dark: варианты для градиентных виджетов, цветных карточек, статус-бейджей
+  - Shadow overrides для dark mode (все shadow-sm/md/lg)
+  - i18n: ru + kz (4 ключа)
 
 ### P2-7. Дополнительные тесты (6 штук)
 - SCARED, Спилбергер-Ханин, PSS-10, Опросник буллинга, Учебное выгорание, Социометрия

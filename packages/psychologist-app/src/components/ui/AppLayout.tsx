@@ -47,10 +47,10 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-6 shrink-0">
+        <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-4 lg:px-6 shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100 text-secondary"
+            className="lg:hidden p-2 rounded-md hover:bg-surface-hover text-secondary"
           >
             <Menu size={20} />
           </button>
@@ -62,7 +62,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="relative">
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="relative p-2 rounded-lg hover:bg-gray-100 text-secondary transition-colors"
+                className="relative p-2 rounded-lg hover:bg-surface-hover text-secondary transition-colors"
               >
                 <Bell size={20} />
                 {unreadCount > 0 && (
@@ -79,14 +79,14 @@ export function AppLayout({ children }: AppLayoutProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setNotifOpen(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
-                    <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-surface rounded-xl shadow-lg border border-border z-50 max-h-96 overflow-y-auto">
+                    <div className="p-3 border-b border-border-light flex items-center justify-between">
                       <span className="text-sm font-semibold text-text-main">
                         Notifications
                       </span>
                       <button
                         onClick={() => setNotifOpen(false)}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-1 hover:bg-surface-hover rounded"
                       >
                         <X size={14} />
                       </button>
@@ -96,7 +96,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                         <div
                           key={n.id}
                           className={clsx(
-                            "px-3 py-2.5 border-b border-gray-50 hover:bg-gray-50 cursor-pointer",
+                            "px-3 py-2.5 border-b border-border-light hover:bg-surface-hover cursor-pointer",
                             !n.read && "bg-primary/5",
                           )}
                           onClick={() => {

@@ -125,7 +125,7 @@ export function ChatPage() {
         <div className="flex items-center gap-3 px-5 pt-6">
           <button
             onClick={() => navigate("/chat")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -138,7 +138,7 @@ export function ChatPage() {
               key={mode}
               onClick={() => createMutation.mutate(mode)}
               disabled={createMutation.isPending}
-              className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+              className="flex w-full items-center gap-4 rounded-2xl bg-surface p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
             >
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${bgClass}`}>
                 <Icon size={24} className={iconClass} />
@@ -161,10 +161,10 @@ export function ChatPage() {
   return (
     <div className="flex h-screen flex-col bg-bg">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-md">
+      <div className="flex items-center gap-3 border-b border-border-light bg-surface/90 px-4 py-3 backdrop-blur-md">
         <button
           onClick={() => navigate("/chat")}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary"
         >
           <ArrowLeft size={18} className="text-text-main" />
         </button>
@@ -183,7 +183,7 @@ export function ChatPage() {
                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                   msg.role === "user"
                     ? "rounded-br-md bg-primary-dark text-white"
-                    : "rounded-bl-md bg-white text-text-main shadow-sm"
+                    : "rounded-bl-md bg-surface text-text-main shadow-sm"
                 }`}
               >
                 {msg.content}
@@ -192,7 +192,7 @@ export function ChatPage() {
           ))}
           {isStreaming && streamingText && (
             <div className="flex justify-start">
-              <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-white px-4 py-3 text-sm leading-relaxed text-text-main shadow-sm">
+              <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-sm leading-relaxed text-text-main shadow-sm">
                 {streamingText}
                 <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-gray-400" />
               </div>
@@ -200,7 +200,7 @@ export function ChatPage() {
           )}
           {isStreaming && !streamingText && (
             <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-2xl rounded-bl-md bg-surface px-4 py-3 shadow-sm">
                 <div className="flex gap-1">
                   <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
                   <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
@@ -214,7 +214,7 @@ export function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-md">
+      <div className="border-t border-border-light bg-surface/90 px-4 py-3 backdrop-blur-md">
         <div className="mx-auto flex max-w-md items-end gap-2">
           <textarea
             value={input}
@@ -222,7 +222,7 @@ export function ChatPage() {
             onKeyDown={handleKeyDown}
             placeholder={t.chat.inputPlaceholder}
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="flex-1 resize-none rounded-2xl border border-border px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             style={{ maxHeight: "120px" }}
           />
           <button

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "./hooks/useLanguage.js";
+import { ThemeProvider } from "./hooks/useTheme.js";
 import { useAuthStore } from "./store/auth-store.js";
 
 // Pages
@@ -40,6 +41,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <LanguageProvider>
         <BrowserRouter>
           <Routes>
@@ -75,6 +77,7 @@ export function App() {
           </Routes>
         </BrowserRouter>
       </LanguageProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

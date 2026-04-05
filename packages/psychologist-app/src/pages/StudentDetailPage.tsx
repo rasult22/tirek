@@ -173,7 +173,7 @@ export function StudentDetailPage() {
       </button>
 
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-bold shrink-0">
             {student.name.charAt(0).toUpperCase()}
@@ -202,8 +202,8 @@ export function StudentDetailPage() {
           </button>
           <button
             onClick={() => exportApi.studentCSV(id!)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-300 text-xs
-              font-medium text-text-main hover:bg-gray-50 transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input-border text-xs
+              font-medium text-text-main hover:bg-surface-hover transition-colors shrink-0"
           >
             <Download size={12} />
             CSV
@@ -212,7 +212,7 @@ export function StudentDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <div className="flex gap-1">
           {tabs.map((tab) => (
             <button
@@ -236,7 +236,7 @@ export function StudentDetailPage() {
       {activeTab === "overview" && (
         <div className="space-y-6">
           {/* Mood chart - last 30 days as colored dots */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
             <h2 className="text-base font-semibold text-text-main mb-4">
               {t.psychologist.moodHistory} (30 days)
             </h2>
@@ -270,7 +270,7 @@ export function StudentDetailPage() {
 
           {/* Current status indicators */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 text-center">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-5 text-center">
               <p className="text-3xl mb-1">
                 {moodHistory.length > 0
                   ? moodEmojis[moodHistory[moodHistory.length - 1].mood] ?? "\u2014"
@@ -278,13 +278,13 @@ export function StudentDetailPage() {
               </p>
               <p className="text-xs text-text-light">Last mood</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 text-center">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-5 text-center">
               <p className="text-2xl font-bold text-text-main mb-1">
                 {testResults.length}
               </p>
               <p className="text-xs text-text-light">Tests completed</p>
             </div>
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 text-center">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-5 text-center">
               <p className="text-2xl font-bold text-text-main mb-1">
                 {moodHistory.length}
               </p>
@@ -295,7 +295,7 @@ export function StudentDetailPage() {
       )}
 
       {activeTab === "tests" && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
           {testResults.length === 0 ? (
             <div className="flex flex-col items-center py-16">
               <FileText size={40} className="text-text-light mb-3" />
@@ -305,7 +305,7 @@ export function StudentDetailPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <tr className="border-b border-border-light bg-surface-secondary/50">
                     <th className="text-left px-5 py-3 font-semibold text-text-light">Date</th>
                     <th className="text-left px-5 py-3 font-semibold text-text-light">Test</th>
                     <th className="text-center px-5 py-3 font-semibold text-text-light">Score</th>
@@ -316,7 +316,7 @@ export function StudentDetailPage() {
                   {testResults.map((result) => (
                     <tr
                       key={result.id}
-                      className="border-b border-gray-50 hover:bg-gray-50/50"
+                      className="border-b border-border-light hover:bg-surface-hover/50"
                     >
                       <td className="px-5 py-3.5 text-text-light">
                         {result.completedAt
@@ -348,7 +348,7 @@ export function StudentDetailPage() {
       )}
 
       {activeTab === "achievements" && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
           {achievementsLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 size={24} className="animate-spin text-text-light" />
@@ -375,8 +375,8 @@ export function StudentDetailPage() {
                       className={clsx(
                         "flex flex-col items-center rounded-xl p-3 border transition-all",
                         item.earned
-                          ? "border-amber-200 bg-amber-50/50"
-                          : "border-gray-100 bg-gray-50/50 opacity-50 grayscale",
+                          ? "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30"
+                          : "border-border-light bg-surface-secondary/50 opacity-50 grayscale",
                       )}
                     >
                       <span className="text-2xl">{item.achievement.emoji}</span>
@@ -405,7 +405,7 @@ export function StudentDetailPage() {
       )}
 
       {activeTab === "cbt" && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
           {cbtLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 size={24} className="animate-spin text-text-light" />
@@ -423,21 +423,21 @@ export function StudentDetailPage() {
                   behavioral_experiment: t.cbt.behavioralExperiment,
                 };
                 const typeColors: Record<string, string> = {
-                  thought_diary: "bg-violet-100 text-violet-700",
-                  circle_of_control: "bg-cyan-100 text-cyan-700",
-                  stop_technique: "bg-red-100 text-red-700",
-                  behavioral_experiment: "bg-indigo-100 text-indigo-700",
+                  thought_diary: "bg-violet-100 dark:bg-violet-900/30 text-violet-700",
+                  circle_of_control: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700",
+                  stop_technique: "bg-red-100 dark:bg-red-900/30 text-red-700",
+                  behavioral_experiment: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700",
                 };
                 return (
                   <div
                     key={entry.id}
-                    className="rounded-lg border border-gray-100 p-4"
+                    className="rounded-lg border border-border-light p-4"
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <span
                         className={clsx(
                           "rounded-full px-2.5 py-0.5 text-[11px] font-bold",
-                          typeColors[entry.type] ?? "bg-gray-100 text-gray-700",
+                          typeColors[entry.type] ?? "bg-surface-secondary text-gray-700",
                         )}
                       >
                         {typeLabels[entry.type] ?? entry.type}
@@ -494,7 +494,7 @@ export function StudentDetailPage() {
                             {d.prediction && <p><span className="font-medium text-text-light">{t.cbt.prediction}:</span> {d.prediction}</p>}
                             {d.result && <p><span className="font-medium text-green-500">{t.cbt.result}:</span> {d.result}</p>}
                             {d.conclusion && <p><span className="font-medium text-amber-500">{t.cbt.conclusion}:</span> {d.conclusion}</p>}
-                            <span className={clsx("inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-bold", d.completed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700")}>
+                            <span className={clsx("inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-bold", d.completed ? "bg-green-100 dark:bg-green-900/30 text-green-700" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700")}>
                               {d.completed ? t.cbt.completed : t.cbt.pending}
                             </span>
                           </>
@@ -534,14 +534,14 @@ export function StudentDetailPage() {
 
           {/* Note form */}
           {showNoteForm && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-semibold text-text-main">
                   {editingNoteId ? t.common.edit : t.psychologist.addNote}
                 </h3>
                 <button
                   onClick={cancelNote}
-                  className="p-1 hover:bg-gray-100 rounded text-text-light"
+                  className="p-1 hover:bg-surface-hover rounded text-text-light"
                 >
                   <X size={16} />
                 </button>
@@ -550,7 +550,7 @@ export function StudentDetailPage() {
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm
+                className="w-full px-3 py-2 rounded-lg border border-input-border bg-surface text-sm
                   text-text-main placeholder:text-text-light resize-none
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 placeholder="Write your note..."
@@ -558,7 +558,7 @@ export function StudentDetailPage() {
               <div className="flex justify-end gap-2 mt-3">
                 <button
                   onClick={cancelNote}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-text-light hover:bg-gray-100"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-text-light hover:bg-surface-hover"
                 >
                   {t.common.cancel}
                 </button>
@@ -589,7 +589,7 @@ export function StudentDetailPage() {
               {notes.data.map((note) => (
                 <div
                   key={note.id}
-                  className="bg-white rounded-xl border border-gray-200 shadow-sm p-5"
+                  className="bg-surface rounded-xl border border-border shadow-sm p-5"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className="text-xs text-text-light">
@@ -602,7 +602,7 @@ export function StudentDetailPage() {
                     </p>
                     <button
                       onClick={() => handleEditNote(note.id, note.content)}
-                      className="p-1 hover:bg-gray-100 rounded text-text-light hover:text-primary"
+                      className="p-1 hover:bg-surface-hover rounded text-text-light hover:text-primary"
                     >
                       <Edit3 size={14} />
                     </button>
@@ -614,7 +614,7 @@ export function StudentDetailPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-8 text-center">
               <StickyNote size={32} className="text-text-light mx-auto mb-2" />
               <p className="text-sm text-text-light">{t.common.noData}</p>
             </div>

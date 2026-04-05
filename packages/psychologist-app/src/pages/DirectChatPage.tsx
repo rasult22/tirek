@@ -84,10 +84,10 @@ export function DirectChatPage() {
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3">
+      <div className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3">
         <button
           onClick={() => navigate("/messages")}
-          className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-gray-100"
+          className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-surface-hover"
         >
           <ArrowLeft size={18} className="text-text-main" />
         </button>
@@ -117,7 +117,7 @@ export function DirectChatPage() {
                   className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     isMine
                       ? "rounded-br-md bg-primary text-white"
-                      : "rounded-bl-md bg-white text-text-main shadow-sm border border-gray-100"
+                      : "rounded-bl-md bg-surface text-text-main shadow-sm border border-border-light"
                   }`}
                 >
                   <p>{msg.content}</p>
@@ -137,7 +137,7 @@ export function DirectChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-200 bg-white px-4 py-3">
+      <div className="border-t border-border bg-surface px-4 py-3">
         <div className="mx-auto flex max-w-2xl items-end gap-2">
           <textarea
             value={input}
@@ -145,7 +145,7 @@ export function DirectChatPage() {
             onKeyDown={handleKeyDown}
             placeholder={t.directChat.inputPlaceholder}
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="flex-1 resize-none rounded-xl border border-border px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             style={{ maxHeight: "120px" }}
           />
           <button

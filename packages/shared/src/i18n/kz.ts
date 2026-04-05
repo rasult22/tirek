@@ -204,6 +204,10 @@ export const kz: TranslationKeys = {
     title: "Профиль",
     language: "Тіл",
     changeLanguage: "Тілді ауыстыру",
+    theme: "Безендіру тақырыбы",
+    themeLight: "Жарық",
+    themeDark: "Қараңғы",
+    themeSystem: "Жүйелік",
   },
   journal: {
     title: "Күнделік",

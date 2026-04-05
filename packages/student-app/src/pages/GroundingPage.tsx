@@ -99,7 +99,7 @@ export function GroundingPage({ exercise }: { exercise: Exercise }) {
       <div className="flex items-center gap-3 px-5 pt-6">
         <button
           onClick={() => navigate("/exercises")}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
         >
           <ArrowLeft size={20} className="text-text-main" />
         </button>
@@ -146,14 +146,14 @@ export function GroundingPage({ exercise }: { exercise: Exercise }) {
               className={`flex w-full items-center gap-3 rounded-2xl px-5 py-4 transition-all ${
                 checked
                   ? "bg-secondary/15 shadow-sm"
-                  : "bg-white shadow-sm"
+                  : "bg-surface shadow-sm"
               }`}
             >
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all ${
                   checked
                     ? "bg-secondary text-white"
-                    : "border-2 border-gray-200"
+                    : "border-2 border-border"
                 }`}
               >
                 {checked && <Check size={16} />}

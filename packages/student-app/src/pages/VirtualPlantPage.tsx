@@ -8,10 +8,10 @@ import { AppLayout } from "../components/ui/AppLayout.js";
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌳", "🌸"] as const;
 const STAGE_BG = [
-  "from-lime-100 to-green-50",
-  "from-green-100 to-emerald-50",
-  "from-emerald-100 to-teal-50",
-  "from-pink-100 to-rose-50",
+  "from-lime-100 to-green-50 dark:from-lime-950/40 dark:to-green-950/20",
+  "from-green-100 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/20",
+  "from-emerald-100 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/20",
+  "from-pink-100 to-rose-50 dark:from-pink-950/40 dark:to-rose-950/20",
 ] as const;
 
 function stageName(stage: number, t: ReturnType<typeof useT>["plant"]) {
@@ -73,7 +73,7 @@ export function VirtualPlantPage() {
         <div className="flex items-center gap-3">
           <Link
             to="/"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={18} />
           </Link>
@@ -96,14 +96,14 @@ export function VirtualPlantPage() {
             {stageName(plant.stage, t.plant)}
           </div>
           {plant.isSleeping && (
-            <div className="mt-3 rounded-xl bg-white/70 px-4 py-2 text-center text-xs font-medium text-text-light">
+            <div className="mt-3 rounded-xl bg-surface/70 px-4 py-2 text-center text-xs font-medium text-text-light">
               💤 {t.plant.sleeping}
             </div>
           )}
         </div>
 
         {/* Name editing */}
-        <div className="mt-5 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="mt-5 rounded-2xl bg-surface p-4 shadow-sm">
           <div className="mb-2 text-xs font-bold uppercase tracking-wide text-text-light">
             {t.plant.nameLabel}
           </div>
@@ -111,7 +111,7 @@ export function VirtualPlantPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary"
+                className="flex-1 rounded-xl border border-border px-3 py-2 text-sm outline-none focus:border-primary"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 maxLength={50}
@@ -132,7 +132,7 @@ export function VirtualPlantPage() {
                 {plant.name ?? t.plant.unnamed}
               </span>
               <button
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-text-light transition-colors hover:bg-gray-200"
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-secondary text-text-light transition-colors hover:bg-surface-hover"
                 onClick={() => {
                   setEditName(plant.name ?? "");
                   setEditing(true);
@@ -150,7 +150,7 @@ export function VirtualPlantPage() {
         </div>
 
         {/* Growth stats */}
-        <div className="mt-4 rounded-2xl bg-white p-4 shadow-sm">
+        <div className="mt-4 rounded-2xl bg-surface p-4 shadow-sm">
           <div className="mb-3 text-xs font-bold uppercase tracking-wide text-text-light">
             {t.plant.growthPoints}
           </div>
@@ -167,7 +167,7 @@ export function VirtualPlantPage() {
                 </span>
               )}
             </div>
-            <div className="mt-2 h-3 overflow-hidden rounded-full bg-gray-100">
+            <div className="mt-2 h-3 overflow-hidden rounded-full bg-surface-secondary">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500"
                 style={{ width: `${Math.max(progressPercent, 3)}%` }}

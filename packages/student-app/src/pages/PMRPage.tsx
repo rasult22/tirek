@@ -175,7 +175,7 @@ export function PMRPage({ exercise }: { exercise: Exercise }) {
       <div className="flex items-center gap-3 px-5 pt-6">
         <button
           onClick={() => navigate("/exercises")}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+          className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
         >
           <ArrowLeft size={20} className="text-text-main" />
         </button>
@@ -243,7 +243,7 @@ export function PMRPage({ exercise }: { exercise: Exercise }) {
           <>
             <button
               onClick={handleReset}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-surface shadow-sm"
             >
               <RotateCcw size={20} className="text-text-light" />
             </button>

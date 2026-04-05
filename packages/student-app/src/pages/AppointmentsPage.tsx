@@ -29,10 +29,10 @@ function fmt(d: Date): string {
 }
 
 const statusColors: Record<string, string> = {
-  scheduled: "bg-amber-100 text-amber-700",
-  confirmed: "bg-green-100 text-green-700",
-  cancelled: "bg-gray-100 text-gray-500",
-  completed: "bg-blue-100 text-blue-700",
+  scheduled: "bg-amber-100 dark:bg-amber-900/30 text-amber-700",
+  confirmed: "bg-green-100 dark:bg-green-900/30 text-green-700",
+  cancelled: "bg-surface-secondary text-gray-500",
+  completed: "bg-blue-100 dark:bg-blue-900/30 text-blue-700",
 };
 
 export function AppointmentsPage() {
@@ -102,7 +102,7 @@ export function AppointmentsPage() {
               {upcoming.map((appt) => (
                 <div
                   key={appt.id}
-                  className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm"
+                  className="flex items-center justify-between rounded-2xl bg-surface p-4 shadow-sm"
                 >
                   <div>
                     <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export function AppointmentsPage() {
                         cancelMutation.mutate(appt.id);
                       }
                     }}
-                    className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-danger"
+                    className="rounded-lg p-2 text-gray-400 hover:bg-surface-hover hover:text-danger"
                   >
                     <X size={16} />
                   </button>
@@ -145,13 +145,13 @@ export function AppointmentsPage() {
             <div className="flex gap-1">
               <button
                 onClick={() => setWeekOffset((o) => o - 1)}
-                className="rounded-lg p-1.5 hover:bg-gray-100"
+                className="rounded-lg p-1.5 hover:bg-surface-hover"
               >
                 <ChevronLeft size={16} />
               </button>
               <button
                 onClick={() => setWeekOffset((o) => o + 1)}
-                className="rounded-lg p-1.5 hover:bg-gray-100"
+                className="rounded-lg p-1.5 hover:bg-surface-hover"
               >
                 <ChevronRight size={16} />
               </button>
@@ -172,7 +172,7 @@ export function AppointmentsPage() {
                       ? "bg-primary text-white shadow-md"
                       : isToday
                         ? "bg-primary/10 text-primary-dark"
-                        : "bg-white text-text-main shadow-sm"
+                        : "bg-surface text-text-main shadow-sm"
                   }`}
                 >
                   <span className="text-[10px] font-medium opacity-70">
@@ -181,7 +181,7 @@ export function AppointmentsPage() {
                   <span>{d.getDate()}</span>
                   {daySlots > 0 && (
                     <span
-                      className={`h-1 w-1 rounded-full ${isSelected ? "bg-white" : "bg-primary"}`}
+                      className={`h-1 w-1 rounded-full ${isSelected ? "bg-surface" : "bg-primary"}`}
                     />
                   )}
                 </button>
@@ -215,7 +215,7 @@ export function AppointmentsPage() {
                     setBookingSlot(slot);
                     setNote("");
                   }}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-surface px-4 py-3 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
                 >
                   <Clock size={14} className="text-primary" />
                   <span className="text-sm font-bold text-text-main">
@@ -230,14 +230,14 @@ export function AppointmentsPage() {
         {/* Booking modal */}
         {bookingSlot && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30">
-            <div className="w-full max-w-md rounded-t-3xl bg-white p-6">
+            <div className="w-full max-w-md rounded-t-3xl bg-surface p-6">
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-lg font-bold text-text-main">
                   {t.appointments.book}
                 </h3>
                 <button
                   onClick={() => setBookingSlot(null)}
-                  className="rounded-lg p-1 hover:bg-gray-100"
+                  className="rounded-lg p-1 hover:bg-surface-hover"
                 >
                   <X size={20} />
                 </button>
@@ -252,7 +252,7 @@ export function AppointmentsPage() {
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t.appointments.notePlaceholder}
                 rows={3}
-                className="mb-4 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="mb-4 w-full rounded-xl border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
               <button
                 onClick={() => bookMutation.mutate()}

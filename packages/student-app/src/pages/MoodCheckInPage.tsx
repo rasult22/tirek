@@ -115,7 +115,7 @@ export function MoodCheckInPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -130,8 +130,8 @@ export function MoodCheckInPage() {
               onClick={() => setMood(level.value)}
               className={`flex flex-col items-center gap-1 rounded-2xl px-3 py-3 transition-all ${
                 mood === level.value
-                  ? "scale-110 bg-white shadow-lg ring-2 ring-primary-dark"
-                  : "hover:bg-white/60"
+                  ? "scale-110 bg-surface shadow-lg ring-2 ring-primary-dark"
+                  : "hover:bg-surface/60"
               }`}
             >
               <span className="text-3xl">{level.emoji}</span>
@@ -143,7 +143,7 @@ export function MoodCheckInPage() {
         {mood !== null && (
           <div className="mt-6 space-y-5">
             {/* Sliders */}
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <div className="space-y-4">
                 <SliderRow label={t.mood.energy} value={energy} onChange={setEnergy} />
                 <SliderRow label={t.mood.sleep} value={sleep} onChange={setSleep} />
@@ -152,7 +152,7 @@ export function MoodCheckInPage() {
             </div>
 
             {/* Factors */}
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <p className="mb-3 text-sm font-bold text-text-main">{t.mood.factors}</p>
               <div className="flex flex-wrap gap-2">
                 {FACTORS.map(({ key, emoji }) => (
@@ -162,7 +162,7 @@ export function MoodCheckInPage() {
                     className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all ${
                       factors.includes(key)
                         ? "bg-primary-dark text-white shadow-sm"
-                        : "bg-gray-100 text-text-main hover:bg-gray-200"
+                        : "bg-surface-secondary text-text-main hover:bg-surface-hover"
                     }`}
                   >
                     <span>{emoji}</span>
@@ -173,14 +173,14 @@ export function MoodCheckInPage() {
             </div>
 
             {/* Note */}
-            <div className="rounded-2xl bg-white p-5 shadow-sm">
+            <div className="rounded-2xl bg-surface p-5 shadow-sm">
               <p className="mb-2 text-sm font-bold text-text-main">{t.mood.note}</p>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t.mood.notePlaceholder}
                 rows={3}
-                className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full resize-none rounded-xl border border-border px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
 

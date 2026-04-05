@@ -9,12 +9,12 @@ const EMOJI_MAP: Record<string, { emoji: string; bg: string }> = {
   "square-breathing": { emoji: "\u2B1B", bg: "bg-primary/15" },
   "breathing-478": { emoji: "\uD83C\uDF00", bg: "bg-accent/20" },
   diaphragmatic: { emoji: "\uD83C\uDF88", bg: "bg-secondary/20" },
-  "grounding-54321": { emoji: "\uD83C\uDF3F", bg: "bg-green-100" },
-  pmr: { emoji: "\uD83D\uDCAA", bg: "bg-amber-100" },
-  "thought-diary": { emoji: "\uD83D\uDCD3", bg: "bg-violet-100" },
-  "circle-of-control": { emoji: "\u2B55", bg: "bg-cyan-100" },
-  "stop-technique": { emoji: "\uD83D\uDED1", bg: "bg-red-100" },
-  "behavioral-experiment": { emoji: "\uD83D\uDD2C", bg: "bg-indigo-100" },
+  "grounding-54321": { emoji: "\uD83C\uDF3F", bg: "bg-green-100 dark:bg-green-900/30" },
+  pmr: { emoji: "\uD83D\uDCAA", bg: "bg-amber-100 dark:bg-amber-900/30" },
+  "thought-diary": { emoji: "\uD83D\uDCD3", bg: "bg-violet-100 dark:bg-violet-900/30" },
+  "circle-of-control": { emoji: "\u2B55", bg: "bg-cyan-100 dark:bg-cyan-900/30" },
+  "stop-technique": { emoji: "\uD83D\uDED1", bg: "bg-red-100 dark:bg-red-900/30" },
+  "behavioral-experiment": { emoji: "\uD83D\uDD2C", bg: "bg-indigo-100 dark:bg-indigo-900/30" },
 };
 
 export function ExercisesListPage() {
@@ -34,7 +34,7 @@ export function ExercisesListPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -56,13 +56,13 @@ export function ExercisesListPage() {
             </div>
           )}
           {exercises?.map((ex) => {
-            const visual = EMOJI_MAP[ex.slug] ?? { emoji: "\uD83C\uDF3F", bg: "bg-gray-100" };
+            const visual = EMOJI_MAP[ex.slug] ?? { emoji: "\uD83C\uDF3F", bg: "bg-surface-secondary" };
             const name = language === "kz" && ex.nameKz ? ex.nameKz : ex.nameRu;
             return (
               <button
                 key={ex.id}
                 onClick={() => navigate(`/exercises/${ex.slug}`)}
-                className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+                className="flex w-full items-center gap-4 rounded-2xl bg-surface p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
               >
                 <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${visual.bg}`}>
                   <span className="text-2xl">{visual.emoji}</span>

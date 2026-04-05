@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --color-primary: #4A6FA5;
   --color-primary-dark: #3A5A8A;
@@ -10,12 +12,46 @@
   --color-bg: #F8FAFC;
   --color-text: #1F2937;
   --color-text-light: #6B7280;
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F3F4F6;
+  --color-surface-hover: #F9FAFB;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-input-border: #D1D5DB;
+}
+
+.dark {
+  --color-primary: #6B8FC0;
+  --color-primary-dark: #5A7AB0;
+  --color-secondary: #9CA3AF;
+  --color-success: #34D66F;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+  --color-bg: #0F1117;
+  --color-text: #E2E8F0;
+  --color-text-light: #94A3B8;
+  --color-surface: #1A1D27;
+  --color-surface-secondary: #14161E;
+  --color-surface-hover: #232736;
+  --color-border: #2D3141;
+  --color-border-light: #232736;
+  --color-input-border: #3D4255;
 }
 
 body {
   font-family: "Inter", sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
+}
+
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.dark .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 @theme {
@@ -28,4 +64,10 @@ body {
   --color-bg: #F8FAFC;
   --color-text-main: #1F2937;
   --color-text-light: #6B7280;
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F3F4F6;
+  --color-surface-hover: #F9FAFB;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-input-border: #D1D5DB;
 }

@@ -85,10 +85,10 @@ export function DirectChatPage() {
   return (
     <div className="flex h-screen flex-col bg-bg">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-md">
+      <div className="flex items-center gap-3 border-b border-border-light bg-surface/90 px-4 py-3 backdrop-blur-md">
         <button
           onClick={() => navigate("/messages")}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-50"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary"
         >
           <ArrowLeft size={18} className="text-text-main" />
         </button>
@@ -113,7 +113,7 @@ export function DirectChatPage() {
                   className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     isMine
                       ? "rounded-br-md bg-primary-dark text-white"
-                      : "rounded-bl-md bg-white text-text-main shadow-sm"
+                      : "rounded-bl-md bg-surface text-text-main shadow-sm"
                   }`}
                 >
                   <p>{msg.content}</p>
@@ -133,7 +133,7 @@ export function DirectChatPage() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-100 bg-white/90 px-4 py-3 backdrop-blur-md">
+      <div className="border-t border-border-light bg-surface/90 px-4 py-3 backdrop-blur-md">
         <div className="mx-auto flex max-w-md items-end gap-2">
           <textarea
             value={input}
@@ -141,7 +141,7 @@ export function DirectChatPage() {
             onKeyDown={handleKeyDown}
             placeholder={t.directChat.inputPlaceholder}
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-gray-200 px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="flex-1 resize-none rounded-2xl border border-border px-4 py-3 text-sm text-text-main placeholder-text-light outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             style={{ maxHeight: "120px" }}
           />
           <button

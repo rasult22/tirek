@@ -102,7 +102,7 @@ export function InviteCodesPage() {
 
       {/* Generate form */}
       {showForm && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
           <h2 className="text-base font-semibold text-text-main mb-4">
             {t.psychologist.generateCodes}
           </h2>
@@ -121,7 +121,7 @@ export function InviteCodesPage() {
                 }
                 min={1}
                 max={50}
-                className="w-24 h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+                className="w-24 h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
@@ -132,7 +132,7 @@ export function InviteCodesPage() {
               <select
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
-                className="h-10 px-3 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+                className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
               >
                 <option value="">Any</option>
@@ -150,7 +150,7 @@ export function InviteCodesPage() {
               <select
                 value={classLetter}
                 onChange={(e) => setClassLetter(e.target.value)}
-                className="h-10 px-3 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+                className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
               >
                 <option value="">Any</option>
@@ -180,7 +180,7 @@ export function InviteCodesPage() {
       )}
 
       {/* Codes table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 size={28} className="animate-spin text-text-light" />
@@ -189,7 +189,7 @@ export function InviteCodesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
+                <tr className="border-b border-border-light bg-surface-secondary/50">
                   <th className="text-left px-5 py-3 font-semibold text-text-light">
                     Code
                   </th>
@@ -217,10 +217,10 @@ export function InviteCodesPage() {
                   return (
                     <tr
                       key={code.id}
-                      className="border-b border-gray-50 hover:bg-gray-50/50"
+                      className="border-b border-border-light hover:bg-surface-secondary/50"
                     >
                       <td className="px-5 py-3.5">
-                        <code className="text-sm font-mono font-medium text-text-main bg-gray-100 px-2 py-1 rounded">
+                        <code className="text-sm font-mono font-medium text-text-main bg-surface-secondary px-2 py-1 rounded">
                           {code.code}
                         </code>
                       </td>
@@ -250,7 +250,7 @@ export function InviteCodesPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => copyCode(code.code, code.id)}
-                            className="p-1.5 rounded-md hover:bg-gray-100 text-text-light hover:text-primary transition-colors"
+                            className="p-1.5 rounded-md hover:bg-surface-hover text-text-light hover:text-primary transition-colors"
                             title="Copy"
                           >
                             {copiedId === code.id ? (

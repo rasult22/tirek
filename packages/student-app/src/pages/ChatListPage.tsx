@@ -49,7 +49,7 @@ export function ChatListPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -84,7 +84,7 @@ export function ChatListPage() {
             <button
               key={session.id}
               onClick={() => navigate(`/chat/${session.id}`)}
-              className="flex w-full items-center gap-3 rounded-2xl bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+              className="flex w-full items-center gap-3 rounded-2xl bg-surface p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-xl">
                 {MODE_EMOJI[session.mode] ?? "💬"}

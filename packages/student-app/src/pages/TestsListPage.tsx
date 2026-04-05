@@ -25,7 +25,7 @@ export function TestsListPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -35,7 +35,7 @@ export function TestsListPage() {
         {/* Test cards */}
         <div className="mt-6 space-y-4">
           {tests.map((test) => {
-            const meta = TEST_ICONS[test.slug] ?? { bg: "bg-gray-100", emoji: "📋" };
+            const meta = TEST_ICONS[test.slug] ?? { bg: "bg-surface-secondary", emoji: "📋" };
             const name = language === "kz" ? test.nameKz : test.nameRu;
             const desc = language === "kz" ? test.descriptionKz : test.descriptionRu;
 
@@ -43,7 +43,7 @@ export function TestsListPage() {
               <button
                 key={test.slug}
                 onClick={() => navigate(`/tests/${test.slug}`)}
-                className="flex w-full items-center gap-4 rounded-2xl bg-white p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
+                className="flex w-full items-center gap-4 rounded-2xl bg-surface p-5 shadow-sm transition-all hover:shadow-md active:scale-[0.98]"
               >
                 <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${meta.bg}`}>
                   <span className="text-2xl">{meta.emoji}</span>

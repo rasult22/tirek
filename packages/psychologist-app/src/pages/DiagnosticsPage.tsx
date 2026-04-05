@@ -49,8 +49,8 @@ export function DiagnosticsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => exportApi.classCSV(grade ? Number(grade) : undefined)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm
-              font-medium text-text-main hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-input-border text-sm
+              font-medium text-text-main hover:bg-surface-hover transition-colors"
           >
             <Download size={14} />
             {t.psychologist.exportReport}
@@ -75,7 +75,7 @@ export function DiagnosticsPage() {
           <select
             value={testSlug}
             onChange={(e) => setTestSlug(e.target.value)}
-            className="h-10 px-3 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+            className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
           >
             <option value="">All tests</option>
@@ -92,7 +92,7 @@ export function DiagnosticsPage() {
           <select
             value={severity}
             onChange={(e) => setSeverity(e.target.value)}
-            className="h-10 px-3 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+            className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
           >
             <option value="">All</option>
@@ -110,7 +110,7 @@ export function DiagnosticsPage() {
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-            className="h-10 px-3 pr-8 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+            className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
           >
             <option value="">All</option>
@@ -135,7 +135,7 @@ export function DiagnosticsPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-10 pl-8 pr-3 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+              className="h-10 pl-8 pr-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
@@ -154,7 +154,7 @@ export function DiagnosticsPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-10 pl-8 pr-3 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+              className="h-10 pl-8 pr-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
@@ -162,7 +162,7 @@ export function DiagnosticsPage() {
       </div>
 
       {/* Results table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 size={28} className="animate-spin text-text-light" />
@@ -171,7 +171,7 @@ export function DiagnosticsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
+                <tr className="border-b border-border-light bg-surface-secondary/50">
                   <th className="text-left px-5 py-3 font-semibold text-text-light">
                     Student
                   </th>
@@ -193,7 +193,7 @@ export function DiagnosticsPage() {
                 {results.data.map((row) => (
                   <tr
                     key={row.id}
-                    className="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition-colors"
+                    className="border-b border-border-light hover:bg-surface-hover/50 cursor-pointer transition-colors"
                     onClick={() => navigate(`/students/${row.studentId}`)}
                   >
                     <td className="px-5 py-3.5">

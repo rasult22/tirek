@@ -45,7 +45,7 @@ export function LoginPage() {
         </div>
 
         {/* Login card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8">
+        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 sm:p-8">
           <h2 className="text-lg font-semibold text-text-main mb-6">
             {t.auth.login}
           </h2>
@@ -66,7 +66,7 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full h-11 px-3.5 rounded-lg border border-gray-300 bg-white text-sm
+                className="w-full h-11 px-3.5 rounded-lg border border-input-border bg-surface text-sm
                   text-text-main placeholder:text-text-light
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
                   transition-colors"
@@ -90,7 +90,7 @@ export function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full h-11 px-3.5 pr-10 rounded-lg border border-gray-300 bg-white text-sm
+                  className="w-full h-11 px-3.5 pr-10 rounded-lg border border-input-border bg-surface text-sm
                     text-text-main placeholder:text-text-light
                     focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
                     transition-colors"

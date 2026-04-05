@@ -106,13 +106,13 @@ export function SlotsManagementPage() {
           <div className="flex gap-1">
             <button
               onClick={() => setWeekOffset((o) => o - 1)}
-              className="rounded-lg p-1.5 hover:bg-gray-100"
+              className="rounded-lg p-1.5 hover:bg-surface-hover"
             >
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => setWeekOffset((o) => o + 1)}
-              className="rounded-lg p-1.5 hover:bg-gray-100"
+              className="rounded-lg p-1.5 hover:bg-surface-hover"
             >
               <ChevronRight size={16} />
             </button>
@@ -133,7 +133,7 @@ export function SlotsManagementPage() {
                     ? "bg-primary text-white shadow-md"
                     : isToday
                       ? "bg-primary/10 text-primary-dark"
-                      : "bg-white text-text-main shadow-sm"
+                      : "bg-surface text-text-main shadow-sm"
                 }`}
               >
                 <span className="text-[10px] font-medium opacity-70">
@@ -150,7 +150,7 @@ export function SlotsManagementPage() {
       </div>
 
       {/* Add slot form */}
-      <div className="mt-5 rounded-2xl bg-white p-4 shadow-sm">
+      <div className="mt-5 rounded-2xl bg-surface p-4 shadow-sm">
         <h3 className="mb-3 text-sm font-bold text-text-main">
           {t.appointments.addSlots}
         </h3>
@@ -163,7 +163,7 @@ export function SlotsManagementPage() {
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <span className="pb-2 text-text-light">–</span>
@@ -175,7 +175,7 @@ export function SlotsManagementPage() {
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full rounded-lg border border-border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
           <button
@@ -210,7 +210,7 @@ export function SlotsManagementPage() {
             {slotsForDate.map((slot) => (
               <div
                 key={slot.id}
-                className="flex items-center justify-between rounded-xl bg-white px-4 py-3 shadow-sm"
+                className="flex items-center justify-between rounded-xl bg-surface px-4 py-3 shadow-sm"
               >
                 <div className="flex items-center gap-3">
                   <Clock size={16} className="text-primary" />
@@ -220,8 +220,8 @@ export function SlotsManagementPage() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                       slot.isBooked
-                        ? "bg-amber-100 text-amber-700"
-                        : "bg-green-100 text-green-700"
+                        ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700"
+                        : "bg-green-100 dark:bg-green-900/30 text-green-700"
                     }`}
                   >
                     {slot.isBooked
@@ -236,7 +236,7 @@ export function SlotsManagementPage() {
                         deleteMutation.mutate(slot.id);
                       }
                     }}
-                    className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-danger"
+                    className="rounded-lg p-1.5 text-gray-400 hover:bg-surface-hover hover:text-danger"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -249,7 +249,7 @@ export function SlotsManagementPage() {
 
       {/* Repeat weekly */}
       {slotsForDate.filter((s) => !s.isBooked).length > 0 && (
-        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-gray-50 p-4">
+        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-surface-secondary p-4">
           <Copy size={16} className="text-text-light" />
           <span className="text-sm text-text-main">
             {t.appointments.repeatWeekly}:
@@ -260,7 +260,7 @@ export function SlotsManagementPage() {
             max={8}
             value={repeatWeeks}
             onChange={(e) => setRepeatWeeks(Number(e.target.value))}
-            className="w-16 rounded-lg border border-gray-200 px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-16 rounded-lg border border-border px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <span className="text-sm text-text-light">
             {t.appointments.weeks}

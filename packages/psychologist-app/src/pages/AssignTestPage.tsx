@@ -94,7 +94,7 @@ export function AssignTestPage() {
         {t.psychologist.assignTest}
       </h1>
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-6 space-y-6">
         {/* Select test */}
         <div>
           <label className="block text-sm font-medium text-text-main mb-2">
@@ -118,7 +118,7 @@ export function AssignTestPage() {
                   "p-4 rounded-lg border-2 text-left transition-colors",
                   testSlug === test.slug
                     ? "border-primary bg-primary/5"
-                    : "border-gray-200 hover:border-gray-300",
+                    : "border-border hover:border-input-border",
                 )}
               >
                 <p className="text-sm font-semibold text-text-main">
@@ -143,7 +143,7 @@ export function AssignTestPage() {
                 "flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
                 target === "class"
                   ? "border-primary bg-primary/5 text-primary"
-                  : "border-gray-200 text-text-light hover:border-gray-300",
+                  : "border-border text-text-light hover:border-input-border",
               )}
             >
               <Users size={16} />
@@ -156,7 +156,7 @@ export function AssignTestPage() {
                 "flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
                 target === "student"
                   ? "border-primary bg-primary/5 text-primary"
-                  : "border-gray-200 text-text-light hover:border-gray-300",
+                  : "border-border text-text-light hover:border-input-border",
               )}
             >
               <User size={16} />
@@ -181,12 +181,12 @@ export function AssignTestPage() {
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
                 placeholder={t.common.search + "..."}
-                className="w-full h-10 pl-8 pr-3 rounded-lg border border-gray-300 bg-white text-sm
+                className="w-full h-10 pl-8 pr-3 rounded-lg border border-input-border bg-surface text-sm
                   text-text-main placeholder:text-text-light
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
             </div>
-            <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-50">
+            <div className="max-h-48 overflow-y-auto border border-border rounded-lg divide-y divide-gray-50">
               {filteredStudents?.map((s) => (
                 <button
                   key={s.id}
@@ -196,7 +196,7 @@ export function AssignTestPage() {
                     "w-full flex items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors",
                     studentId === s.id
                       ? "bg-primary/5 text-primary"
-                      : "hover:bg-gray-50 text-text-main",
+                      : "hover:bg-surface-hover text-text-main",
                   )}
                 >
                   <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
@@ -231,7 +231,7 @@ export function AssignTestPage() {
               <select
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+                className="w-full h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               >
                 <option value="">--</option>
@@ -249,7 +249,7 @@ export function AssignTestPage() {
               <select
                 value={classLetter}
                 onChange={(e) => setClassLetter(e.target.value)}
-                className="w-full h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+                className="w-full h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               >
                 <option value="">All letters</option>
@@ -272,7 +272,7 @@ export function AssignTestPage() {
             type="date"
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
-            className="h-10 px-3 rounded-lg border border-gray-300 bg-white text-sm text-text-main
+            className="h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
         </div>

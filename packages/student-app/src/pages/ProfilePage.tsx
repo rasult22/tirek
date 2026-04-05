@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, LogOut, Globe, User, Pencil, Check, X } from "lucide-react";
+import { ArrowLeft, LogOut, Globe, User, Pencil, Check, X, Sun, Moon, Monitor } from "lucide-react";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
+import { useTheme } from "../hooks/useTheme.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { authApi } from "../api/auth.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
@@ -22,6 +23,7 @@ const AVATAR_IDS = Object.keys(AVATAR_MAP);
 export function ProfilePage() {
   const t = useT();
   const { language, setLanguage } = useLanguage();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -57,7 +59,7 @@ export function ProfilePage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-sm"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -66,7 +68,7 @@ export function ProfilePage() {
 
         {/* User card */}
         {!editing ? (
-          <div className="mt-6 flex flex-col items-center rounded-2xl bg-white p-6 shadow-sm">
+          <div className="mt-6 flex flex-col items-center rounded-2xl bg-surface p-6 shadow-sm">
             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/15">
               {user?.avatarId && AVATAR_MAP[user.avatarId] ? (
                 <span className="text-4xl">{AVATAR_MAP[user.avatarId]}</span>
@@ -90,7 +92,7 @@ export function ProfilePage() {
             </button>
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+          <div className="mt-6 rounded-2xl bg-surface p-6 shadow-sm">
             <h3 className="text-sm font-bold text-text-main mb-4">{t.common.edit}</h3>
 
             {/* Name input */}
@@ -99,7 +101,7 @@ export function ProfilePage() {
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-text-main focus:border-primary focus:outline-none"
+              className="w-full rounded-xl border border-border px-4 py-3 text-sm text-text-main focus:border-primary focus:outline-none"
             />
 
             {/* Avatar picker */}
@@ -110,7 +112,7 @@ export function ProfilePage() {
                   key={id}
                   onClick={() => setEditAvatar(id)}
                   className={`flex h-12 w-12 items-center justify-center rounded-xl text-2xl transition-all ${
-                    editAvatar === id ? "bg-primary/20 ring-2 ring-primary" : "bg-gray-100 hover:bg-gray-200"
+                    editAvatar === id ? "bg-primary/20 ring-2 ring-primary" : "bg-surface-secondary hover:bg-surface-hover"
                   }`}
                 >
                   {AVATAR_MAP[id]}
@@ -122,7 +124,7 @@ export function ProfilePage() {
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setEditing(false)}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-bold text-text-light transition-all hover:bg-gray-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border py-3 text-sm font-bold text-text-light transition-all hover:bg-surface-hover"
               >
                 <X size={14} />
                 {t.common.cancel}
@@ -140,7 +142,7 @@ export function ProfilePage() {
         )}
 
         {/* Language switcher */}
-        <div className="mt-5 rounded-2xl bg-white p-5 shadow-sm">
+        <div className="mt-5 rounded-2xl bg-surface p-5 shadow-sm">
           <div className="flex items-center gap-3">
             <Globe size={20} className="text-primary-dark" />
             <span className="flex-1 text-sm font-bold text-text-main">{t.profile.language}</span>
@@ -153,7 +155,7 @@ export function ProfilePage() {
                 className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
                   language === lang
                     ? "bg-primary-dark text-white shadow-sm"
-                    : "bg-gray-100 text-text-light hover:bg-gray-200"
+                    : "bg-surface-secondary text-text-light hover:bg-surface-hover"
                 }`}
               >
                 {lang === "ru" ? "\uD83C\uDDF7\uD83C\uDDFA Русский" : "\uD83C\uDDF0\uD83C\uDDFF Қазақша"}
@@ -162,10 +164,41 @@ export function ProfilePage() {
           </div>
         </div>
 
+        {/* Theme switcher */}
+        <div className="mt-5 rounded-2xl bg-surface p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            {resolvedTheme === "dark" ? (
+              <Moon size={20} className="text-primary-dark" />
+            ) : (
+              <Sun size={20} className="text-primary-dark" />
+            )}
+            <span className="flex-1 text-sm font-bold text-text-main">{t.profile.theme}</span>
+          </div>
+          <div className="mt-3 flex gap-2">
+            {([
+              { key: "light" as const, label: t.profile.themeLight, icon: Sun },
+              { key: "dark" as const, label: t.profile.themeDark, icon: Moon },
+              { key: "system" as const, label: t.profile.themeSystem, icon: Monitor },
+            ]).map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTheme(key)}
+                className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
+                  theme === key
+                    ? "bg-primary-dark text-white shadow-sm"
+                    : "bg-surface-secondary text-text-light hover:bg-surface-hover"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-danger/20 bg-white py-3.5 text-sm font-bold text-danger transition-all hover:bg-danger/5"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-danger/20 bg-surface py-3.5 text-sm font-bold text-danger transition-all hover:bg-danger/5"
         >
           <LogOut size={18} />
           {t.auth.logout}

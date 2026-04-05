@@ -64,20 +64,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
       <aside
         className={clsx(
-          "fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-50",
+          "fixed top-0 left-0 h-full w-64 bg-surface border-r border-border z-50",
           "flex flex-col transition-transform duration-200",
           "lg:translate-x-0 lg:static lg:z-auto",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100">
+        <div className="flex items-center justify-between h-16 px-5 border-b border-border-light">
           <span className="text-xl font-bold text-primary tracking-tight">
             Tirek
           </span>
           <button
             onClick={onClose}
-            className="lg:hidden p-1 rounded-md hover:bg-gray-100 text-secondary"
+            className="lg:hidden p-1 rounded-md hover:bg-surface-hover text-secondary"
           >
             <X size={20} />
           </button>
@@ -96,7 +96,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary/10 text-primary"
-                    : "text-secondary hover:bg-gray-50 hover:text-text-main",
+                    : "text-secondary hover:bg-surface-hover hover:text-text-main",
                 )
               }
             >
@@ -112,7 +112,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-gray-100">
+        <div className="px-5 py-4 border-t border-border-light">
           <p className="text-xs text-text-light">Tirek v0.1.0</p>
         </div>
       </aside>
