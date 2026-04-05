@@ -25,6 +25,7 @@ import { DirectChatListPage } from "./pages/DirectChatListPage.js";
 import { DirectChatPage } from "./pages/DirectChatPage.js";
 import { AppointmentsPage } from "./pages/AppointmentsPage.js";
 import { VirtualPlantPage } from "./pages/VirtualPlantPage.js";
+import { AchievementsPage } from "./pages/AchievementsPage.js";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -67,6 +68,7 @@ export function App() {
             <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
             <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
             <Route path="/plant" element={<ProtectedRoute><VirtualPlantPage /></ProtectedRoute>} />
+            <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
             <Route path="/sos" element={<SOSPage />} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />

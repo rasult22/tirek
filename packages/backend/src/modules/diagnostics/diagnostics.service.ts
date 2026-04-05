@@ -7,6 +7,7 @@ import {
 import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { diagnosticsRepository } from "./diagnostics.repository.js";
+import { achievementsService } from "../achievements/achievements.service.js";
 
 interface ScoringRule {
   min: number;
@@ -196,6 +197,8 @@ export const diagnosticsService = {
       severity,
       completedAt: new Date(),
     });
+
+    achievementsService.checkAndAward(userId, { trigger: "test" }).catch(() => {});
 
     return {
       sessionId: completed!.id,

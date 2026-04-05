@@ -135,15 +135,31 @@
   - Student-app: виджет на Dashboard + отдельная страница /plant с редактированием имени
   - i18n: ru + kz (18 ключей)
 
-### P2-4. Достижения/значки
-- "Первая медитация", "7 дней подряд", "Мастер дыхания" и т.д.
-- Таблица achievements + user_achievements
+### P2-4. Достижения/значки ✅
+- **Статус:** Завершено
+- **Детали:**
+  - DB: таблицы `achievements` (16 определений) + `user_achievements` (earned tracking)
+  - Backend: модуль `achievements/` (repository, service, routes) для обоих ролей
+  - 16 достижени�� в 4 категориях: первые шаги, серии, мастерство, рост
+  - Fire-and-forget проверка при каждой активности (mood, exercise, journal, test, streak, plant)
+  - Notification при получении нового достижения
+  - Student-app: AchievementsPage (grid earned/locked) + Dashboard виджет + quickLink
+  - Psychologist-app: вкладка "Достижения" на StudentDetailPage
+  - i18n: ru + kz
 
-### P2-5. КПТ-упражнения
-- Дневник мыслей (Ситуация → Мысль → Эмоция → Искажение → Альтернатива)
-- Круг контроля
-- Техника СТОП
-- Поведенческие эксперименты
+### P2-5. КПТ-упражнения ✅
+- **Статус:** Завершено
+- **Детали:**
+  - DB: таблица `cbt_entries` (userId, type, data JSONB, createdAt)
+  - Backend: модуль `cbt/` (repository, service, routes) для обоих ролей
+  - 4 типа упражнений: thought_diary, circle_of_control, stop_technique, behavioral_experiment
+  - 4 упражнения в seed с type="cbt" в exercises таблице
+  - Валидация данных по типу + fire-and-forget gamification (streak, plant +15, achievements)
+  - Student-app: 4 интерактивные страницы (ThoughtDiaryPage — wizard 5 шагов, CircleOfControlPage — 2 зоны, StopTechniquePage — 4 шага СТОП, BehavioralExperimentPage — двухфазный с update)
+  - Каждая страница: история записей + удаление
+  - ExerciseRouterPage: dispatch по type="cbt" → config.cbtType
+  - Psychologist-app: вкладка "КПТ" на StudentDetailPage с read-only записями
+  - i18n: ru + kz (~60 ключей, 10 когнитивных искажений)
 
 ### P2-6. Тёмная тема
 - Переключатель в настройках обоих приложений

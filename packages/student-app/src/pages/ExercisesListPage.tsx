@@ -11,6 +11,10 @@ const EMOJI_MAP: Record<string, { emoji: string; bg: string }> = {
   diaphragmatic: { emoji: "\uD83C\uDF88", bg: "bg-secondary/20" },
   "grounding-54321": { emoji: "\uD83C\uDF3F", bg: "bg-green-100" },
   pmr: { emoji: "\uD83D\uDCAA", bg: "bg-amber-100" },
+  "thought-diary": { emoji: "\uD83D\uDCD3", bg: "bg-violet-100" },
+  "circle-of-control": { emoji: "\u2B55", bg: "bg-cyan-100" },
+  "stop-technique": { emoji: "\uD83D\uDED1", bg: "bg-red-100" },
+  "behavioral-experiment": { emoji: "\uD83D\uDD2C", bg: "bg-indigo-100" },
 };
 
 export function ExercisesListPage() {

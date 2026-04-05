@@ -1,4 +1,5 @@
 import { virtualPlantRepository } from "./virtual-plant.repository.js";
+import { achievementsService } from "../achievements/achievements.service.js";
 
 const STAGE_THRESHOLDS = [0, 50, 150, 300] as const;
 
@@ -60,6 +61,7 @@ export const virtualPlantService = {
       stage: newStage,
       lastWateredAt: new Date(),
     });
+    achievementsService.checkAndAward(userId, { trigger: "plant", plantStage: newStage }).catch(() => {});
   },
 
   async renamePlant(userId: string, name: string) {

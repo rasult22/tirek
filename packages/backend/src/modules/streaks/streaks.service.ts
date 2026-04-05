@@ -1,4 +1,5 @@
 import { streaksRepository } from "./streaks.repository.js";
+import { achievementsService } from "../achievements/achievements.service.js";
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
@@ -41,6 +42,7 @@ export const streaksService = {
         lastActiveDate: today,
         freezesAvailable: 1,
       });
+      achievementsService.checkAndAward(userId, { trigger: "streak", currentStreak: 1 }).catch(() => {});
       return;
     }
 
@@ -79,5 +81,6 @@ export const streaksService = {
       freezesAvailable: newFreezes,
       freezeUsedDate,
     });
+    achievementsService.checkAndAward(userId, { trigger: "streak", currentStreak: newStreak }).catch(() => {});
   },
 };

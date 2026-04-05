@@ -5,6 +5,11 @@ import { exercisesApi } from "../api/exercises.js";
 import { BreathingPage } from "./BreathingPage.js";
 import { GroundingPage } from "./GroundingPage.js";
 import { PMRPage } from "./PMRPage.js";
+import { ThoughtDiaryPage } from "./ThoughtDiaryPage.js";
+import { CircleOfControlPage } from "./CircleOfControlPage.js";
+import { StopTechniquePage } from "./StopTechniquePage.js";
+import { BehavioralExperimentPage } from "./BehavioralExperimentPage.js";
+import type { CbtExerciseConfig } from "@tirek/shared";
 
 export function ExerciseRouterPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +39,21 @@ export function ExerciseRouterPage() {
       return <GroundingPage exercise={exercise} />;
     case "relaxation":
       return <PMRPage exercise={exercise} />;
+    case "cbt": {
+      const cbtConfig = exercise.config as CbtExerciseConfig;
+      switch (cbtConfig.cbtType) {
+        case "thought_diary":
+          return <ThoughtDiaryPage exercise={exercise} />;
+        case "circle_of_control":
+          return <CircleOfControlPage exercise={exercise} />;
+        case "stop_technique":
+          return <StopTechniquePage exercise={exercise} />;
+        case "behavioral_experiment":
+          return <BehavioralExperimentPage exercise={exercise} />;
+        default:
+          return <ThoughtDiaryPage exercise={exercise} />;
+      }
+    }
     default:
       return <BreathingPage />;
   }

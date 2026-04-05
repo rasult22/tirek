@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, ClipboardList, Wind, CalendarDays, Calendar, CheckCircle2, Sparkles, Flame, BookOpen, Trophy, Mail } from "lucide-react";
+import { MessageCircle, ClipboardList, Wind, CalendarDays, Calendar, CheckCircle2, Sparkles, Flame, BookOpen, Trophy, Mail, Award } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
@@ -10,6 +10,7 @@ import { streaksApi } from "../api/streaks.js";
 import { plantApi } from "../api/plant.js";
 import { exercisesApi } from "../api/exercises.js";
 import { appointmentsApi } from "../api/appointments.js";
+import { achievementsApi } from "../api/achievements.js";
 import { moodLevels } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
 
@@ -48,6 +49,11 @@ export function DashboardPage() {
     queryFn: appointmentsApi.next,
   });
 
+  const { data: achievementsSummary } = useQuery({
+    queryKey: ["achievements-summary"],
+    queryFn: achievementsApi.getSummary,
+  });
+
   const quickLinks = [
     { to: "/chat", icon: MessageCircle, label: t.nav.chat, bg: "bg-primary/15", color: "text-primary-dark" },
     { to: "/tests", icon: ClipboardList, label: t.nav.tests, bg: "bg-secondary/20", color: "text-secondary" },
@@ -56,6 +62,7 @@ export function DashboardPage() {
     { to: "/messages", icon: Mail, label: t.directChat.title, bg: "bg-green-100", color: "text-green-600" },
     { to: "/mood/calendar", icon: CalendarDays, label: t.mood.calendar, bg: "bg-info/20", color: "text-info" },
     { to: "/appointments", icon: Calendar, label: t.nav.appointments, bg: "bg-purple-100", color: "text-purple-600" },
+    { to: "/achievements", icon: Award, label: t.achievements.title, bg: "bg-yellow-100", color: "text-yellow-600" },
   ];
 
   return (
@@ -134,6 +141,35 @@ export function DashboardPage() {
                   : plant.stage >= 4
                     ? t.plant.maxStage
                     : `${t.plant.pointsToNext}: ${plant.pointsToNextStage}`}
+              </div>
+            </div>
+          </Link>
+        )}
+
+        {/* Achievements widget */}
+        {achievementsSummary && achievementsSummary.totalCount > 0 && (
+          <Link
+            to="/achievements"
+            className="mt-5 flex items-center gap-4 rounded-2xl bg-gradient-to-r from-yellow-100 to-amber-50 p-4 transition-shadow hover:shadow-md"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-200/60">
+              {achievementsSummary.recentAchievements.length > 0 ? (
+                <span className="text-2xl">{achievementsSummary.recentAchievements[0].achievement.emoji}</span>
+              ) : (
+                <Award size={26} className="text-yellow-500" />
+              )}
+            </div>
+            <div className="flex-1">
+              <div className="text-xs font-bold uppercase tracking-wide text-yellow-600/70">
+                {t.achievements.title}
+              </div>
+              <div className="mt-0.5 flex items-baseline gap-1.5">
+                <span className="text-2xl font-extrabold text-yellow-600">
+                  {achievementsSummary.earnedCount}
+                </span>
+                <span className="text-sm text-yellow-600/70">
+                  / {achievementsSummary.totalCount}
+                </span>
               </div>
             </div>
           </Link>

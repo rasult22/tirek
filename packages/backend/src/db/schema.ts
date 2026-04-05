@@ -395,3 +395,52 @@ export const appointments = pgTable("appointments", {
     .defaultNow()
     .notNull(),
 });
+
+// ── 25. cbt_entries ────────────────────────────────────────────────
+export const cbtEntries = pgTable("cbt_entries", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id),
+  type: text("type").notNull(), // "thought_diary" | "circle_of_control" | "stop_technique" | "behavioral_experiment"
+  data: jsonb("data").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ── 23. achievements ───────────────────────────────────────────────
+export const achievements = pgTable("achievements", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  category: text("category").notNull(), // first_steps | streak | mastery | growth
+  nameRu: text("name_ru").notNull(),
+  nameKz: text("name_kz"),
+  descriptionRu: text("description_ru"),
+  descriptionKz: text("description_kz"),
+  emoji: text("emoji").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ── 24. user_achievements ──────────────────────────────────────────
+export const userAchievements = pgTable(
+  "user_achievements",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    achievementId: text("achievement_id")
+      .notNull()
+      .references(() => achievements.id),
+    earnedAt: timestamp("earned_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    uniqueUserAchievement: unique().on(t.userId, t.achievementId),
+  }),
+);

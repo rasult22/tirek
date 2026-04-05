@@ -106,7 +106,7 @@ export interface Exercise {
   nameRu: string;
   nameKz: string;
   description: string;
-  config: BreathingConfig | GroundingConfig | PMRConfig;
+  config: BreathingConfig | GroundingConfig | PMRConfig | CbtExerciseConfig;
 }
 
 export interface BreathingConfig {
@@ -140,6 +140,61 @@ export interface PMRStep {
 
 export interface PMRConfig {
   steps: PMRStep[];
+}
+
+export interface CbtExerciseConfig {
+  cbtType: CbtType;
+}
+
+// ── CBT types ──────────────────────────────────────────────────────
+export type CbtType =
+  | "thought_diary"
+  | "circle_of_control"
+  | "stop_technique"
+  | "behavioral_experiment";
+
+export interface ThoughtDiaryData {
+  situation: string;
+  thought: string;
+  emotion: string;
+  emotionIntensity?: number; // 1-10
+  distortion?: string;
+  alternative?: string;
+}
+
+export interface CircleOfControlData {
+  canControl: string[];
+  cannotControl: string[];
+}
+
+export interface StopTechniqueData {
+  stop: string;
+  breathe: string;
+  observe: string;
+  proceed: string;
+}
+
+export interface BehavioralExperimentData {
+  hypothesis: string;
+  experiment: string;
+  prediction: string;
+  result?: string;
+  conclusion?: string;
+  completed?: boolean;
+}
+
+export type CbtData =
+  | ThoughtDiaryData
+  | CircleOfControlData
+  | StopTechniqueData
+  | BehavioralExperimentData;
+
+export interface CbtEntry {
+  id: string;
+  userId: string;
+  type: CbtType;
+  data: CbtData;
+  createdAt: string;
 }
 
 export interface ContentQuote {
@@ -194,7 +249,7 @@ export interface InviteCode {
 export interface Notification {
   id: string;
   userId: string;
-  type: "crisis" | "reminder" | "assignment" | "system" | "direct_message" | "appointment";
+  type: "crisis" | "reminder" | "assignment" | "system" | "direct_message" | "appointment" | "achievement";
   title: string;
   body: string;
   read: boolean;
@@ -345,4 +400,30 @@ export interface UpcomingAppointment {
   startTime: string;
   endTime: string;
   psychologistName: string;
+}
+
+export type AchievementCategory = "first_steps" | "streak" | "mastery" | "growth";
+
+export interface Achievement {
+  id: string;
+  slug: string;
+  category: AchievementCategory;
+  nameRu: string;
+  nameKz: string | null;
+  descriptionRu: string | null;
+  descriptionKz: string | null;
+  emoji: string;
+  sortOrder: number;
+}
+
+export interface UserAchievementItem {
+  achievement: Achievement;
+  earned: boolean;
+  earnedAt: string | null;
+}
+
+export interface AchievementsSummary {
+  earnedCount: number;
+  totalCount: number;
+  recentAchievements: UserAchievementItem[];
 }

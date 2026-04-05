@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "./index.js";
-import { users, inviteCodes, diagnosticTests, exercises, contentQuotes, studentPsychologist } from "./schema.js";
+import { users, inviteCodes, diagnosticTests, exercises, contentQuotes, studentPsychologist, achievements } from "./schema.js";
 import { testDefinitions } from "../../../shared/src/constants/test-definitions.js";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
@@ -170,10 +170,50 @@ async function seed() {
     },
   ];
 
+  // CBT exercises
+  exerciseData.push(
+    {
+      id: uuidv4(),
+      type: "cbt",
+      slug: "thought-diary",
+      nameRu: "Дневник мыслей",
+      nameKz: "Ой күнделігі",
+      description: "Ситуация → Мысль → Эмоция → Искажение → Альтернатива",
+      config: { cbtType: "thought_diary" },
+    },
+    {
+      id: uuidv4(),
+      type: "cbt",
+      slug: "circle-of-control",
+      nameRu: "Круг контроля",
+      nameKz: "Бақылау шеңбері",
+      description: "Что я могу и не могу контролировать",
+      config: { cbtType: "circle_of_control" },
+    },
+    {
+      id: uuidv4(),
+      type: "cbt",
+      slug: "stop-technique",
+      nameRu: "Техника СТОП",
+      nameKz: "ТОҚ техникасы",
+      description: "Стоп → Вздохни → Наблюдай → Продолжай",
+      config: { cbtType: "stop_technique" },
+    },
+    {
+      id: uuidv4(),
+      type: "cbt",
+      slug: "behavioral-experiment",
+      nameRu: "Поведенческий эксперимент",
+      nameKz: "Мінез-құлық эксперименті",
+      description: "Гипотеза → Эксперимент → Результат → Вывод",
+      config: { cbtType: "behavioral_experiment" },
+    },
+  );
+
   for (const ex of exerciseData) {
     await db.insert(exercises).values(ex).onConflictDoNothing();
   }
-  console.log("  ✓ 5 exercises (3 breathing + 1 grounding + 1 relaxation)");
+  console.log("  ✓ 9 exercises (3 breathing + 1 grounding + 1 relaxation + 4 CBT)");
 
   // ── 4. Motivational quotes ──────────────────────────────────────────
   const quotes = [
@@ -220,6 +260,35 @@ async function seed() {
     await db.insert(contentQuotes).values(q).onConflictDoNothing();
   }
   console.log(`  ✓ ${quotes.length} quotes (motivation + proverbs + affirmations)`);
+
+  // ── 5. Achievements ────────────────────────────────────────────────
+  const achievementData = [
+    // First steps
+    { id: uuidv4(), slug: "first-mood", category: "first_steps", nameRu: "Первое настроение", nameKz: "Алғашқы көңіл-күй", descriptionRu: "Отметить настроение впервые", descriptionKz: "Алғаш рет көңіл-күйді белгілеу", emoji: "🎯", sortOrder: 1 },
+    { id: uuidv4(), slug: "first-exercise", category: "first_steps", nameRu: "Первая медитация", nameKz: "Алғашқы медитация", descriptionRu: "Выполнить первое упражнение", descriptionKz: "Алғашқы жаттығуды орындау", emoji: "🌬️", sortOrder: 2 },
+    { id: uuidv4(), slug: "first-journal", category: "first_steps", nameRu: "Первый дневник", nameKz: "Алғашқы күнделік", descriptionRu: "Написать первую запись в дневнике", descriptionKz: "Күнделікке алғашқы жазба жазу", emoji: "📝", sortOrder: 3 },
+    { id: uuidv4(), slug: "first-test", category: "first_steps", nameRu: "Первый тест", nameKz: "Алғашқы тест", descriptionRu: "Пройти первый тест", descriptionKz: "Алғашқы тестті тапсыру", emoji: "📋", sortOrder: 4 },
+    // Streaks
+    { id: uuidv4(), slug: "streak-3", category: "streak", nameRu: "3 дня подряд", nameKz: "3 күн қатарынан", descriptionRu: "Серия из 3 дней активности", descriptionKz: "3 күндік белсенділік сериясы", emoji: "🔥", sortOrder: 10 },
+    { id: uuidv4(), slug: "streak-7", category: "streak", nameRu: "7 дней подряд", nameKz: "7 күн қатарынан", descriptionRu: "Серия из 7 дней активности", descriptionKz: "7 күндік белсенділік сериясы", emoji: "🔥", sortOrder: 11 },
+    { id: uuidv4(), slug: "streak-30", category: "streak", nameRu: "30 дней подряд", nameKz: "30 күн қатарынан", descriptionRu: "Серия из 30 дней активности", descriptionKz: "30 күндік белсенділік сериясы", emoji: "💎", sortOrder: 12 },
+    // Mastery
+    { id: uuidv4(), slug: "breathing-master", category: "mastery", nameRu: "Мастер дыхания", nameKz: "Тыныс алу шебері", descriptionRu: "Выполнить 10 дыхательных упражнений", descriptionKz: "10 тыныс алу жаттығуын орындау", emoji: "🌬️", sortOrder: 20 },
+    { id: uuidv4(), slug: "exercise-master", category: "mastery", nameRu: "Мастер упражнений", nameKz: "Жаттығу шебері", descriptionRu: "Выполнить 25 упражнений", descriptionKz: "25 жаттығу орындау", emoji: "💪", sortOrder: 21 },
+    { id: uuidv4(), slug: "mood-expert", category: "mastery", nameRu: "Эмоциональный эксперт", nameKz: "Эмоция сарапшысы", descriptionRu: "Отметить настроение 30 раз", descriptionKz: "Көңіл-күйді 30 рет белгілеу", emoji: "🧠", sortOrder: 22 },
+    { id: uuidv4(), slug: "journal-keeper", category: "mastery", nameRu: "Хранитель дневника", nameKz: "Күнделік сақтаушысы", descriptionRu: "Написать 15 записей в дневнике", descriptionKz: "Күнделікке 15 жазба жазу", emoji: "📖", sortOrder: 23 },
+    { id: uuidv4(), slug: "test-explorer", category: "mastery", nameRu: "Исследователь тестов", nameKz: "Тест зерттеушісі", descriptionRu: "Пройти 3 разных теста", descriptionKz: "3 түрлі тест тапсыру", emoji: "🏆", sortOrder: 24 },
+    { id: uuidv4(), slug: "all-tests", category: "mastery", nameRu: "Все тесты пройдены", nameKz: "Барлық тесттер тапсырылды", descriptionRu: "Пройти все доступные тесты", descriptionKz: "Барлық қолжетімді тесттерді тапсыру", emoji: "🎓", sortOrder: 25 },
+    // Growth
+    { id: uuidv4(), slug: "plant-sprout", category: "growth", nameRu: "Росток", nameKz: "Өскін", descriptionRu: "Вырастить растение до 2 стадии", descriptionKz: "Өсімдікті 2-ші сатыға дейін өсіру", emoji: "🌱", sortOrder: 30 },
+    { id: uuidv4(), slug: "plant-tree", category: "growth", nameRu: "Дерево", nameKz: "Ағаш", descriptionRu: "Вырастить растение до 3 стадии", descriptionKz: "Өсімдікті 3-ші сатыға дейін өсіру", emoji: "🌳", sortOrder: 31 },
+    { id: uuidv4(), slug: "plant-bloom", category: "growth", nameRu: "Цветение", nameKz: "Гүлдеу", descriptionRu: "Вырастить растение до 4 стадии", descriptionKz: "Өсімдікті 4-ші сатыға дейін өсіру", emoji: "🌸", sortOrder: 32 },
+  ];
+
+  for (const a of achievementData) {
+    await db.insert(achievements).values(a).onConflictDoNothing();
+  }
+  console.log(`  ✓ ${achievementData.length} achievements (4 categories)`);
 
   console.log("\n✅ Seed completed!");
   process.exit(0);

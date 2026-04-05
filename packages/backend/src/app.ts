@@ -30,6 +30,14 @@ import {
   appointmentsStudentRouter,
   appointmentsPsychologistRouter,
 } from "./modules/appointments/appointments.routes.js";
+import {
+  achievementsStudentRouter,
+  achievementsPsychologistRouter,
+} from "./modules/achievements/achievements.routes.js";
+import {
+  cbtStudentRouter,
+  cbtPsychologistRouter,
+} from "./modules/cbt/cbt.routes.js";
 
 export const app = new Hono<{ Variables: AppVariables }>();
 
@@ -67,6 +75,8 @@ app.route("/student/streaks", streaksRouter);
 app.route("/student/plant", virtualPlantRouter);
 app.route("/student/direct-chat", directChatStudentRouter);
 app.route("/student/appointments", appointmentsStudentRouter);
+app.route("/student/achievements", achievementsStudentRouter);
+app.route("/student/cbt", cbtStudentRouter);
 app.route("/student", contentRouter);
 
 // Psychologist routes
@@ -78,6 +88,8 @@ app.route("/psychologist", usersRouter);
 app.route("/psychologist", notesRouter);
 app.route("/psychologist/direct-chat", directChatPsychologistRouter);
 app.route("/psychologist/appointments", appointmentsPsychologistRouter);
+app.route("/psychologist/achievements", achievementsPsychologistRouter);
+app.route("/psychologist/cbt", cbtPsychologistRouter);
 app.route("/psychologist/export", exportRouter);
 
 // Shared routes
