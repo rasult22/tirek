@@ -71,7 +71,7 @@ export function AchievementsPage() {
                 {data.earnedCount} / {data.totalCount}
               </span>
             </div>
-            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-amber-200/60 dark:bg-amber-800/30">
+            <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-amber-200/60">
               <div
                 className="h-full rounded-full bg-amber-500 transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}

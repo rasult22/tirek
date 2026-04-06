@@ -207,7 +207,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
 
       <div className="flex-1 px-5 pt-5">
         {/* Can control zone */}
-        <div className="rounded-2xl border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/30 p-4">
+        <div className="rounded-2xl border-2 border-green-200 bg-green-50/50 p-4">
           <h3 className="text-sm font-bold text-green-700">
             ✅ {t.cbt.canControl}
           </h3>
@@ -238,7 +238,7 @@ export function CircleOfControlPage({ exercise }: { exercise: Exercise }) {
             <button
               onClick={() => addItem("can")}
               disabled={!inputCan.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-500 text-white disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-700 dark:disabled:text-gray-500"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-green-500 text-white disabled:bg-gray-200 disabled:text-gray-400"
             >
               <Plus size={18} />
             </button>

@@ -47,26 +47,26 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-4 lg:px-6 shrink-0">
+        <header className="h-16 glass-card-elevated border-b border-border-light flex items-center justify-between px-4 lg:px-6 shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-md hover:bg-surface-hover text-secondary"
+            className="btn-press lg:hidden p-2 rounded-xl hover:bg-surface-hover text-text-light transition-colors"
           >
             <Menu size={20} />
           </button>
 
           <div className="hidden lg:block" />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Notification bell */}
             <div className="relative">
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="relative p-2 rounded-lg hover:bg-surface-hover text-secondary transition-colors"
+                className="btn-press relative p-2.5 rounded-xl hover:bg-surface-hover text-text-light transition-all"
               >
-                <Bell size={20} />
+                <Bell size={19} strokeWidth={1.8} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-[10px] font-bold rounded-full bg-danger text-white">
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 flex items-center justify-center text-[9px] font-bold rounded-full bg-danger text-white">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -79,16 +79,16 @@ export function AppLayout({ children }: AppLayoutProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setNotifOpen(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-surface rounded-xl shadow-lg border border-border z-50 max-h-96 overflow-y-auto">
-                    <div className="p-3 border-b border-border-light flex items-center justify-between">
-                      <span className="text-sm font-semibold text-text-main">
-                        Notifications
+                  <div className="absolute right-0 top-full mt-2 w-80 glass-card-elevated rounded-2xl z-50 max-h-96 overflow-y-auto">
+                    <div className="p-3.5 border-b border-border-light flex items-center justify-between">
+                      <span className="text-sm font-bold text-text-main">
+                        Уведомления
                       </span>
                       <button
                         onClick={() => setNotifOpen(false)}
-                        className="p-1 hover:bg-surface-hover rounded"
+                        className="p-1 hover:bg-surface-hover rounded-lg transition-colors"
                       >
-                        <X size={14} />
+                        <X size={14} className="text-text-light" />
                       </button>
                     </div>
                     {notifications && notifications.data.length > 0 ? (
@@ -96,36 +96,40 @@ export function AppLayout({ children }: AppLayoutProps) {
                         <div
                           key={n.id}
                           className={clsx(
-                            "px-3 py-2.5 border-b border-border-light hover:bg-surface-hover cursor-pointer",
-                            !n.read && "bg-primary/5",
+                            "px-3.5 py-3 border-b border-border-light hover:bg-surface-hover cursor-pointer transition-colors",
+                            !n.read && "bg-primary/4",
                           )}
                           onClick={() => {
                             if (!n.read) markReadMutation.mutate(n.id);
+                            setNotifOpen(false);
                             if (n.type === "direct_message" && n.metadata?.conversationId) {
-                              setNotifOpen(false);
                               navigate(`/messages/${n.metadata.conversationId}`);
+                            } else if (n.type === "sos_alert" || n.type === "concern_detected") {
+                              navigate("/crisis");
+                            } else if (n.type === "assignment") {
+                              navigate("/diagnostics");
                             }
                           }}
                         >
-                          <div className="flex items-start gap-2">
+                          <div className="flex items-start gap-2.5">
                             <span
                               className={clsx(
-                                "mt-1 w-2 h-2 rounded-full shrink-0",
-                                n.type === "crisis" && "bg-danger",
-                                n.type === "reminder" && "bg-warning",
+                                "mt-1.5 w-2 h-2 rounded-full shrink-0",
+                                (n.type === "crisis" || n.type === "sos_alert") && "bg-danger",
+                                (n.type === "reminder" || n.type === "concern_detected") && "bg-warning",
                                 n.type === "assignment" && "bg-primary",
-                                n.type === "direct_message" && "bg-green-500",
+                                n.type === "direct_message" && "bg-success",
                                 n.type === "system" && "bg-secondary",
                               )}
                             />
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-text-main truncate">
+                              <p className="text-sm font-semibold text-text-main truncate">
                                 {n.title}
                               </p>
                               <p className="text-xs text-text-light mt-0.5 line-clamp-2">
                                 {n.body}
                               </p>
-                              <p className="text-[10px] text-text-light mt-1">
+                              <p className="text-[10px] text-text-light/60 mt-1 font-medium">
                                 {new Date(n.createdAt).toLocaleString()}
                               </p>
                             </div>
@@ -133,8 +137,8 @@ export function AppLayout({ children }: AppLayoutProps) {
                         </div>
                       ))
                     ) : (
-                      <div className="p-6 text-center text-sm text-text-light">
-                        No notifications
+                      <div className="p-8 text-center text-sm text-text-light">
+                        Нет уведомлений
                       </div>
                     )}
                   </div>
@@ -143,11 +147,11 @@ export function AppLayout({ children }: AppLayoutProps) {
             </div>
 
             {/* User avatar */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/15 to-secondary/10 text-primary flex items-center justify-center text-sm font-bold">
                 {user?.name?.charAt(0)?.toUpperCase() ?? "P"}
               </div>
-              <span className="hidden sm:block text-sm font-medium text-text-main">
+              <span className="hidden sm:block text-sm font-semibold text-text-main">
                 {user?.name ?? "Psychologist"}
               </span>
             </div>

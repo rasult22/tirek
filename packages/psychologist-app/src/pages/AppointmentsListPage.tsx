@@ -15,10 +15,10 @@ import { appointmentsApi } from "../api/appointments.js";
 import type { Appointment } from "@tirek/shared";
 
 const statusColors: Record<string, string> = {
-  scheduled: "bg-amber-100 dark:bg-amber-900/30 text-amber-700",
-  confirmed: "bg-green-100 dark:bg-green-900/30 text-green-700",
+  scheduled: "bg-amber-100 text-amber-700",
+  confirmed: "bg-green-100 text-green-700",
   cancelled: "bg-surface-secondary text-gray-500",
-  completed: "bg-blue-100 dark:bg-blue-900/30 text-blue-700",
+  completed: "bg-blue-100 text-blue-700",
 };
 
 export function AppointmentsListPage() {
@@ -187,7 +187,7 @@ function AppointmentCard({
             <button
               onClick={() => onStatusChange(appt.id, "confirmed")}
               disabled={isPending}
-              className="flex items-center gap-1 rounded-lg bg-green-100 dark:bg-green-900/30 px-3 py-1.5 text-xs font-bold text-green-700 hover:bg-green-200 dark:hover:bg-green-800/40 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg bg-green-100 px-3 py-1.5 text-xs font-bold text-green-700 hover:bg-green-200 disabled:opacity-50"
             >
               <Check size={12} />
               {t.appointments.confirm}
@@ -197,7 +197,7 @@ function AppointmentCard({
             <button
               onClick={() => onStatusChange(appt.id, "completed")}
               disabled={isPending}
-              className="flex items-center gap-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-200 dark:hover:bg-blue-800/40 disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-200 disabled:opacity-50"
             >
               <CheckCircle2 size={12} />
               {t.appointments.complete}

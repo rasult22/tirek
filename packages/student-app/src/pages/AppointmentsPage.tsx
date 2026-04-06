@@ -29,10 +29,10 @@ function fmt(d: Date): string {
 }
 
 const statusColors: Record<string, string> = {
-  scheduled: "bg-amber-100 dark:bg-amber-900/30 text-amber-700",
-  confirmed: "bg-green-100 dark:bg-green-900/30 text-green-700",
+  scheduled: "bg-amber-100 text-amber-700",
+  confirmed: "bg-green-100 text-green-700",
   cancelled: "bg-surface-secondary text-gray-500",
-  completed: "bg-blue-100 dark:bg-blue-900/30 text-blue-700",
+  completed: "bg-blue-100 text-blue-700",
 };
 
 export function AppointmentsPage() {

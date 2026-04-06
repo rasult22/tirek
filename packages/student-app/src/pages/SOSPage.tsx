@@ -8,9 +8,9 @@ import { sosApi } from "../api/sos.js";
 import { hotlines } from "@tirek/shared";
 
 const LEVELS = [
-  { level: 1 as const, color: "border-yellow-400 bg-yellow-50 dark:bg-yellow-950/30", icon: "bg-yellow-400/20 text-yellow-600", badge: "bg-yellow-400 text-white" },
-  { level: 2 as const, color: "border-warning bg-orange-50 dark:bg-orange-950/30", icon: "bg-warning/20 text-warning", badge: "bg-warning text-white" },
-  { level: 3 as const, color: "border-danger bg-red-50 dark:bg-red-950/30", icon: "bg-danger/20 text-danger", badge: "bg-danger text-white" },
+  { level: 1 as const, color: "border-yellow-400 bg-yellow-50", icon: "bg-yellow-400/20 text-yellow-600", badge: "bg-yellow-400 text-white" },
+  { level: 2 as const, color: "border-warning bg-orange-50", icon: "bg-warning/20 text-warning", badge: "bg-warning text-white" },
+  { level: 3 as const, color: "border-danger bg-red-50", icon: "bg-danger/20 text-danger", badge: "bg-danger text-white" },
 ];
 
 export function SOSPage() {
@@ -44,7 +44,7 @@ export function SOSPage() {
         </div>
 
         {/* Calming message */}
-        <div className="mt-6 rounded-2xl border-2 border-danger/20 bg-red-50 dark:bg-red-950/30 p-6 text-center">
+        <div className="mt-6 rounded-2xl border-2 border-danger/20 bg-red-50 p-6 text-center">
           <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-danger/15">
             <Heart size={32} className="text-danger" />
           </div>
@@ -95,7 +95,7 @@ export function SOSPage() {
 
         {/* Level 3 warning */}
         {selectedLevel === 3 && (
-          <div className="mt-3 rounded-xl border border-danger/30 bg-red-50 dark:bg-red-950/30 p-3 text-center text-xs leading-relaxed text-danger font-medium">
+          <div className="mt-3 rounded-xl border border-danger/30 bg-red-50 p-3 text-center text-xs leading-relaxed text-danger font-medium">
             {t.sos.confidentialityNote}
           </div>
         )}

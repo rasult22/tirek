@@ -6,6 +6,7 @@ import {
   diagnosticAnswers,
   testAssignments,
   studentPsychologist,
+  users,
 } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 
@@ -178,6 +179,9 @@ export const diagnosticsRepository = {
       .select({
         session: diagnosticSessions,
         test: diagnosticTests,
+        studentName: users.name,
+        studentGrade: users.grade,
+        studentClass: users.classLetter,
       })
       .from(diagnosticSessions)
       .innerJoin(
@@ -187,6 +191,10 @@ export const diagnosticsRepository = {
       .innerJoin(
         studentPsychologist,
         eq(diagnosticSessions.userId, studentPsychologist.studentId),
+      )
+      .innerJoin(
+        users,
+        eq(diagnosticSessions.userId, users.id),
       )
       .where(and(...conditions))
       .orderBy(desc(diagnosticSessions.completedAt))

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { directChatApi } from "../api/direct-chat.js";
 import { useT } from "../hooks/useLanguage.js";
 import { getActive, getHistory, resolve, getFlaggedMessages } from "../api/crisis.js";
 import { StatusBadge } from "../components/ui/StatusBadge.js";
@@ -15,7 +16,9 @@ import {
   Shield,
   History,
   MessageSquareWarning,
+  MessageCircle,
 } from "lucide-react";
+import { useNavigate } from "react-router";
 import { clsx } from "clsx";
 import type { SOSEvent, FlaggedMessage } from "@tirek/shared";
 
@@ -29,11 +32,23 @@ interface ResolveState {
 export function CrisisPage() {
   const t = useT();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [tab, setTab] = useState<"active" | "flagged" | "history">("active");
   const [resolveStates, setResolveStates] = useState<
     Record<string, ResolveState>
   >({});
+  const [openingChat, setOpeningChat] = useState<string | null>(null);
+
+  const openStudentChat = useCallback(async (studentId: string) => {
+    setOpeningChat(studentId);
+    try {
+      const conv = await directChatApi.createConversation(studentId);
+      navigate(`/messages/${conv.id}`);
+    } catch {
+      setOpeningChat(null);
+    }
+  }, [navigate]);
 
   const { data: active, isLoading: activeLoading } = useQuery({
     queryKey: ["crisis", "active"],
@@ -179,7 +194,7 @@ export function CrisisPage() {
                       </div>
                       <p className="text-sm text-text-light">
                         {alert.studentGrade
-                          ? `${alert.studentGrade}${alert.studentClass ?? ""} class`
+                          ? `${alert.studentGrade}${alert.studentClassLetter ?? ""} класс`
                           : ""}{" "}
                         &middot;{" "}
                         <Clock size={12} className="inline" />{" "}
@@ -187,6 +202,38 @@ export function CrisisPage() {
                       </p>
                     </div>
                     <StatusBadge status="crisis" />
+                  </div>
+
+                  {/* Situation details */}
+                  {alert.notes && (
+                    <div className="px-5 py-3 border-t border-danger/10 bg-danger/3">
+                      <p className="text-sm text-text-main leading-relaxed">
+                        {alert.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Quick actions */}
+                  <div className="px-5 py-3 border-t border-danger/10 flex gap-2">
+                    <button
+                      onClick={() => navigate(`/students/${alert.userId}`)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    >
+                      <Users size={13} />
+                      Профиль ученика
+                    </button>
+                    <button
+                      onClick={() => openStudentChat(alert.userId)}
+                      disabled={openingChat === alert.userId}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-success/10 text-success hover:bg-success/20 disabled:opacity-50 transition-colors"
+                    >
+                      {openingChat === alert.userId ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <MessageCircle size={13} />
+                      )}
+                      Написать ученику
+                    </button>
                   </div>
 
                   {/* Action checklist */}
@@ -253,7 +300,7 @@ export function CrisisPage() {
                           updateState(alert.id, { notes: e.target.value })
                         }
                         rows={3}
-                        placeholder="Resolution notes..."
+                        placeholder="Опишите предпринятые действия..."
                         className="w-full px-3 py-2 rounded-lg border border-input-border bg-surface text-sm
                           text-text-main placeholder:text-text-light resize-none
                           focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
@@ -293,10 +340,10 @@ export function CrisisPage() {
               <Shield size={24} className="text-success" />
             </div>
             <p className="text-sm font-medium text-text-main">
-              No active crisis alerts
+              Нет активных кризисных алертов
             </p>
             <p className="text-xs text-text-light mt-1">
-              All students are safe
+              Все ученики в безопасности
             </p>
           </div>
         )}

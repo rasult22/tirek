@@ -14,17 +14,12 @@ import {
   Check,
   Pencil,
   X,
-  Sun,
-  Moon,
-  Monitor,
 } from "lucide-react";
-import { useTheme } from "../hooks/useTheme.js";
 import { clsx } from "clsx";
 
 export function ProfilePage() {
   const t = useT();
   const { language, setLanguage } = useLanguage();
-  const { theme, resolvedTheme, setTheme } = useTheme();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -161,41 +156,6 @@ export function ProfilePage() {
             >
               {language === lang.code && <Check size={14} />}
               {lang.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Theme switcher */}
-      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
-        <div className="flex items-center gap-2 mb-4">
-          {resolvedTheme === "dark" ? (
-            <Moon size={18} className="text-text-light" />
-          ) : (
-            <Sun size={18} className="text-text-light" />
-          )}
-          <h2 className="text-base font-semibold text-text-main">
-            {t.profile.theme}
-          </h2>
-        </div>
-        <div className="flex gap-3">
-          {([
-            { key: "light" as const, label: t.profile.themeLight },
-            { key: "dark" as const, label: t.profile.themeDark },
-            { key: "system" as const, label: t.profile.themeSystem },
-          ]).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTheme(key)}
-              className={clsx(
-                "flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
-                theme === key
-                  ? "border-primary bg-primary/5 text-primary"
-                  : "border-border text-text-light hover:border-gray-300",
-              )}
-            >
-              {theme === key && <Check size={14} />}
-              {label}
             </button>
           ))}
         </div>

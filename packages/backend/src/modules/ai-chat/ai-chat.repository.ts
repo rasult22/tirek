@@ -19,21 +19,37 @@ export const aiChatRepository = {
   },
 
   async findSessionsByUser(userId: string, pagination: PaginationParams) {
-    return db
-      .select()
-      .from(chatSessions)
-      .where(eq(chatSessions.userId, userId))
-      .orderBy(desc(chatSessions.startedAt))
-      .limit(pagination.limit)
-      .offset(pagination.offset);
+    // Only return sessions that have at least one message, with a preview
+    const rows = await db.execute(sql`
+      SELECT cs.id, cs.user_id AS "userId", cs.mode, cs.started_at AS "startedAt",
+             cs.last_message_at AS "lastMessageAt",
+             (SELECT content FROM chat_messages cm
+              WHERE cm.session_id = cs.id ORDER BY cm.created_at ASC LIMIT 1) AS preview
+      FROM chat_sessions cs
+      WHERE cs.user_id = ${userId}
+        AND EXISTS (SELECT 1 FROM chat_messages cm WHERE cm.session_id = cs.id)
+      ORDER BY COALESCE(cs.last_message_at, cs.started_at) DESC
+      LIMIT ${pagination.limit} OFFSET ${pagination.offset}
+    `);
+
+    return (rows.rows as any[]).map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      mode: r.mode,
+      startedAt: r.startedAt,
+      lastMessageAt: r.lastMessageAt,
+      preview: r.preview && r.preview.length > 60 ? r.preview.slice(0, 60) + "..." : r.preview,
+    }));
   },
 
   async countSessionsByUser(userId: string) {
-    const [row] = await db
-      .select({ value: dbCount() })
-      .from(chatSessions)
-      .where(eq(chatSessions.userId, userId));
-    return Number(row?.value ?? 0);
+    const rows = await db.execute(sql`
+      SELECT COUNT(DISTINCT cs.id)::int AS count
+      FROM chat_sessions cs
+      WHERE cs.user_id = ${userId}
+        AND EXISTS (SELECT 1 FROM chat_messages cm WHERE cm.session_id = cs.id)
+    `);
+    return (rows.rows[0] as any)?.count ?? 0;
   },
 
   async createMessage(data: {

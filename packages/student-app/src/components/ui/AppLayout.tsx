@@ -4,7 +4,7 @@ import { SOSButton } from "./SOSButton.js";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-bg pb-20">
+    <div className="min-h-screen bg-bg pb-24">
       {children}
       <SOSButton />
       <BottomNav />

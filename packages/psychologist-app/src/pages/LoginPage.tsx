@@ -29,14 +29,20 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
+      {/* Background decoration */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-secondary/5 blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md animate-fade-in-up">
         {/* Logo area */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-            <Shield className="w-8 h-8 text-primary" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark mb-4 shadow-lg shadow-primary/15">
+            <Shield className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-text-main">
+          <h1 className="text-2xl font-bold tracking-tight text-text-main">
             Tirek
           </h1>
           <p className="text-sm text-text-light mt-1">
@@ -45,8 +51,8 @@ export function LoginPage() {
         </div>
 
         {/* Login card */}
-        <div className="bg-surface rounded-2xl shadow-sm border border-border p-6 sm:p-8">
-          <h2 className="text-lg font-semibold text-text-main mb-6">
+        <div className="glass-card-elevated rounded-2xl p-6 sm:p-8">
+          <h2 className="text-lg font-bold text-text-main mb-6">
             {t.auth.login}
           </h2>
 
@@ -55,7 +61,7 @@ export function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-text-main mb-1.5"
+                className="block text-sm font-semibold text-text-main mb-1.5"
               >
                 {t.auth.email}
               </label>
@@ -66,10 +72,9 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full h-11 px-3.5 rounded-lg border border-input-border bg-surface text-sm
-                  text-text-main placeholder:text-text-light
-                  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
-                  transition-colors"
+                className="w-full h-11 px-4 rounded-xl border border-border-light bg-surface/80 text-sm
+                  text-text-main placeholder:text-text-light/60
+                  transition-all"
                 placeholder="email@school.kz"
               />
             </div>
@@ -78,7 +83,7 @@ export function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-text-main mb-1.5"
+                className="block text-sm font-semibold text-text-main mb-1.5"
               >
                 {t.auth.password}
               </label>
@@ -90,15 +95,14 @@ export function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full h-11 px-3.5 pr-10 rounded-lg border border-input-border bg-surface text-sm
-                    text-text-main placeholder:text-text-light
-                    focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
-                    transition-colors"
+                  className="w-full h-11 px-4 pr-11 rounded-xl border border-border-light bg-surface/80 text-sm
+                    text-text-main placeholder:text-text-light/60
+                    transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light hover:text-text-main"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light hover:text-primary transition-colors"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -107,7 +111,7 @@ export function LoginPage() {
 
             {/* Error */}
             {loginMutation.isError && (
-              <div className="p-3 rounded-lg bg-danger/10 text-danger text-sm">
+              <div className="p-3 rounded-xl bg-danger/8 border border-danger/15 text-danger text-sm font-medium">
                 {t.auth.invalidCredentials}
               </div>
             )}
@@ -116,9 +120,10 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={loginMutation.isPending || !email || !password}
-              className="w-full h-11 rounded-lg bg-primary text-white text-sm font-semibold
-                hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed
-                transition-colors flex items-center justify-center gap-2"
+              className="btn-press w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-all flex items-center justify-center gap-2
+                shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/20"
             >
               {loginMutation.isPending && <Loader2 size={16} className="animate-spin" />}
               {t.auth.login}
@@ -126,7 +131,7 @@ export function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-text-light mt-6">
+        <p className="text-center text-[11px] text-text-light/60 font-medium mt-8">
           Tirek &copy; {new Date().getFullYear()}
         </p>
       </div>

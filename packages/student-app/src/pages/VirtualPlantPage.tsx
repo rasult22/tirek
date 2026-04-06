@@ -8,10 +8,10 @@ import { AppLayout } from "../components/ui/AppLayout.js";
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌳", "🌸"] as const;
 const STAGE_BG = [
-  "from-lime-100 to-green-50 dark:from-lime-950/40 dark:to-green-950/20",
-  "from-green-100 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/20",
-  "from-emerald-100 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/20",
-  "from-pink-100 to-rose-50 dark:from-pink-950/40 dark:to-rose-950/20",
+  "from-lime-100 to-green-50",
+  "from-green-100 to-emerald-50",
+  "from-emerald-100 to-teal-50",
+  "from-pink-100 to-rose-50",
 ] as const;
 
 function stageName(stage: number, t: ReturnType<typeof useT>["plant"]) {

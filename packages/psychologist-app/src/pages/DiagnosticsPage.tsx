@@ -192,7 +192,7 @@ export function DiagnosticsPage() {
               <tbody>
                 {results.data.map((row) => (
                   <tr
-                    key={row.id}
+                    key={row.sessionId}
                     className="border-b border-border-light hover:bg-surface-hover/50 cursor-pointer transition-colors"
                     onClick={() => navigate(`/students/${row.studentId}`)}
                   >

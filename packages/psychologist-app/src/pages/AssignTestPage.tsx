@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useT } from "../hooks/useLanguage.js";
+import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { assignTest } from "../api/diagnostics.js";
+import { testDefinitions } from "@tirek/shared";
 import { getStudents } from "../api/students.js";
 import {
   ArrowLeft,
@@ -19,6 +20,7 @@ type Target = "student" | "class";
 
 export function AssignTestPage() {
   const t = useT();
+  const { language } = useLanguage();
   const navigate = useNavigate();
 
   const [testSlug, setTestSlug] = useState("");
@@ -36,7 +38,7 @@ export function AssignTestPage() {
     enabled: target === "student",
   });
 
-  const filteredStudents = students?.filter((s) =>
+  const filteredStudents = students?.data?.filter((s) =>
     studentSearch
       ? s.name.toLowerCase().includes(studentSearch.toLowerCase())
       : true,
@@ -100,16 +102,14 @@ export function AssignTestPage() {
           <label className="block text-sm font-medium text-text-main mb-2">
             Test
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { slug: "phq-a", name: t.tests.phqName, desc: t.tests.phqDesc },
-              { slug: "gad-7", name: t.tests.gadName, desc: t.tests.gadDesc },
-              {
-                slug: "rosenberg",
-                name: t.tests.rosenbergName,
-                desc: t.tests.rosenbergDesc,
-              },
-            ].map((test) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Object.values(testDefinitions).map((td) => {
+              const test = {
+                slug: td.slug,
+                name: language === "kz" ? td.nameKz : td.nameRu,
+                desc: language === "kz" ? td.descriptionKz : td.descriptionRu,
+              };
+              return (
               <button
                 key={test.slug}
                 type="button"
@@ -126,7 +126,8 @@ export function AssignTestPage() {
                 </p>
                 <p className="text-xs text-text-light mt-1">{test.desc}</p>
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
 

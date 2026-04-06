@@ -13,19 +13,21 @@ import { users, moodEntries, diagnosticSessions, diagnosticTests, studentPsychol
 import { eq, desc, and, gte } from "drizzle-orm";
 import { runMandatoryCrisisCheck } from "../../lib/crisis-keywords.js";
 
-const VALID_MODES = ["talk", "problem", "exam", "discovery"] as const;
+const VALID_MODES = ["general", "talk", "problem", "exam", "discovery"] as const;
 
-const FALLBACK_RESPONSE =
-  "Извини, у меня возникла техническая проблема. Пожалуйста, попробуй ещё раз через несколько секунд. Если тебе нужна срочная помощь — позвони на телефон доверия: 150.";
+const FALLBACK_RESPONSES: Record<string, string> = {
+  ru: "Извини, у меня возникла техническая проблема. Пожалуйста, попробуй ещё раз через несколько секунд. Если тебе нужна срочная помощь — позвони на телефон доверия: 150.",
+  kz: "Кешір, техникалық ақау пайда болды. Бірнеше секундтан кейін қайталап көрші. Шұғыл көмек қажет болса — сенім телефонына хабарлас: 150.",
+};
 
-async function buildStudentContext(userId: string, mode: string): Promise<string> {
+async function buildStudentContext(userId: string, mode: string): Promise<{ context: string; language: string }> {
   const [user] = await db
     .select({ name: users.name, grade: users.grade, classLetter: users.classLetter, language: users.language })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
-  if (!user) return "";
+  if (!user) return { context: "", language: "ru" };
 
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -53,7 +55,8 @@ async function buildStudentContext(userId: string, mode: string): Promise<string
 
   const className = user.grade && user.classLetter ? `${user.grade}${user.classLetter}` : user.grade ? `${user.grade} класс` : "не указан";
 
-  let context = `\n═══ КОНТЕКСТ УЧЕНИКА (не озвучивай напрямую, используй для понимания) ═══\nИмя: ${user.name}\nКласс: ${className}\nЯзык: ${user.language === "kz" ? "казахский" : "русский"}\nРежим сессии: ${mode}`;
+  const langLabel = user.language === "kz" ? "казахский" : "русский";
+  let context = `\n═══ КОНТЕКСТ УЧЕНИКА (не озвучивай напрямую, используй для понимания) ═══\nИмя: ${user.name}\nКласс: ${className}\nЯзык интерфейса: ${langLabel}\nРежим сессии: ${mode}\n\n⚠️ ОБЯЗАТЕЛЬНО: Отвечай на ${langLabel} языке — это язык, выбранный учеником в настройках.`;
 
   if (recentMoods.length > 0) {
     const avgMood = Math.round((recentMoods.reduce((s, m) => s + m.mood, 0) / recentMoods.length) * 10) / 10;
@@ -74,12 +77,13 @@ async function buildStudentContext(userId: string, mode: string): Promise<string
     if (testLines) context += `\n\nНедавние тесты:\n${testLines}`;
   }
 
-  return context;
+  return { context, language: user.language };
 }
 
 export const aiChatService = {
-  async createSession(userId: string, body: { mode: string }) {
-    if (!VALID_MODES.includes(body.mode as (typeof VALID_MODES)[number])) {
+  async createSession(userId: string, body: { mode?: string }) {
+    const mode = body.mode || "general";
+    if (!VALID_MODES.includes(mode as (typeof VALID_MODES)[number])) {
       throw new ValidationError(
         `Mode must be one of: ${VALID_MODES.join(", ")}`,
       );
@@ -88,7 +92,7 @@ export const aiChatService = {
     const session = await aiChatRepository.createSession({
       id: uuidv4(),
       userId,
-      mode: body.mode,
+      mode,
     });
 
     return session;
@@ -126,14 +130,16 @@ export const aiChatService = {
     }
 
     // Build student context for agent awareness
-    const studentContext = await buildStudentContext(userId, session.mode);
+    const { context: studentContext } = await buildStudentContext(userId, session.mode);
+
+    const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisisDetectionTool и notifyPsychologistTool.`;
 
     const agent = mastra.getAgent("supportAgent");
 
-    // Stream response via Mastra support agent
+    // Stream response via Mastra support agent — use fullStream to capture tool calls
     const streamResult = await agent.stream(
       [
-        ...(studentContext ? [{ role: "system" as const, content: studentContext }] : []),
+        { role: "system" as const, content: (studentContext || "") + toolContext },
         { role: "user" as const, content: body.content },
       ],
       {
@@ -142,7 +148,7 @@ export const aiChatService = {
     );
 
     return {
-      textStream: streamResult.textStream,
+      fullStream: streamResult.fullStream,
       async saveAssistantMessage(fullText: string) {
         await aiChatRepository.createMessage({
           sessionId,
@@ -187,11 +193,12 @@ export const aiChatService = {
 
     let assistantContent: string;
     try {
-      const studentContext = await buildStudentContext(userId, session.mode);
+      const { context: studentContext, language } = await buildStudentContext(userId, session.mode);
+      const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisisDetectionTool и notifyPsychologistTool.`;
       const agent = mastra.getAgent("supportAgent");
       const response = await agent.generate(
         [
-          ...(studentContext ? [{ role: "system" as const, content: studentContext }] : []),
+          { role: "system" as const, content: (studentContext || "") + toolContext },
           { role: "user" as const, content: body.content },
         ],
         {
@@ -201,7 +208,8 @@ export const aiChatService = {
       assistantContent = response.text;
     } catch (error) {
       console.error("Mastra agent error:", error);
-      assistantContent = FALLBACK_RESPONSE;
+      const [userData] = await db.select({ language: users.language }).from(users).where(eq(users.id, userId)).limit(1);
+      assistantContent = FALLBACK_RESPONSES[userData?.language ?? "ru"] ?? FALLBACK_RESPONSES.ru;
     }
 
     const assistantMessage = await aiChatRepository.createMessage({

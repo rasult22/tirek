@@ -375,7 +375,7 @@ export function StudentDetailPage() {
                       className={clsx(
                         "flex flex-col items-center rounded-xl p-3 border transition-all",
                         item.earned
-                          ? "border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/30"
+                          ? "border-amber-200 bg-amber-50/50"
                           : "border-border-light bg-surface-secondary/50 opacity-50 grayscale",
                       )}
                     >
@@ -423,10 +423,10 @@ export function StudentDetailPage() {
                   behavioral_experiment: t.cbt.behavioralExperiment,
                 };
                 const typeColors: Record<string, string> = {
-                  thought_diary: "bg-violet-100 dark:bg-violet-900/30 text-violet-700",
-                  circle_of_control: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700",
-                  stop_technique: "bg-red-100 dark:bg-red-900/30 text-red-700",
-                  behavioral_experiment: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700",
+                  thought_diary: "bg-violet-100 text-violet-700",
+                  circle_of_control: "bg-cyan-100 text-cyan-700",
+                  stop_technique: "bg-red-100 text-red-700",
+                  behavioral_experiment: "bg-indigo-100 text-indigo-700",
                 };
                 return (
                   <div
@@ -494,7 +494,7 @@ export function StudentDetailPage() {
                             {d.prediction && <p><span className="font-medium text-text-light">{t.cbt.prediction}:</span> {d.prediction}</p>}
                             {d.result && <p><span className="font-medium text-green-500">{t.cbt.result}:</span> {d.result}</p>}
                             {d.conclusion && <p><span className="font-medium text-amber-500">{t.cbt.conclusion}:</span> {d.conclusion}</p>}
-                            <span className={clsx("inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-bold", d.completed ? "bg-green-100 dark:bg-green-900/30 text-green-700" : "bg-amber-100 dark:bg-amber-900/30 text-amber-700")}>
+                            <span className={clsx("inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-bold", d.completed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700")}>
                               {d.completed ? t.cbt.completed : t.cbt.pending}
                             </span>
                           </>

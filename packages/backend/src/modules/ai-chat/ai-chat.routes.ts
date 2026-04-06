@@ -10,7 +10,7 @@ const aiChatRouter = new Hono<{ Variables: AppVariables }>();
 // POST /chat/sessions - create a new chat session
 aiChatRouter.post("/sessions", async (c) => {
   try {
-    const body = await c.req.json();
+    const body = await c.req.json().catch(() => ({}));
     const result = await aiChatService.createSession(c.var.user.userId, body);
     return c.json(result, 201);
   } catch (err) {
@@ -22,7 +22,7 @@ aiChatRouter.post("/sessions", async (c) => {
 aiChatRouter.post("/sessions/:id/stream", async (c) => {
   try {
     const body = await c.req.json();
-    const { textStream, saveAssistantMessage } = await aiChatService.streamMessage(
+    const { fullStream, saveAssistantMessage } = await aiChatService.streamMessage(
       c.var.user.userId,
       c.req.param("id"),
       body,
@@ -32,12 +32,25 @@ aiChatRouter.post("/sessions/:id/stream", async (c) => {
       let fullText = "";
 
       try {
-        const reader = textStream.getReader();
+        const reader = fullStream.getReader();
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          fullText += value;
-          await stream.writeSSE({ data: JSON.stringify({ type: "token", content: value }) });
+
+          const chunk = value as any;
+
+          if (chunk.type === "text-delta" && chunk.payload?.text) {
+            fullText += chunk.payload.text;
+            await stream.writeSSE({ data: JSON.stringify({ type: "token", content: chunk.payload.text }) });
+          } else if (chunk.type === "tool-result" && chunk.payload?.toolName) {
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: "tool_call",
+                toolName: chunk.payload.toolName,
+                result: chunk.payload.result,
+              }),
+            });
+          }
         }
 
         // Save the completed message
@@ -45,7 +58,7 @@ aiChatRouter.post("/sessions/:id/stream", async (c) => {
         await stream.writeSSE({ data: JSON.stringify({ type: "done", content: fullText }) });
       } catch (error) {
         console.error("Stream error:", error);
-        const fallback = "Извини, произошла ошибка. Попробуй ещё раз или позвони на телефон доверия: 150.";
+        const fallback = "Извини, произошла ошибка. Попробуй ещё раз или позвони на телефон доверия: 150. / Кешір, қате пайда болды. Қайталап көрші немесе сенім телефонына хабарлас: 150.";
         await saveAssistantMessage(fullText || fallback);
         await stream.writeSSE({ data: JSON.stringify({ type: "error", content: fallback }) });
       }

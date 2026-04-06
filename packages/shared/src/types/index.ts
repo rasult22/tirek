@@ -216,6 +216,7 @@ export interface SOSEvent {
   studentName?: string;
   studentGrade?: number;
   studentClass?: string;
+  studentClassLetter?: string;
 }
 
 export interface ChatSession {
@@ -224,6 +225,7 @@ export interface ChatSession {
   mode: "talk" | "problem" | "exam" | "discovery";
   startedAt: string;
   lastMessageAt: string;
+  preview?: string;
 }
 
 export interface ChatMessage {
@@ -249,7 +251,7 @@ export interface InviteCode {
 export interface Notification {
   id: string;
   userId: string;
-  type: "crisis" | "reminder" | "assignment" | "system" | "direct_message" | "appointment" | "achievement";
+  type: "crisis" | "sos_alert" | "concern_detected" | "reminder" | "assignment" | "system" | "direct_message" | "appointment" | "achievement";
   title: string;
   body: string;
   read: boolean;

@@ -176,8 +176,16 @@
   - Shadow overrides для dark mode (все shadow-sm/md/lg)
   - i18n: ru + kz (4 ключа)
 
-### P2-7. Дополнительные тесты (6 штук)
-- SCARED, Спилбергер-Ханин, PSS-10, Опросник буллинга, Учебное выгорание, Социометрия
+### P2-7. Дополнительные тесты (6 штук) ✅
+- **Статус:** Завершено
+- **Детали:**
+  - 6 новых тестов в test-definitions.ts: SCARED (41q), STAI (40q), PSS-10 (10q), Буллинг (20q), Учебное выгорание (16q), Социометрия (12q)
+  - Баг-фикс reverse scoring: добавлен maxOptionValue/minOptionValue в seed, формула поддерживает 1-based шкалы (STAI)
+  - Seed: upsert вместо onConflictDoNothing для обновления existing тестов
+  - Student-app: TEST_ICONS для 6 новых тестов с dark mode
+  - Psychologist-app: AssignTestPage динамический (читает из testDefinitions)
+  - i18n: ru + kz (12 ключей)
+  - Итого: 9 тестов, 139 билингвальных вопросов
 
 ### P2-8. Admin панель
 - Управление школами, психологами, системным контентом

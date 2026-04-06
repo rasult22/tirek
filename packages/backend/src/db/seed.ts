@@ -81,6 +81,15 @@ async function seed() {
 
   // ── 2. Diagnostic tests ─────────────────────────────────────────────
   for (const [slug, def] of Object.entries(testDefinitions)) {
+    const optionValues = def.options.map((o: { value: number }) => o.value);
+    const scoringData = {
+      options: def.options,
+      thresholds: def.scoringRules,
+      reverseItems: def.reverseItems,
+      maxScore: def.maxScore,
+      maxOptionValue: Math.max(...optionValues),
+      minOptionValue: Math.min(...optionValues),
+    };
     await db
       .insert(diagnosticTests)
       .values({
@@ -90,17 +99,22 @@ async function seed() {
         nameKz: def.nameKz,
         description: def.descriptionRu,
         questions: def.questions,
-        scoringRules: {
-          options: def.options,
-          thresholds: def.scoringRules,
-          reverseItems: def.reverseItems,
-          maxScore: def.maxScore,
-        },
+        scoringRules: scoringData,
         questionCount: def.questions.length,
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate({
+        target: diagnosticTests.slug,
+        set: {
+          nameRu: def.nameRu,
+          nameKz: def.nameKz,
+          description: def.descriptionRu,
+          questions: def.questions,
+          scoringRules: scoringData,
+          questionCount: def.questions.length,
+        },
+      });
   }
-  console.log("  ✓ 3 diagnostic tests (PHQ-A, GAD-7, Rosenberg)");
+  console.log(`  ✓ ${Object.keys(testDefinitions).length} diagnostic tests seeded`);
 
   // ── 3. Breathing exercises ──────────────────────────────────────────
   const exerciseData = [

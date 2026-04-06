@@ -26,6 +26,7 @@ interface ScoringRules {
   maxScore?: number;
   reverseItems?: number[];
   maxOptionValue?: number;
+  minOptionValue?: number;
 }
 
 export const diagnosticsService = {
@@ -140,7 +141,8 @@ export const diagnosticsService = {
     // Handle reverse scoring (e.g., Rosenberg self-esteem scale)
     if (scoringRules?.reverseItems && scoringRules?.maxOptionValue !== undefined) {
       if (scoringRules.reverseItems.includes(questionIndex)) {
-        score = scoringRules.maxOptionValue - answer;
+        const minVal = scoringRules.minOptionValue ?? 0;
+        score = minVal + scoringRules.maxOptionValue - answer;
       }
     }
 
@@ -269,18 +271,36 @@ export const diagnosticsService = {
     psychologistId: string,
     body: {
       testId?: string;
+      testSlug?: string;
+      target?: string;
       targetType?: string;
       targetGrade?: number;
+      grade?: number;
       targetClassLetter?: string;
+      classLetter?: string;
       targetStudentId?: string;
+      studentId?: string;
       dueDate?: string;
     },
   ) {
-    if (!body.testId || !body.targetType) {
-      throw new ValidationError("testId and targetType are required");
+    const targetType = body.targetType ?? body.target;
+    if (!targetType) {
+      throw new ValidationError("targetType (or target) is required");
     }
-    const test = await diagnosticsRepository.findTestById(body.testId);
-    if (!test) throw new NotFoundError("Test not found");
+
+    // Resolve test: accept testId or testSlug
+    if (!body.testId && !body.testSlug) {
+      throw new ValidationError("testId or testSlug is required");
+    }
+    let test = body.testId
+      ? await diagnosticsRepository.findTestById(body.testId)
+      : null;
+    if (!test && body.testSlug) {
+      test = await diagnosticsRepository.findTestBySlug(body.testSlug);
+    }
+    if (!test) {
+      throw new NotFoundError(`Test not found: ${body.testSlug ?? body.testId}`);
+    }
 
     const { db } = await import("../../db/index.js");
     const { testAssignments } = await import("../../db/schema.js");
@@ -290,12 +310,12 @@ export const diagnosticsService = {
       .insert(testAssignments)
       .values({
         id: uuid(),
-        testId: body.testId,
+        testId: test.id,
         assignedBy: psychologistId,
-        targetType: body.targetType,
-        targetGrade: body.targetGrade ?? null,
-        targetClassLetter: body.targetClassLetter ?? null,
-        targetStudentId: body.targetStudentId ?? null,
+        targetType,
+        targetGrade: body.targetGrade ?? body.grade ?? null,
+        targetClassLetter: body.targetClassLetter ?? body.classLetter ?? null,
+        targetStudentId: body.targetStudentId ?? body.studentId ?? null,
         dueDate: body.dueDate ? new Date(body.dueDate) : null,
       })
       .returning();
@@ -317,11 +337,15 @@ export const diagnosticsService = {
       sessionId: r.session.id,
       studentId: r.session.userId,
       testId: r.test.id,
+      testSlug: r.test.slug,
       testName: r.test.nameRu,
       totalScore: r.session.totalScore,
       maxScore: r.session.maxScore,
       severity: r.session.severity,
       completedAt: r.session.completedAt,
+      studentName: r.studentName,
+      studentGrade: r.studentGrade,
+      studentClass: r.studentClass,
     }));
 
     return paginated(data, total, pagination);

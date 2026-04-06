@@ -9,38 +9,43 @@ import {
 } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { detectMarkers } from "../../lib/crisis-keywords.js";
 
 export const crisisDetectionTool = createTool({
   id: "crisis-detection",
-  description:
-    "Detects crisis markers in a user message (suicidal ideation, self-harm, abuse, severe distress) and creates SOS events with psychologist notifications when needed.",
+  description: `ОБЯЗАТЕЛЬНО вызови этот инструмент, когда в сообщении ученика ты видишь ЛЮБЫЕ признаки:
+- Суицидальные мысли (прямые или косвенные): "не хочу жить", "лучше бы меня не было", "зачем я живу", "устал от жизни", "хочу исчезнуть", и любые похожие по смыслу фразы
+- Самоповреждение: порезы, удары себя, любые формы причинения себе вреда
+- Насилие: физическое, сексуальное, эмоциональное — над учеником или в семье
+- Тяжёлый дистресс: сильное отчаяние, безнадёжность, ощущение что выхода нет
+
+НЕ анализируй ключевые слова — анализируй СМЫСЛ и КОНТЕКСТ. Фраза "я больше не могу" в контексте страданий — это кризис.
+Вызывай этот инструмент при МАЛЕЙШЕМ подозрении — лучше перестраховаться.
+Инструмент создаст SOS-событие и уведомит психолога. Ученик НЕ увидит, что ты это сделал.`,
   inputSchema: z.object({
-    message: z.string().describe("The user message to analyze for crisis markers"),
     userId: z.string().describe("The ID of the user who sent the message"),
     sessionId: z.string().describe("The chat session ID"),
+    severity: z
+      .enum(["low", "medium", "high"])
+      .describe(
+        "high = суицид, самоповреждение, насилие, прямая угроза жизни. medium = сильный дистресс, безнадёжность, буллинг, абьюз. low = тревожность, подавленность, проблемы со сном, постоянный плач.",
+      ),
+    markers: z
+      .array(z.string())
+      .describe(
+        "Краткое описание обнаруженных признаков кризиса на русском, например: ['суицидальные мысли', 'нежелание жить']",
+      ),
+    summary: z
+      .string()
+      .describe(
+        "Краткое описание ситуации для психолога на русском, например: 'Ученик выражает нежелание жить после рассказа о буллинге'",
+      ),
   }),
   outputSchema: z.object({
-    isCrisis: z.boolean(),
+    recorded: z.boolean(),
     severity: z.enum(["low", "medium", "high"]),
-    markers: z.array(z.string()),
-    response: z.string(),
   }),
-  execute: async ({ context }) => {
-    const { message, userId, sessionId } = context;
-
-    const result = detectMarkers(message);
-
-    if (!result) {
-      return {
-        isCrisis: false,
-        severity: "low" as const,
-        markers: [],
-        response: "",
-      };
-    }
-
-    const { severity, markers } = result;
+  execute: async (params) => {
+    const { userId, sessionId, severity, markers, summary } = params;
 
     // Create SOS event for high and medium severity
     if (severity === "high" || severity === "medium") {
@@ -52,7 +57,7 @@ export const crisisDetectionTool = createTool({
           id: sosId,
           userId,
           level: sosLevel,
-          notes: `Auto-detected crisis in chat session ${sessionId}. Markers: ${markers.join(", ")}`,
+          notes: `${summary}. Session: ${sessionId}. Markers: ${markers.join(", ")}`,
         });
 
         // Find linked psychologists and create notifications
@@ -74,7 +79,7 @@ export const crisisDetectionTool = createTool({
               severity === "high"
                 ? "🚨 СРОЧНО: Обнаружены критические маркеры кризиса"
                 : "⚠️ Внимание: Обнаружены маркеры кризиса",
-            body: `У ученика обнаружены признаки кризисной ситуации (уровень: ${severity}). Требуется внимание специалиста.`,
+            body: summary,
             metadata: {
               sosEventId: sosId,
               sessionId,
@@ -88,49 +93,9 @@ export const crisisDetectionTool = createTool({
       }
     }
 
-    // Build supportive response with hotline numbers
-    let response: string;
-
-    if (severity === "high") {
-      response = [
-        "Я очень переживаю за тебя. То, что ты чувствуешь — это серьёзно, и тебе нужна помощь живого специалиста прямо сейчас.",
-        "",
-        "📞 Пожалуйста, позвони по одному из этих номеров:",
-        "• 150 — телефон доверия для детей и подростков",
-        "• 111 — служба экстренной психологической помощи",
-        "• 112 — единая служба спасения",
-        "",
-        "Ты также можешь обратиться к своему школьному психологу — это безопасно и конфиденциально.",
-        "Ты не один/одна. Есть люди, которые хотят помочь тебе.",
-      ].join("\n");
-    } else if (severity === "medium") {
-      response = [
-        "Я слышу тебя, и мне важно, чтобы ты знал(а) — ты не одинок(а) в этом.",
-        "",
-        "То, что ты описываешь, — это ситуация, в которой лучше всего поможет живой специалист.",
-        "Я очень рекомендую поговорить с твоим школьным психологом.",
-        "",
-        "📞 Ты также можешь позвонить:",
-        "• 150 — телефон доверия для детей и подростков",
-        "• 111 — служба экстренной психологической помощи",
-        "",
-        "Помни: просить о помощи — это проявление силы, а не слабости.",
-      ].join("\n");
-    } else {
-      response = [
-        "Я понимаю, что тебе сейчас непросто. Тревога и стресс — это нормальная реакция, и с этим можно справиться.",
-        "",
-        "Если чувствуешь, что тебе тяжело справляться самостоятельно, поговори с школьным психологом — он(а) поможет разобраться.",
-        "",
-        "📞 Телефон доверия: 150 (бесплатно, анонимно, круглосуточно)",
-      ].join("\n");
-    }
-
     return {
-      isCrisis: true,
+      recorded: true,
       severity,
-      markers,
-      response,
     };
   },
 });

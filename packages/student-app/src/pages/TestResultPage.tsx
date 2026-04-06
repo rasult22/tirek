@@ -7,10 +7,10 @@ import type { SessionResult } from "../api/tests.js";
 import type { Severity } from "@tirek/shared";
 
 const SEVERITY_CONFIG: Record<Severity, { emoji: string; bg: string; border: string }> = {
-  minimal: { emoji: "😊", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-200 dark:border-green-800" },
-  mild: { emoji: "🙂", bg: "bg-yellow-50 dark:bg-yellow-950/30", border: "border-yellow-200 dark:border-yellow-800" },
-  moderate: { emoji: "🤔", bg: "bg-orange-50 dark:bg-orange-950/30", border: "border-orange-200 dark:border-orange-800" },
-  severe: { emoji: "🤗", bg: "bg-red-50 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" },
+  minimal: { emoji: "😊", bg: "bg-green-50", border: "border-green-200" },
+  mild: { emoji: "🙂", bg: "bg-yellow-50", border: "border-yellow-200" },
+  moderate: { emoji: "🤔", bg: "bg-orange-50", border: "border-orange-200" },
+  severe: { emoji: "🤗", bg: "bg-red-50", border: "border-red-200" },
 };
 
 export function TestResultPage() {
@@ -70,7 +70,7 @@ export function TestResultPage() {
         <div className="mt-6 space-y-3">
           {(sev === "moderate" || sev === "severe") && (
             <Link
-              to="/chat/new"
+              to="/chat"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-dark py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/30"
             >
               <MessageCircle size={18} />

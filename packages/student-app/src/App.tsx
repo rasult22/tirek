@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "./hooks/useLanguage.js";
-import { ThemeProvider } from "./hooks/useTheme.js";
 import { useAuthStore } from "./store/auth-store.js";
 
 // Pages
@@ -41,7 +40,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
       <LanguageProvider>
         <BrowserRouter>
           <Routes>
@@ -58,7 +56,8 @@ export function App() {
             />
             <Route path="/mood" element={<ProtectedRoute><MoodCheckInPage /></ProtectedRoute>} />
             <Route path="/mood/calendar" element={<ProtectedRoute><MoodCalendarPage /></ProtectedRoute>} />
-            <Route path="/chat" element={<ProtectedRoute><ChatListPage /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+            <Route path="/chat/history" element={<ProtectedRoute><ChatListPage /></ProtectedRoute>} />
             <Route path="/chat/:sessionId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
             <Route path="/tests" element={<ProtectedRoute><TestsListPage /></ProtectedRoute>} />
             <Route path="/tests/:testId" element={<ProtectedRoute><TestPage /></ProtectedRoute>} />
@@ -77,7 +76,6 @@ export function App() {
           </Routes>
         </BrowserRouter>
       </LanguageProvider>
-      </ThemeProvider>
     </QueryClientProvider>
   );
 }

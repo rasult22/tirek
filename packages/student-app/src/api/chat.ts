@@ -3,7 +3,7 @@ import type { ChatSession, ChatMessage, PaginatedResponse } from "@tirek/shared"
 import { useAuthStore } from "../store/auth-store.js";
 
 export const chatApi = {
-  sessions: () => apiFetch<PaginatedResponse<ChatSession>>("/student/chat/sessions"),
+  sessions: () => apiFetch<PaginatedResponse<ChatSession>>("/student/chat/sessions?limit=6"),
 
   create: (mode: string) =>
     apiFetch<ChatSession>("/student/chat/sessions", {

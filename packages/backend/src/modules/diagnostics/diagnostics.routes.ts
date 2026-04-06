@@ -1,8 +1,11 @@
 import { Hono } from "hono";
+import { eq } from "drizzle-orm";
 import type { AppVariables } from "../../middleware/auth.js";
 import { handleError } from "../../shared/errors.js";
 import { parsePagination } from "../../shared/pagination.js";
 import { diagnosticsService } from "./diagnostics.service.js";
+import { db } from "../../db/index.js";
+import { users } from "../../db/schema.js";
 
 const diagnosticsRouter = new Hono<{ Variables: AppVariables }>();
 
@@ -21,11 +24,17 @@ diagnosticsRouter.get("/", async (c) => {
 // GET /tests/assigned
 diagnosticsRouter.get("/assigned", async (c) => {
   try {
-    const user = c.var.user;
+    const userId = c.var.user.userId;
+    // Fetch grade/classLetter from DB since JWT doesn't include them
+    const [student] = await db
+      .select({ grade: users.grade, classLetter: users.classLetter })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
     const result = await diagnosticsService.getAssignedTests(
-      user.userId,
-      (user as any).grade ?? null,
-      (user as any).classLetter ?? null,
+      userId,
+      student?.grade ?? null,
+      student?.classLetter ?? null,
     );
     return c.json(result);
   } catch (err) {

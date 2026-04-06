@@ -1,21 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft, LogOut, Globe, User, Pencil, Check, X, Sun, Moon, Monitor } from "lucide-react";
+import { ArrowLeft, LogOut, Globe, User, Pencil, Check, X } from "lucide-react";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
-import { useTheme } from "../hooks/useTheme.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { authApi } from "../api/auth.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import type { Language } from "@tirek/shared";
 
 const AVATAR_MAP: Record<string, string> = {
-  "avatar-1": "\uD83D\uDE0A",
-  "avatar-2": "\uD83E\uDD29",
-  "avatar-3": "\uD83E\uDD8A",
-  "avatar-4": "\uD83D\uDC31",
-  "avatar-5": "\uD83D\uDE80",
-  "avatar-6": "\uD83C\uDF3B",
+  "avatar-1": "\u{1F60A}",
+  "avatar-2": "\u{1F929}",
+  "avatar-3": "\u{1F98A}",
+  "avatar-4": "\u{1F431}",
+  "avatar-5": "\u{1F680}",
+  "avatar-6": "\u{1F33B}",
 };
 
 const AVATAR_IDS = Object.keys(AVATAR_MAP);
@@ -23,7 +22,6 @@ const AVATAR_IDS = Object.keys(AVATAR_MAP);
 export function ProfilePage() {
   const t = useT();
   const { language, setLanguage } = useLanguage();
-  const { theme, resolvedTheme, setTheme } = useTheme();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -54,12 +52,12 @@ export function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-md px-5 pt-6">
+      <div className="mx-auto max-w-md px-5 pt-6 animate-fade-in-up">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
+            className="btn-press flex h-10 w-10 items-center justify-center rounded-xl glass-card"
           >
             <ArrowLeft size={20} className="text-text-main" />
           </button>
@@ -68,51 +66,49 @@ export function ProfilePage() {
 
         {/* User card */}
         {!editing ? (
-          <div className="mt-6 flex flex-col items-center rounded-2xl bg-surface p-6 shadow-sm">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/15">
+          <div className="mt-6 flex flex-col items-center glass-card-elevated rounded-2xl p-7">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-secondary/10">
               {user?.avatarId && AVATAR_MAP[user.avatarId] ? (
-                <span className="text-4xl">{AVATAR_MAP[user.avatarId]}</span>
+                <span className="text-4xl drop-shadow-sm">{AVATAR_MAP[user.avatarId]}</span>
               ) : (
                 <User size={36} className="text-primary-dark" />
               )}
             </div>
-            <h2 className="mt-3 text-lg font-extrabold text-text-main">{user?.name}</h2>
+            <h2 className="mt-4 text-lg font-extrabold text-text-main">{user?.name}</h2>
             <p className="mt-0.5 text-sm text-text-light">{user?.email}</p>
             {user?.grade && (
-              <p className="mt-1 text-xs font-bold text-primary-dark">
+              <p className="mt-1.5 text-xs font-bold text-primary-dark bg-primary/8 px-3 py-1 rounded-full">
                 {user.grade}{user.classLetter ?? ""}
               </p>
             )}
             <button
               onClick={startEdit}
-              className="mt-4 flex items-center gap-2 rounded-xl bg-primary/10 px-4 py-2 text-sm font-bold text-primary-dark transition-all hover:bg-primary/20"
+              className="btn-press mt-5 flex items-center gap-2 rounded-xl bg-primary/10 px-5 py-2.5 text-sm font-bold text-primary-dark transition-all hover:bg-primary/15"
             >
               <Pencil size={14} />
               {t.common.edit}
             </button>
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl bg-surface p-6 shadow-sm">
+          <div className="mt-6 glass-card-elevated rounded-2xl p-6">
             <h3 className="text-sm font-bold text-text-main mb-4">{t.common.edit}</h3>
 
-            {/* Name input */}
-            <label className="block text-xs font-bold text-text-light mb-1">{t.auth.name}</label>
+            <label className="block text-xs font-bold text-text-light mb-1.5">{t.auth.name}</label>
             <input
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="w-full rounded-xl border border-border px-4 py-3 text-sm text-text-main focus:border-primary focus:outline-none"
+              className="w-full rounded-xl border border-border-light bg-surface/60 px-4 py-3 text-sm text-text-main transition-all"
             />
 
-            {/* Avatar picker */}
-            <label className="block text-xs font-bold text-text-light mt-4 mb-2">{t.auth.selectAvatar}</label>
+            <label className="block text-xs font-bold text-text-light mt-5 mb-2">{t.auth.selectAvatar}</label>
             <div className="flex flex-wrap gap-2">
               {AVATAR_IDS.map((id) => (
                 <button
                   key={id}
                   onClick={() => setEditAvatar(id)}
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl text-2xl transition-all ${
-                    editAvatar === id ? "bg-primary/20 ring-2 ring-primary" : "bg-surface-secondary hover:bg-surface-hover"
+                  className={`btn-press flex h-12 w-12 items-center justify-center rounded-xl text-2xl transition-all ${
+                    editAvatar === id ? "bg-primary/15 ring-2 ring-primary glow-primary" : "bg-surface-secondary hover:bg-surface-hover"
                   }`}
                 >
                   {AVATAR_MAP[id]}
@@ -120,11 +116,10 @@ export function ProfilePage() {
               ))}
             </div>
 
-            {/* Actions */}
-            <div className="mt-5 flex gap-3">
+            <div className="mt-6 flex gap-3">
               <button
                 onClick={() => setEditing(false)}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border py-3 text-sm font-bold text-text-light transition-all hover:bg-surface-hover"
+                className="btn-press flex-1 flex items-center justify-center gap-2 rounded-xl border border-border-light py-3 text-sm font-bold text-text-light transition-all hover:bg-surface-hover"
               >
                 <X size={14} />
                 {t.common.cancel}
@@ -132,7 +127,7 @@ export function ProfilePage() {
               <button
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending || !editName.trim()}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-dark py-3 text-sm font-bold text-white transition-all hover:bg-primary disabled:opacity-50"
+                className="btn-press flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-primary-dark py-3 text-sm font-bold text-white transition-all disabled:opacity-50"
               >
                 <Check size={14} />
                 {t.common.save}
@@ -142,54 +137,25 @@ export function ProfilePage() {
         )}
 
         {/* Language switcher */}
-        <div className="mt-5 rounded-2xl bg-surface p-5 shadow-sm">
+        <div className="mt-5 glass-card rounded-2xl p-5">
           <div className="flex items-center gap-3">
-            <Globe size={20} className="text-primary-dark" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <Globe size={18} className="text-primary-dark" />
+            </div>
             <span className="flex-1 text-sm font-bold text-text-main">{t.profile.language}</span>
           </div>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3.5 flex gap-2">
             {(["ru", "kz"] as Language[]).map((lang) => (
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
-                className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
+                className={`btn-press flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
                   language === lang
-                    ? "bg-primary-dark text-white shadow-sm"
+                    ? "bg-gradient-to-r from-primary to-primary-dark text-white shadow-sm"
                     : "bg-surface-secondary text-text-light hover:bg-surface-hover"
                 }`}
               >
-                {lang === "ru" ? "\uD83C\uDDF7\uD83C\uDDFA Русский" : "\uD83C\uDDF0\uD83C\uDDFF Қазақша"}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Theme switcher */}
-        <div className="mt-5 rounded-2xl bg-surface p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            {resolvedTheme === "dark" ? (
-              <Moon size={20} className="text-primary-dark" />
-            ) : (
-              <Sun size={20} className="text-primary-dark" />
-            )}
-            <span className="flex-1 text-sm font-bold text-text-main">{t.profile.theme}</span>
-          </div>
-          <div className="mt-3 flex gap-2">
-            {([
-              { key: "light" as const, label: t.profile.themeLight, icon: Sun },
-              { key: "dark" as const, label: t.profile.themeDark, icon: Moon },
-              { key: "system" as const, label: t.profile.themeSystem, icon: Monitor },
-            ]).map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setTheme(key)}
-                className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
-                  theme === key
-                    ? "bg-primary-dark text-white shadow-sm"
-                    : "bg-surface-secondary text-text-light hover:bg-surface-hover"
-                }`}
-              >
-                {label}
+                {lang === "ru" ? "\u{1F1F7}\u{1F1FA} \u0420\u0443\u0441\u0441\u043A\u0438\u0439" : "\u{1F1F0}\u{1F1FF} \u049A\u0430\u0437\u0430\u049B\u0448\u0430"}
               </button>
             ))}
           </div>
@@ -198,7 +164,7 @@ export function ProfilePage() {
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-danger/20 bg-surface py-3.5 text-sm font-bold text-danger transition-all hover:bg-danger/5"
+          className="btn-press mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-danger/20 bg-danger/5 py-3.5 text-sm font-bold text-danger transition-all hover:bg-danger/10"
         >
           <LogOut size={18} />
           {t.auth.logout}
