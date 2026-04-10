@@ -1,6 +1,6 @@
 import { eq, desc, asc, sql, count as dbCount, inArray } from "drizzle-orm";
 import { db } from "../../db/index.js";
-import { chatSessions, chatMessages, users } from "../../db/schema.js";
+import { chatSessions, chatMessages, users, notifications } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 
 export const aiChatRepository = {
@@ -92,23 +92,30 @@ export const aiChatRepository = {
   async findFlaggedMessages(studentIds: string[], pagination: PaginationParams) {
     if (studentIds.length === 0) return { rows: [], total: 0 };
 
-    const rows = await db
-      .select({
-        messageId: chatMessages.id,
-        content: chatMessages.content,
-        createdAt: chatMessages.createdAt,
-        sessionId: chatSessions.id,
-        studentName: users.name,
-        studentGrade: users.grade,
-        studentClass: users.classLetter,
-      })
-      .from(chatMessages)
-      .innerJoin(chatSessions, eq(chatMessages.sessionId, chatSessions.id))
-      .innerJoin(users, eq(chatSessions.userId, users.id))
-      .where(eq(chatMessages.flagged, true))
-      .orderBy(desc(chatMessages.createdAt))
-      .limit(pagination.limit)
-      .offset(pagination.offset);
+    const rows = await db.execute(sql`
+      SELECT
+        cm.id AS "messageId",
+        cm.content,
+        cm.created_at AS "createdAt",
+        cs.id AS "sessionId",
+        u.name AS "studentName",
+        u.grade AS "studentGrade",
+        u.class_letter AS "studentClass",
+        (
+          SELECT n.metadata->>'sosEventId'
+          FROM notifications n
+          WHERE n.metadata->>'sessionId' = cs.id
+            AND n.type = 'sos_alert'
+          ORDER BY n.created_at DESC
+          LIMIT 1
+        ) AS "sosEventId"
+      FROM chat_messages cm
+      INNER JOIN chat_sessions cs ON cm.session_id = cs.id
+      INNER JOIN users u ON cs.user_id = u.id
+      WHERE cm.flagged = true
+      ORDER BY cm.created_at DESC
+      LIMIT ${pagination.limit} OFFSET ${pagination.offset}
+    `);
 
     const [countRow] = await db
       .select({ value: dbCount() })
@@ -116,6 +123,6 @@ export const aiChatRepository = {
       .innerJoin(chatSessions, eq(chatMessages.sessionId, chatSessions.id))
       .where(eq(chatMessages.flagged, true));
 
-    return { rows, total: Number(countRow?.value ?? 0) };
+    return { rows: rows.rows as any[], total: Number(countRow?.value ?? 0) };
   },
 };

@@ -41,4 +41,14 @@ usersRouter.get("/students/:id", async (c) => {
   }
 });
 
+// DELETE /students/:id - detach student from psychologist
+usersRouter.delete("/students/:id", async (c) => {
+  try {
+    await usersService.detachStudent(c.req.param("id"), c.var.user.userId);
+    return c.json({ success: true });
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 export { usersRouter };

@@ -5,6 +5,7 @@ import { ArrowLeft, Pencil, Check } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { plantApi } from "../api/plant.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 const STAGE_EMOJI = ["🌱", "🌿", "🌳", "🌸"] as const;
 const STAGE_BG = [
@@ -25,7 +26,7 @@ export function VirtualPlantPage() {
   const t = useT();
   const queryClient = useQueryClient();
 
-  const { data: plant } = useQuery({
+  const { data: plant, isError, refetch } = useQuery({
     queryKey: ["plant"],
     queryFn: plantApi.get,
   });
@@ -43,6 +44,14 @@ export function VirtualPlantPage() {
       setTimeout(() => setSaved(false), 2000);
     },
   });
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   if (!plant) {
     return (

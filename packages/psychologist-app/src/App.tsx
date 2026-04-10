@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { LanguageProvider } from "./hooks/useLanguage.js";
 import { useAuthStore } from "./store/auth-store.js";
 import { AppLayout } from "./components/ui/AppLayout.js";
+import { ErrorBoundary } from "./components/ui/ErrorBoundary.js";
+import { NetworkStatus } from "./components/ui/NetworkStatus.js";
 
 // Pages
 import { LoginPage } from "./pages/LoginPage.js";
@@ -39,6 +41,8 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
+        <ErrorBoundary>
+        <NetworkStatus />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -66,6 +70,7 @@ export function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        </ErrorBoundary>
       </LanguageProvider>
     </QueryClientProvider>
   );

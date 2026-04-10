@@ -4,12 +4,13 @@ import { Plus, MessageCircle, Clock } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { chatApi } from "../api/chat.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 export function ChatListPage() {
   const t = useT();
   const navigate = useNavigate();
 
-  const { data: sessions, isLoading } = useQuery({
+  const { data: sessions, isLoading, isError, refetch } = useQuery({
     queryKey: ["chat", "sessions"],
     queryFn: chatApi.sessions,
   });
@@ -26,6 +27,14 @@ export function ChatListPage() {
 
   // Show only the 6 most recent sessions
   const recentSessions = sessions?.data?.slice(0, 6) ?? [];
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

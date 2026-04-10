@@ -94,11 +94,16 @@ export function LoginPage() {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-text-light transition-colors hover:text-primary"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-text-light transition-colors hover:text-primary"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
+
+        <p className="text-right text-xs text-text-light cursor-default opacity-60">
+          {t.auth.forgotPassword}
+        </p>
 
         {loginMutation.isError && (
           <div className="rounded-xl bg-danger/8 border border-danger/15 px-4 py-2.5 text-center text-sm font-medium text-danger">

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import type { InviteCode } from "@tirek/shared";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 function getCodeStatus(
   code: InviteCode,
@@ -31,8 +33,9 @@ export function InviteCodesPage() {
   const [grade, setGrade] = useState("");
   const [classLetter, setClassLetter] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [revokeId, setRevokeId] = useState<string | null>(null);
 
-  const { data: codes, isLoading } = useQuery({
+  const { data: codes, isLoading, isError, refetch } = useQuery({
     queryKey: ["invite-codes"],
     queryFn: list,
   });
@@ -84,7 +87,20 @@ export function InviteCodesPage() {
     },
   };
 
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
+  }
+
   return (
+    <>
+    <ConfirmDialog
+      open={revokeId !== null}
+      onConfirm={() => {
+        if (revokeId) revokeMutation.mutate(revokeId);
+        setRevokeId(null);
+      }}
+      onCancel={() => setRevokeId(null)}
+    />
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-text-main">
@@ -234,8 +250,9 @@ export function InviteCodesPage() {
                     </button>
                     {status === "available" && (
                       <button
-                        onClick={() => revokeMutation.mutate(code.id)}
+                        onClick={() => setRevokeId(code.id)}
                         disabled={revokeMutation.isPending}
+                        aria-label={t.common.delete}
                         className="p-1.5 rounded-md hover:bg-danger/10 text-text-light hover:text-danger transition-colors"
                       >
                         <Trash2 size={14} />
@@ -254,5 +271,6 @@ export function InviteCodesPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

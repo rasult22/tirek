@@ -30,9 +30,10 @@ export function BottomNav() {
               key={item.to}
               to={item.to}
               end={item.to === "/"}
+              aria-label={t.nav[item.labelKey]}
               className={({ isActive }) => {
                 const active = isItemActive(item, isActive);
-                return `btn-press relative flex flex-col items-center gap-0.5 rounded-xl px-2.5 py-1.5 text-[11px] font-bold tracking-wide transition-all ${
+                return `btn-press relative flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-xs font-bold tracking-wide transition-all ${
                   active
                     ? "bg-primary/10 text-primary-dark"
                     : "text-text-light hover:text-primary"

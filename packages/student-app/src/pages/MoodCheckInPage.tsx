@@ -20,22 +20,27 @@ function SliderRow({
   label,
   value,
   onChange,
+  valueLabels,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  valueLabels?: string[];
 }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
         <span className="text-xs font-bold text-text-main">{label}</span>
-        <span className="text-xs font-bold text-primary-dark">{value}/5</span>
+        <span className="text-xs font-bold text-primary-dark">
+          {valueLabels?.[value - 1] ?? `${value}/5`}
+        </span>
       </div>
       <div className="flex gap-2">
         {[1, 2, 3, 4, 5].map((v) => (
           <button
             key={v}
             onClick={() => onChange(v)}
+            aria-label={valueLabels?.[v - 1] ?? `${v}`}
             className={`btn-press h-3 flex-1 rounded-full transition-all ${
               v <= value
                 ? "bg-gradient-to-r from-primary to-primary-dark shadow-sm"
@@ -117,6 +122,7 @@ export function MoodCheckInPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
+            aria-label={t.common.back}
             className="btn-press flex h-10 w-10 items-center justify-center rounded-xl glass-card"
           >
             <ArrowLeft size={20} className="text-text-main" />
@@ -147,9 +153,9 @@ export function MoodCheckInPage() {
             {/* Sliders */}
             <div className="glass-card rounded-2xl p-5">
               <div className="space-y-5">
-                <SliderRow label={t.mood.energy} value={energy} onChange={setEnergy} />
-                <SliderRow label={t.mood.sleep} value={sleep} onChange={setSleep} />
-                <SliderRow label={t.mood.stress} value={stress} onChange={setStress} />
+                <SliderRow label={t.mood.energy} value={energy} onChange={setEnergy} valueLabels={t.mood.energyLabels as unknown as string[]} />
+                <SliderRow label={t.mood.sleep} value={sleep} onChange={setSleep} valueLabels={t.mood.sleepLabels as unknown as string[]} />
+                <SliderRow label={t.mood.stress} value={stress} onChange={setStress} valueLabels={t.mood.stressLabels as unknown as string[]} />
               </div>
             </div>
 

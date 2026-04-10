@@ -18,6 +18,13 @@ export const usersService = {
     return paginated(students, total, pagination);
   },
 
+  async detachStudent(studentId: string, psychologistId: string) {
+    const deleted = await usersRepository.detachStudent(studentId, psychologistId);
+    if (!deleted) {
+      throw new NotFoundError("Student not found or not linked to this psychologist");
+    }
+  },
+
   async getStudentDetail(studentId: string, psychologistId: string) {
     const student = await usersRepository.findStudentById(studentId, psychologistId);
     if (!student) {

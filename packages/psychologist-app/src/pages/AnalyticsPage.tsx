@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { exportApi } from "../api/export.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 export function AnalyticsPage() {
   const t = useT();
@@ -20,7 +21,7 @@ export function AnalyticsPage() {
   const [grade, setGrade] = useState("");
   const [classLetter, setClassLetter] = useState("");
 
-  const { data: report, isLoading } = useQuery({
+  const { data: report, isLoading, isError, refetch } = useQuery({
     queryKey: [
       "analytics",
       "class",
@@ -32,6 +33,10 @@ export function AnalyticsPage() {
         classLetter: classLetter || undefined,
       }),
   });
+
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
+  }
 
   return (
     <div className="space-y-4">
@@ -57,7 +62,7 @@ export function AnalyticsPage() {
           className="flex-1 h-10 px-3 rounded-xl border border-input-border bg-surface text-sm text-text-main
             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
         >
-          <option value="">All grades</option>
+          <option value="">{t.psychologist.allGrades}</option>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((g) => (
             <option key={g} value={g}>
               {g}
@@ -70,7 +75,7 @@ export function AnalyticsPage() {
           className="h-10 px-3 rounded-xl border border-input-border bg-surface text-sm text-text-main
             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
         >
-          <option value="">All</option>
+          <option value="">{t.psychologist.allClasses}</option>
           {["A", "B", "C", "D", "E"].map((l) => (
             <option key={l} value={l}>
               {l}
@@ -88,14 +93,14 @@ export function AnalyticsPage() {
           {/* Stat cards — 2x2 grid */}
           <div className="grid grid-cols-2 gap-3">
             <StatCard
-              label="Total Students"
+              label={t.psychologist.totalStudents}
               value={report.totalStudents}
               icon={Users}
               iconBg="bg-primary/10"
               iconColor="text-primary"
             />
             <StatCard
-              label="Average Mood"
+              label={t.psychologist.averageMood}
               value={
                 report.averageMood != null
                   ? report.averageMood.toFixed(1)
@@ -106,14 +111,14 @@ export function AnalyticsPage() {
               iconColor="text-success"
             />
             <StatCard
-              label="Test Completion"
+              label={t.psychologist.testCompletion}
               value={`${Math.round(report.testCompletionRate * 100)}%`}
               icon={TrendingUp}
               iconBg="bg-warning/10"
               iconColor="text-warning"
             />
             <StatCard
-              label="At Risk"
+              label={t.psychologist.atRisk}
               value={report.atRiskCount}
               icon={AlertTriangle}
               iconBg="bg-danger/10"
@@ -125,23 +130,23 @@ export function AnalyticsPage() {
           <div className="space-y-4">
             <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
               <h2 className="text-sm font-semibold text-text-main mb-3">
-                Mood Distribution
+                {t.psychologist.moodDistribution}
               </h2>
               <MoodBar distribution={report.moodDistribution} />
               <div className="flex justify-between mt-2.5">
                 <LegendItem
                   color="bg-success"
-                  label="Happy"
+                  label={t.psychologist.moodHappy}
                   value={report.moodDistribution.happy}
                 />
                 <LegendItem
                   color="bg-warning"
-                  label="Neutral"
+                  label={t.psychologist.moodNeutral}
                   value={report.moodDistribution.neutral}
                 />
                 <LegendItem
                   color="bg-danger"
-                  label="Sad"
+                  label={t.psychologist.moodSad}
                   value={report.moodDistribution.sad}
                 />
               </div>
@@ -149,7 +154,7 @@ export function AnalyticsPage() {
 
             <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
               <h2 className="text-sm font-semibold text-text-main mb-3">
-                Risk Zone Distribution
+                {t.psychologist.riskDistribution}
               </h2>
               <RiskBar distribution={report.riskDistribution} />
               <div className="flex justify-between mt-2.5">

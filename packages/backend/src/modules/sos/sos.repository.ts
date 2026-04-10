@@ -37,7 +37,7 @@ export const sosRepository = {
           isNull(sosEvents.resolvedAt),
         ),
       )
-      .orderBy(desc(sosEvents.createdAt))
+      .orderBy(desc(sosEvents.level), desc(sosEvents.createdAt))
       .limit(pagination.limit)
       .offset(pagination.offset);
   },

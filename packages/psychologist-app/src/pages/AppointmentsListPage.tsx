@@ -13,6 +13,8 @@ import {
 import { useT } from "../hooks/useLanguage.js";
 import { appointmentsApi } from "../api/appointments.js";
 import type { Appointment } from "@tirek/shared";
+import { ErrorState } from "../components/ui/ErrorState.js";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog.js";
 
 const statusColors: Record<string, string> = {
   scheduled: "bg-amber-100 text-amber-700",
@@ -25,8 +27,9 @@ export function AppointmentsListPage() {
   const t = useT();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<"upcoming" | "all">("upcoming");
+  const [cancelApptId, setCancelApptId] = useState<string | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["psychologist-appointments"],
     queryFn: () => appointmentsApi.list(),
   });
@@ -64,7 +67,22 @@ export function AppointmentsListPage() {
     }
   }
 
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
+  }
+
   return (
+    <>
+    <ConfirmDialog
+      open={cancelApptId !== null}
+      onConfirm={() => {
+        if (cancelApptId) statusMutation.mutate({ id: cancelApptId, status: "cancelled" });
+        setCancelApptId(null);
+      }}
+      onCancel={() => setCancelApptId(null)}
+      title={t.appointments.cancelConfirm}
+      confirmLabel={t.appointments.cancel}
+    />
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-text-main">
@@ -119,9 +137,13 @@ export function AppointmentsListPage() {
                 appointment={appt}
                 t={t}
                 getStatusLabel={getStatusLabel}
-                onStatusChange={(id, status) =>
-                  statusMutation.mutate({ id, status })
-                }
+                onStatusChange={(id, status) => {
+                  if (status === "cancel-request") {
+                    setCancelApptId(id);
+                  } else {
+                    statusMutation.mutate({ id, status });
+                  }
+                }}
                 isPending={statusMutation.isPending}
               />
             ))}
@@ -129,6 +151,7 @@ export function AppointmentsListPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -204,11 +227,7 @@ function AppointmentCard({
             </button>
           )}
           <button
-            onClick={() => {
-              if (confirm(t.appointments.cancelConfirm)) {
-                onStatusChange(appt.id, "cancelled");
-              }
-            }}
+            onClick={() => onStatusChange(appt.id, "cancel-request")}
             disabled={isPending}
             className="flex items-center gap-1 rounded-lg bg-surface-secondary px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-surface-hover disabled:opacity-50"
           >

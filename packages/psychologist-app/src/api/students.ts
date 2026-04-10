@@ -29,3 +29,9 @@ export function getStudents(filters?: StudentsFilters) {
 export function getStudent(id: string) {
   return apiFetch<StudentDetail>(`/psychologist/students/${id}`);
 }
+
+export function detachStudent(id: string) {
+  return apiFetch<{ success: boolean }>(`/psychologist/students/${id}`, {
+    method: "DELETE",
+  });
+}

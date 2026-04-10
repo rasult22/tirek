@@ -298,6 +298,7 @@ export interface FlaggedMessage {
   studentGrade: number | null;
   studentClass: string | null;
   sessionId: string;
+  sosEventId: string | null;
 }
 
 export interface ProgressStats {

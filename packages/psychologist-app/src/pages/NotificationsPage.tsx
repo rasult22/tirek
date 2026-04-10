@@ -4,6 +4,7 @@ import { getNotifications, getUnreadCount, markRead } from "../api/notifications
 import { Bell, ArrowLeft, CheckCheck } from "lucide-react";
 import { clsx } from "clsx";
 import type { Notification } from "@tirek/shared";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 const typeIcons: Record<string, { emoji: string; bg: string }> = {
   crisis: { emoji: "🚨", bg: "bg-danger/10" },
@@ -31,7 +32,7 @@ export function NotificationsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: notifications, isLoading } = useQuery({
+  const { data: notifications, isLoading, isError, refetch } = useQuery({
     queryKey: ["notifications"],
     queryFn: getNotifications,
   });
@@ -84,6 +85,10 @@ export function NotificationsPage() {
     } else {
       grouped.push({ label, items: [item] });
     }
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
   }
 
   return (

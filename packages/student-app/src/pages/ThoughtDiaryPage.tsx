@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog.js";
 import { cbtApi } from "../api/cbt.js";
 import type { Exercise, ThoughtDiaryData, CbtEntry } from "@tirek/shared";
 
@@ -49,8 +51,9 @@ export function ThoughtDiaryPage({ exercise }: { exercise: Exercise }) {
   const [alternative, setAlternative] = useState("");
   const [completed, setCompleted] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null);
 
-  const { data: history } = useQuery({
+  const { data: history, isError, refetch } = useQuery({
     queryKey: ["cbt", "list", "thought_diary"],
     queryFn: () => cbtApi.list("thought_diary"),
   });
@@ -138,6 +141,14 @@ export function ThoughtDiaryPage({ exercise }: { exercise: Exercise }) {
     setCompleted(false);
   };
 
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
+
   if (completed) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-bg px-5">
@@ -199,7 +210,7 @@ export function ThoughtDiaryPage({ exercise }: { exercise: Exercise }) {
                       {new Date(entry.createdAt).toLocaleDateString()}
                     </span>
                     <button
-                      onClick={() => deleteMutation.mutate(entry.id)}
+                      onClick={() => setDeleteEntryId(entry.id)}
                       className="text-danger/60 hover:text-danger"
                     >
                       <Trash2 size={16} />
@@ -247,6 +258,14 @@ export function ThoughtDiaryPage({ exercise }: { exercise: Exercise }) {
             })}
           </div>
         </div>
+        <ConfirmDialog
+          open={deleteEntryId !== null}
+          onConfirm={() => {
+            if (deleteEntryId) deleteMutation.mutate(deleteEntryId);
+            setDeleteEntryId(null);
+          }}
+          onCancel={() => setDeleteEntryId(null)}
+        />
       </AppLayout>
     );
   }

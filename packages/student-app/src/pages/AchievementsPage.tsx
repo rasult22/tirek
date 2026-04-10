@@ -5,6 +5,7 @@ import { useT } from "../hooks/useLanguage.js";
 import { useLanguage } from "../hooks/useLanguage.js";
 import { achievementsApi } from "../api/achievements.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 import type { AchievementCategory } from "@tirek/shared";
 
 const CATEGORY_ORDER: AchievementCategory[] = [
@@ -18,7 +19,7 @@ export function AchievementsPage() {
   const t = useT();
   const { language } = useLanguage();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["achievements"],
     queryFn: achievementsApi.getAll,
   });
@@ -43,6 +44,14 @@ export function AchievementsPage() {
       month: "short",
     });
   };
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

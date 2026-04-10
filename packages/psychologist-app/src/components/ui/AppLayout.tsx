@@ -39,6 +39,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           {/* Notification bell — navigates to notifications page */}
           <button
             onClick={() => navigate("/notifications")}
+            aria-label="Notifications"
             className="btn-press relative p-2 rounded-xl hover:bg-surface-hover text-text-light transition-all"
           >
             <Bell size={18} strokeWidth={1.8} />
@@ -51,7 +52,11 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           {/* User avatar */}
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Profile"
             onClick={() => navigate("/profile")}
+            onKeyDown={(e) => e.key === "Enter" && navigate("/profile")}
             className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/15 to-secondary/10 text-primary flex items-center justify-center text-xs font-bold cursor-pointer"
           >
             {user?.name?.charAt(0)?.toUpperCase() ?? "P"}

@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { exportApi } from "../api/export.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 export function DiagnosticsPage() {
   const t = useT();
@@ -24,7 +25,7 @@ export function DiagnosticsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const { data: results, isLoading } = useQuery({
+  const { data: results, isLoading, isError, refetch } = useQuery({
     queryKey: [
       "diagnostics",
       "results",
@@ -39,6 +40,10 @@ export function DiagnosticsPage() {
         to: dateTo || undefined,
       }),
   });
+
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
+  }
 
   return (
     <div className="space-y-4">

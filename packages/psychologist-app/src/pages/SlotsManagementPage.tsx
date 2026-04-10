@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { appointmentsApi } from "../api/appointments.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog.js";
 
 function getWeekDates(offset: number): Date[] {
   const today = new Date();
@@ -38,11 +40,12 @@ export function SlotsManagementPage() {
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("09:45");
   const [repeatWeeks, setRepeatWeeks] = useState(1);
+  const [deleteSlotId, setDeleteSlotId] = useState<string | null>(null);
 
   const weekFrom = fmt(weekDates[0]!);
   const weekTo = fmt(weekDates[6]!);
 
-  const { data: slots, isLoading } = useQuery({
+  const { data: slots, isLoading, isError, refetch } = useQuery({
     queryKey: ["appointment-slots", weekFrom, weekTo],
     queryFn: () => appointmentsApi.getSlots(weekFrom, weekTo),
   });
@@ -91,7 +94,21 @@ export function SlotsManagementPage() {
     }
   }
 
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
+  }
+
   return (
+    <>
+    <ConfirmDialog
+      open={deleteSlotId !== null}
+      onConfirm={() => {
+        if (deleteSlotId) deleteMutation.mutate(deleteSlotId);
+        setDeleteSlotId(null);
+      }}
+      onCancel={() => setDeleteSlotId(null)}
+      title={t.appointments.deleteSlotConfirm}
+    />
     <div className="space-y-4">
       <h1 className="text-xl font-bold text-text-main">
         {t.appointments.slotsManagement}
@@ -231,11 +248,8 @@ export function SlotsManagementPage() {
                 </div>
                 {!slot.isBooked && (
                   <button
-                    onClick={() => {
-                      if (confirm(t.appointments.deleteSlotConfirm)) {
-                        deleteMutation.mutate(slot.id);
-                      }
-                    }}
+                    onClick={() => setDeleteSlotId(slot.id)}
+                    aria-label={t.appointments.deleteSlot}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-surface-hover hover:text-danger"
                   >
                     <Trash2 size={14} />
@@ -276,5 +290,6 @@ export function SlotsManagementPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -259,7 +259,7 @@ export const aiChatService = {
     const { rows, total } = await aiChatRepository.findFlaggedMessages(studentIds, pagination);
 
     // Truncate content for privacy
-    const data = rows.map((r) => ({
+    const data = rows.map((r: any) => ({
       messageId: r.messageId,
       content: r.content.length > 200 ? r.content.slice(0, 200) + "..." : r.content,
       createdAt: r.createdAt,
@@ -267,6 +267,7 @@ export const aiChatService = {
       studentName: r.studentName,
       studentGrade: r.studentGrade,
       studentClass: r.studentClass,
+      sosEventId: r.sosEventId ?? null,
     }));
 
     return paginated(data, total, pagination);

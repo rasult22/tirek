@@ -13,6 +13,7 @@ import { appointmentsApi } from "../api/appointments.js";
 import { achievementsApi } from "../api/achievements.js";
 import { moodLevels } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 const AVATAR_MAP: Record<string, string> = {
   "avatar-1": "\u{1F60A}",
@@ -28,7 +29,7 @@ export function DashboardPage() {
   const { language } = useLanguage();
   const user = useAuthStore((s) => s.user);
 
-  const { data: todayMood } = useQuery({
+  const { data: todayMood, isError, refetch } = useQuery({
     queryKey: ["mood", "today"],
     queryFn: moodApi.today,
   });
@@ -75,6 +76,14 @@ export function DashboardPage() {
   ];
 
   const avatarEmoji = user?.avatarId ? (AVATAR_MAP[user.avatarId] ?? "\u{1F60A}") : "\u{1F60A}";
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

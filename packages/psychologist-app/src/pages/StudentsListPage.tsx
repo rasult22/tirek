@@ -6,6 +6,7 @@ import { getStudents } from "../api/students.js";
 import { StatusBadge } from "../components/ui/StatusBadge.js";
 import { Search, Filter, Users, Loader2, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 type SortField = "name" | "class" | "status" | "lastActive";
 type SortDir = "asc" | "desc";
@@ -28,7 +29,7 @@ export function StudentsListPage() {
   const [sortField] = useState<SortField>("name");
   const [sortDir] = useState<SortDir>("asc");
 
-  const { data: students, isLoading } = useQuery({
+  const { data: students, isLoading, isError, refetch } = useQuery({
     queryKey: ["students", { grade: grade || undefined, classLetter: classLetter || undefined }],
     queryFn: () =>
       getStudents({
@@ -73,6 +74,10 @@ export function StudentsListPage() {
   function formatDate(dateStr: string | null) {
     if (!dateStr) return "\u2014";
     return new Date(dateStr).toLocaleDateString();
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
   }
 
   return (

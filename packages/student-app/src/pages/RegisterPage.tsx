@@ -25,6 +25,7 @@ export function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [avatarId, setAvatarId] = useState("avatar-1");
 
   const registerMutation = useMutation({
@@ -37,7 +38,7 @@ export function RegisterPage() {
 
   const canGoNext = () => {
     if (step === 1) return inviteCode.trim().length >= 4;
-    if (step === 2) return name.trim() && email.trim() && password.length >= 6;
+    if (step === 2) return name.trim() && email.trim() && password.length >= 6 && password === confirmPassword;
     return true;
   };
 
@@ -124,16 +125,43 @@ export function RegisterPage() {
                 className="w-full rounded-2xl border border-border bg-surface py-3.5 pl-11 pr-4 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
+            <div>
+              <div className="relative">
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.auth.password}
+                  className="w-full rounded-2xl border border-border bg-surface py-3.5 pl-11 pr-4 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              {password.length > 0 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex flex-1 gap-1">
+                    <div className={`h-1 flex-1 rounded-full ${password.length >= 1 ? (password.length >= 8 ? "bg-success" : password.length >= 6 ? "bg-warning" : "bg-danger") : "bg-border-light"}`} />
+                    <div className={`h-1 flex-1 rounded-full ${password.length >= 6 ? (password.length >= 8 ? "bg-success" : "bg-warning") : "bg-border-light"}`} />
+                    <div className={`h-1 flex-1 rounded-full ${password.length >= 8 ? "bg-success" : "bg-border-light"}`} />
+                  </div>
+                  {password.length < 6 && (
+                    <span className="text-[10px] font-medium text-danger">{t.auth.passwordTooShort}</span>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="relative">
               <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={t.auth.password}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder={t.auth.confirmPassword}
                 className="w-full rounded-2xl border border-border bg-surface py-3.5 pl-11 pr-4 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
+            {confirmPassword.length > 0 && password !== confirmPassword && (
+              <p className="text-xs font-medium text-danger">{t.auth.passwordsDoNotMatch}</p>
+            )}
           </div>
         )}
 

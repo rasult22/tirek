@@ -78,6 +78,7 @@ export function TestPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/tests")}
+            aria-label={t.common.back}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
@@ -133,12 +134,20 @@ export function TestPage() {
         </div>
       </div>
 
-      {/* Next/Submit button */}
-      <div className="px-5 pb-8 pt-4">
+      {/* Navigation buttons */}
+      <div className="px-5 pb-8 pt-4 flex gap-3">
+        <button
+          onClick={() => setCurrentQ(currentQ - 1)}
+          disabled={currentQ === 0}
+          aria-label={t.common.previous}
+          className="flex h-[50px] w-14 items-center justify-center rounded-2xl border border-border bg-surface text-text-main shadow-sm transition-all disabled:opacity-30"
+        >
+          <ArrowLeft size={20} />
+        </button>
         <button
           onClick={handleNext}
           disabled={currentAnswer === undefined || completeMutation.isPending}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-dark py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-all disabled:opacity-40"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-dark py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-all disabled:opacity-40"
         >
           {completeMutation.isPending ? (
             <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />

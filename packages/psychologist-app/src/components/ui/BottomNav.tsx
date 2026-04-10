@@ -71,7 +71,8 @@ export function BottomNav() {
                 </span>
                 <button
                   onClick={() => setMoreOpen(false)}
-                  className="p-1 hover:bg-surface-hover rounded-lg"
+                  aria-label={t.common.close}
+                  className="p-2 hover:bg-surface-hover rounded-lg"
                 >
                   <X size={16} className="text-text-light" />
                 </button>
@@ -109,9 +110,10 @@ export function BottomNav() {
               key={item.to}
               to={item.to}
               end={item.end}
+              aria-label={item.label}
               className={({ isActive }) =>
                 clsx(
-                  "flex-1 flex flex-col items-center justify-center gap-0.5 py-2 relative transition-colors",
+                  "flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 relative transition-colors",
                   isActive
                     ? "text-primary"
                     : "text-text-light",
@@ -126,20 +128,21 @@ export function BottomNav() {
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-medium leading-tight text-center">{item.label}</span>
+              <span className="text-[11px] font-medium leading-tight text-center">{item.label}</span>
             </NavLink>
           ))}
 
           {/* More button */}
           <button
+            aria-label={t.common.more}
             onClick={() => setMoreOpen(!moreOpen)}
             className={clsx(
-              "flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors",
+              "flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-colors",
               moreOpen ? "text-primary" : "text-text-light",
             )}
           >
             <MoreHorizontal size={22} strokeWidth={1.8} />
-            <span className="text-[10px] font-medium leading-tight text-center">
+            <span className="text-[11px] font-medium leading-tight text-center">
               {t.common.more}
             </span>
           </button>

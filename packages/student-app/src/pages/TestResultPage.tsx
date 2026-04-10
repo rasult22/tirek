@@ -5,6 +5,7 @@ import { useT } from "../hooks/useLanguage.js";
 import { testsApi } from "../api/tests.js";
 import type { SessionResult } from "../api/tests.js";
 import type { Severity } from "@tirek/shared";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 const SEVERITY_CONFIG: Record<Severity, { emoji: string; bg: string; border: string }> = {
   minimal: { emoji: "😊", bg: "bg-green-50", border: "border-green-200" },
@@ -18,7 +19,7 @@ export function TestResultPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
 
-  const { data: result, isLoading } = useQuery<SessionResult>({
+  const { data: result, isLoading, isError, refetch } = useQuery<SessionResult>({
     queryKey: ["test", "result", sessionId],
     queryFn: () => testsApi.session(sessionId!),
     enabled: !!sessionId,
@@ -28,6 +29,14 @@ export function TestResultPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
         <span className="h-10 w-10 animate-spin rounded-full border-3 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <ErrorState onRetry={() => refetch()} />
       </div>
     );
   }

@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Sparkles, Trash2, Loader2, Send } from "lucide-react";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog.js";
 import { journalApi } from "../api/journal.js";
 
 export function JournalPage() {
@@ -14,13 +16,14 @@ export function JournalPage() {
 
   const [content, setContent] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data: prompt } = useQuery({
     queryKey: ["journal", "prompt"],
     queryFn: journalApi.dailyPrompt,
   });
 
-  const { data: entries, isLoading } = useQuery({
+  const { data: entries, isLoading, isError, refetch } = useQuery({
     queryKey: ["journal", "list"],
     queryFn: journalApi.list,
   });
@@ -54,8 +57,11 @@ export function JournalPage() {
     });
   };
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId);
+      setDeleteId(null);
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -68,13 +74,28 @@ export function JournalPage() {
     });
   };
 
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
+      <ConfirmDialog
+        open={deleteId !== null}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+        title={t.journal.deleteConfirm}
+      />
       <div className="mx-auto max-w-md px-5 pt-6">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
+            aria-label={t.common.back}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
           >
             <ArrowLeft size={20} className="text-text-main" />
@@ -160,7 +181,8 @@ export function JournalPage() {
                     <p className="mt-2 text-xs text-text-light">{formatDate(entry.createdAt)}</p>
                   </div>
                   <button
-                    onClick={() => handleDelete(entry.id)}
+                    onClick={() => setDeleteId(entry.id)}
+                    aria-label={t.common.delete}
                     className="ml-3 flex h-8 w-8 items-center justify-center rounded-lg text-text-light transition-colors hover:bg-red-50 hover:text-red-500"
                   >
                     <Trash2 size={16} />

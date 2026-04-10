@@ -11,6 +11,7 @@ import {
 import { useT } from "../hooks/useLanguage.js";
 import { appointmentsApi } from "../api/appointments.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 import type { AppointmentSlot } from "@tirek/shared";
 
 function getWeekDates(offset: number): Date[] {
@@ -48,7 +49,7 @@ export function AppointmentsPage() {
   const weekFrom = fmt(weekDates[0]!);
   const weekTo = fmt(weekDates[6]!);
 
-  const { data: slots, isLoading: slotsLoading } = useQuery({
+  const { data: slots, isLoading: slotsLoading, isError, refetch } = useQuery({
     queryKey: ["available-slots", weekFrom, weekTo],
     queryFn: () => appointmentsApi.availableSlots(weekFrom, weekTo),
   });
@@ -84,6 +85,14 @@ export function AppointmentsPage() {
     myAppointments?.data?.filter(
       (a) => a.status === "scheduled" || a.status === "confirmed",
     ) ?? [];
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Wind, Loader2 } from "lucide-react";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 import { exercisesApi } from "../api/exercises.js";
 
 const EMOJI_MAP: Record<string, { emoji: string; iconBg: string }> = {
@@ -19,10 +20,18 @@ export function ExercisesListPage() {
   const { language } = useLanguage();
   const navigate = useNavigate();
 
-  const { data: exercises, isLoading } = useQuery({
+  const { data: exercises, isLoading, isError, refetch } = useQuery({
     queryKey: ["exercises"],
     queryFn: exercisesApi.list,
   });
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

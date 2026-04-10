@@ -4,6 +4,7 @@ import { Mail, ArrowRight, UserCircle } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { directChatApi } from "../api/direct-chat.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 import type { Conversation } from "@tirek/shared";
 
 function formatTime(dateStr: string) {
@@ -24,7 +25,7 @@ export function DirectChatListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: convData, isLoading } = useQuery({
+  const { data: convData, isLoading, isError, refetch } = useQuery({
     queryKey: ["direct-chat", "conversations"],
     queryFn: directChatApi.conversations,
     refetchInterval: 30_000,
@@ -45,6 +46,14 @@ export function DirectChatListPage() {
   });
 
   const conversations = convData?.data ?? [];
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

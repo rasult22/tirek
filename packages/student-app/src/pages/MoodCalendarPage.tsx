@@ -6,6 +6,7 @@ import { useT } from "../hooks/useLanguage.js";
 import { moodApi } from "../api/mood.js";
 import { moodLevels } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 const MOOD_COLORS: Record<number, string> = {
   1: "bg-red-300",
@@ -43,7 +44,7 @@ export function MoodCalendarPage() {
 
   const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
 
-  const { data: calendarData } = useQuery({
+  const { data: calendarData, isError, refetch } = useQuery({
     queryKey: ["mood", "calendar", monthStr],
     queryFn: () => moodApi.calendar(year, month + 1),
   });
@@ -85,6 +86,14 @@ export function MoodCalendarPage() {
     social: t.mood.factorSocial,
     other: t.mood.factorOther,
   };
+
+  if (isError) {
+    return (
+      <AppLayout>
+        <ErrorState onRetry={() => refetch()} />
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

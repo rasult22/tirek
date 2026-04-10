@@ -17,12 +17,13 @@ import {
   Loader2,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { ErrorState } from "../components/ui/ErrorState.js";
 
 export function DashboardPage() {
   const t = useT();
   const navigate = useNavigate();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading, isError, refetch } = useQuery({
     queryKey: ["analytics", "overview"],
     queryFn: overview,
   });
@@ -100,6 +101,10 @@ export function DashboardPage() {
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h`;
     return `${Math.floor(hours / 24)}d`;
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={() => refetch()} />;
   }
 
   return (
