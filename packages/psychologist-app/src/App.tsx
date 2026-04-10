@@ -15,6 +15,7 @@ import { CrisisPage } from "./pages/CrisisPage.js";
 import { InviteCodesPage } from "./pages/InviteCodesPage.js";
 import { AnalyticsPage } from "./pages/AnalyticsPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
+import { NotificationsPage } from "./pages/NotificationsPage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
 import { DirectChatPage } from "./pages/DirectChatPage.js";
 import { AppointmentsListPage } from "./pages/AppointmentsListPage.js";
@@ -61,6 +62,7 @@ export function App() {
             <Route path="/invite-codes" element={<ProtectedRoute><InviteCodesPage /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

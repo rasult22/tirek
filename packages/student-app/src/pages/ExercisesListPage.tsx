@@ -12,9 +12,6 @@ const EMOJI_MAP: Record<string, { emoji: string; iconBg: string }> = {
   "grounding-54321": { emoji: "\u{1F33F}", iconBg: "bg-green-100" },
   pmr: { emoji: "\u{1F4AA}", iconBg: "bg-amber-100" },
   "thought-diary": { emoji: "\u{1F4D3}", iconBg: "bg-violet-100" },
-  "circle-of-control": { emoji: "\u2B55", iconBg: "bg-cyan-100" },
-  "stop-technique": { emoji: "\u{1F6D1}", iconBg: "bg-red-100" },
-  "behavioral-experiment": { emoji: "\u{1F52C}", iconBg: "bg-indigo-100" },
 };
 
 export function ExercisesListPage() {

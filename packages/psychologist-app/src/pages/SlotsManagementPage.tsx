@@ -92,13 +92,13 @@ export function SlotsManagementPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-6">
+    <div className="space-y-4">
       <h1 className="text-xl font-bold text-text-main">
         {t.appointments.slotsManagement}
       </h1>
 
       {/* Week date strip */}
-      <div className="mt-5">
+      <div>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-wide text-text-light">
             {t.appointments.selectDate}
@@ -150,7 +150,7 @@ export function SlotsManagementPage() {
       </div>
 
       {/* Add slot form */}
-      <div className="mt-5 rounded-2xl bg-surface p-4 shadow-sm">
+      <div className="rounded-2xl bg-surface p-4 shadow-sm">
         <h3 className="mb-3 text-sm font-bold text-text-main">
           {t.appointments.addSlots}
         </h3>
@@ -193,7 +193,7 @@ export function SlotsManagementPage() {
       </div>
 
       {/* Slots list for selected date */}
-      <div className="mt-4">
+      <div>
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 size={24} className="animate-spin text-primary" />
@@ -249,7 +249,7 @@ export function SlotsManagementPage() {
 
       {/* Repeat weekly */}
       {slotsForDate.filter((s) => !s.isBooked).length > 0 && (
-        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-surface-secondary p-4">
+        <div className="flex flex-wrap items-center gap-2.5 rounded-2xl bg-surface-secondary p-4">
           <Copy size={16} className="text-text-light" />
           <span className="text-sm text-text-main">
             {t.appointments.repeatWeekly}:

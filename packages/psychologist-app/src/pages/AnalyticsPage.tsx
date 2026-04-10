@@ -34,69 +34,59 @@ export function AnalyticsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-text-main">
+        <h1 className="text-xl font-bold text-text-main">
           {t.psychologist.analytics}
         </h1>
         <button
           onClick={() => exportApi.classCSV(grade ? Number(grade) : undefined, classLetter || undefined)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg border border-input-border text-sm
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input-border text-xs
             font-medium text-text-main hover:bg-surface-hover transition-colors"
         >
           <Download size={14} />
-          {t.psychologist.exportReport}
+          CSV
         </button>
       </div>
 
-      {/* Class selector */}
-      <div className="flex flex-wrap gap-3">
-        <div>
-          <label className="block text-xs font-medium text-text-light mb-1">
-            {t.auth.selectGrade}
-          </label>
-          <select
-            value={grade}
-            onChange={(e) => setGrade(e.target.value)}
-            className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
-              focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
-          >
-            <option value="">All grades</option>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-text-light mb-1">
-            {t.auth.selectClass}
-          </label>
-          <select
-            value={classLetter}
-            onChange={(e) => setClassLetter(e.target.value)}
-            className="h-10 px-3 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
-              focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
-          >
-            <option value="">All</option>
-            {["A", "B", "C", "D", "E"].map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Filters */}
+      <div className="flex gap-2">
+        <select
+          value={grade}
+          onChange={(e) => setGrade(e.target.value)}
+          className="flex-1 h-10 px-3 rounded-xl border border-input-border bg-surface text-sm text-text-main
+            focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
+        >
+          <option value="">All grades</option>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
+        <select
+          value={classLetter}
+          onChange={(e) => setClassLetter(e.target.value)}
+          className="h-10 px-3 rounded-xl border border-input-border bg-surface text-sm text-text-main
+            focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
+        >
+          <option value="">All</option>
+          {["A", "B", "C", "D", "E"].map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 size={28} className="animate-spin text-text-light" />
+        <div className="flex justify-center py-12">
+          <Loader2 size={24} className="animate-spin text-text-light" />
         </div>
       ) : report ? (
         <>
-          {/* Stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          {/* Stat cards — 2x2 grid */}
+          <div className="grid grid-cols-2 gap-3">
             <StatCard
               label="Total Students"
               value={report.totalStudents}
@@ -131,15 +121,14 @@ export function AnalyticsPage() {
             />
           </div>
 
-          {/* Distribution charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Mood distribution */}
-            <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
-              <h2 className="text-base font-semibold text-text-main mb-4">
+          {/* Distribution charts — stacked */}
+          <div className="space-y-4">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-text-main mb-3">
                 Mood Distribution
               </h2>
               <MoodBar distribution={report.moodDistribution} />
-              <div className="flex justify-between mt-3">
+              <div className="flex justify-between mt-2.5">
                 <LegendItem
                   color="bg-success"
                   label="Happy"
@@ -158,13 +147,12 @@ export function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Risk distribution */}
-            <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
-              <h2 className="text-base font-semibold text-text-main mb-4">
+            <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
+              <h2 className="text-sm font-semibold text-text-main mb-3">
                 Risk Zone Distribution
               </h2>
               <RiskBar distribution={report.riskDistribution} />
-              <div className="flex justify-between mt-3">
+              <div className="flex justify-between mt-2.5">
                 <LegendItem
                   color="bg-success"
                   label={t.psychologist.statusNormal}
@@ -185,8 +173,8 @@ export function AnalyticsPage() {
           </div>
         </>
       ) : (
-        <div className="bg-surface rounded-xl border border-border shadow-sm p-8 text-center">
-          <BarChart3 size={40} className="text-text-light mx-auto mb-3" />
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-6 text-center">
+          <BarChart3 size={36} className="text-text-light mx-auto mb-2" />
           <p className="text-sm text-text-light">{t.common.noData}</p>
         </div>
       )}
@@ -210,19 +198,19 @@ function StatCard({
   iconColor: string;
 }) {
   return (
-    <div className="bg-surface rounded-xl border border-border shadow-sm p-5">
+    <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-text-light font-medium">{label}</p>
-          <p className="text-2xl font-bold text-text-main mt-1">{value}</p>
+          <p className="text-xs text-text-light font-medium">{label}</p>
+          <p className="text-xl font-bold text-text-main mt-0.5">{value}</p>
         </div>
         <div
           className={clsx(
-            "w-10 h-10 rounded-lg flex items-center justify-center",
+            "w-9 h-9 rounded-lg flex items-center justify-center",
             iconBg,
           )}
         >
-          <Icon size={20} className={iconColor} />
+          <Icon size={18} className={iconColor} />
         </div>
       </div>
     </div>
@@ -236,14 +224,14 @@ function MoodBar({
 }) {
   const total = distribution.happy + distribution.neutral + distribution.sad;
   if (total === 0) {
-    return <div className="w-full h-6 rounded-full bg-surface-secondary" />;
+    return <div className="w-full h-5 rounded-full bg-surface-secondary" />;
   }
   const hp = (distribution.happy / total) * 100;
   const np = (distribution.neutral / total) * 100;
   const sp = (distribution.sad / total) * 100;
 
   return (
-    <div className="w-full h-6 rounded-full bg-surface-secondary overflow-hidden flex">
+    <div className="w-full h-5 rounded-full bg-surface-secondary overflow-hidden flex">
       {hp > 0 && (
         <div
           className="bg-success h-full transition-all"
@@ -274,14 +262,14 @@ function RiskBar({
   const total =
     distribution.normal + distribution.attention + distribution.crisis;
   if (total === 0) {
-    return <div className="w-full h-6 rounded-full bg-surface-secondary" />;
+    return <div className="w-full h-5 rounded-full bg-surface-secondary" />;
   }
   const np = (distribution.normal / total) * 100;
   const ap = (distribution.attention / total) * 100;
   const cp = (distribution.crisis / total) * 100;
 
   return (
-    <div className="w-full h-6 rounded-full bg-surface-secondary overflow-hidden flex">
+    <div className="w-full h-5 rounded-full bg-surface-secondary overflow-hidden flex">
       {np > 0 && (
         <div
           className="bg-success h-full transition-all"
@@ -314,9 +302,9 @@ function LegendItem({
   value: number;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className={clsx("w-3 h-3 rounded-sm", color)} />
-      <span className="text-xs text-text-light">
+    <div className="flex items-center gap-1.5">
+      <span className={clsx("w-2.5 h-2.5 rounded-sm", color)} />
+      <span className="text-[11px] text-text-light">
         {label}: {value}
       </span>
     </div>

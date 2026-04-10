@@ -15,6 +15,13 @@ const TEST_ICONS: Record<string, { iconBg: string; emoji: string }> = {
   bullying: { iconBg: "bg-orange-100", emoji: "\u{1F6E1}\u{FE0F}" },
   "academic-burnout": { iconBg: "bg-yellow-100", emoji: "\u{1F4DA}" },
   sociometry: { iconBg: "bg-cyan-100", emoji: "\u{1F91D}" },
+  "eysenck-self-esteem": { iconBg: "bg-violet-100", emoji: "\u{1FA9E}" },
+  "andreeva-learning": { iconBg: "bg-lime-100", emoji: "\u{1F4D6}" },
+  "bullying-violence": { iconBg: "bg-rose-100", emoji: "\u{26A0}\u{FE0F}" },
+  "buss-darky": { iconBg: "bg-red-100", emoji: "\u{1F4A2}" },
+  "beck-depression": { iconBg: "bg-indigo-100", emoji: "\u{1F327}\u{FE0F}" },
+  "phillips-anxiety": { iconBg: "bg-purple-100", emoji: "\u{1F3EB}" },
+  "olweus-bullying": { iconBg: "bg-amber-100", emoji: "\u{1F6A8}" },
 };
 
 export function TestsListPage() {

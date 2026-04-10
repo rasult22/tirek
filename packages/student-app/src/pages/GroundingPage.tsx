@@ -32,7 +32,7 @@ export function GroundingPage({ exercise }: { exercise: Exercise }) {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState(false);
-  const [checkedItems, setCheckedItems] = useState<boolean[]>([]);
+  const [itemTexts, setItemTexts] = useState<string[]>([]);
 
   const completeMutation = useMutation({
     mutationFn: () => exercisesApi.logCompletion(exercise.slug),
@@ -43,23 +43,23 @@ export function GroundingPage({ exercise }: { exercise: Exercise }) {
   const senseName = language === "kz" ? step?.senseKz : step?.senseRu;
 
   const handleStartStep = () => {
-    setCheckedItems(new Array(step.count).fill(false));
+    setItemTexts(new Array(step.count).fill(""));
   };
 
-  const toggleItem = (idx: number) => {
-    setCheckedItems((prev) => {
+  const updateItem = (idx: number, value: string) => {
+    setItemTexts((prev) => {
       const next = [...prev];
-      next[idx] = !next[idx];
+      next[idx] = value;
       return next;
     });
   };
 
-  const allChecked = checkedItems.length > 0 && checkedItems.every(Boolean);
+  const allFilled = itemTexts.length > 0 && itemTexts.every((t) => t.trim().length > 0);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep((prev) => prev + 1);
-      setCheckedItems([]);
+      setItemTexts([]);
     } else {
       setCompleted(true);
       completeMutation.mutate();
@@ -67,7 +67,7 @@ export function GroundingPage({ exercise }: { exercise: Exercise }) {
   };
 
   // Initialize checked items on first render of a step
-  if (checkedItems.length === 0 && step && !completed) {
+  if (itemTexts.length === 0 && step && !completed) {
     handleStartStep();
   }
 
@@ -137,32 +137,35 @@ export function GroundingPage({ exercise }: { exercise: Exercise }) {
           {t.exercises.groundingNameItem} {step.count} {senseName}
         </h2>
 
-        {/* Checkboxes */}
+        {/* Input fields */}
         <div className="mt-6 w-full max-w-xs space-y-3">
-          {checkedItems.map((checked, idx) => (
-            <button
-              key={idx}
-              onClick={() => toggleItem(idx)}
-              className={`flex w-full items-center gap-3 rounded-2xl px-5 py-4 transition-all ${
-                checked
-                  ? "bg-secondary/15 shadow-sm"
-                  : "bg-surface shadow-sm"
-              }`}
-            >
+          {itemTexts.map((text, idx) => {
+            const filled = text.trim().length > 0;
+            return (
               <div
-                className={`flex h-7 w-7 items-center justify-center rounded-lg transition-all ${
-                  checked
-                    ? "bg-secondary text-white"
-                    : "border-2 border-border"
+                key={idx}
+                className={`flex items-center gap-3 rounded-2xl px-4 py-3 transition-all ${
+                  filled ? "bg-secondary/15 shadow-sm" : "bg-surface shadow-sm"
                 }`}
               >
-                {checked && <Check size={16} />}
+                <div
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all ${
+                    filled ? "bg-secondary text-white" : "border-2 border-border"
+                  }`}
+                >
+                  {filled ? <Check size={16} /> : <span className="text-xs text-text-light">{idx + 1}</span>}
+                </div>
+                <input
+                  type="text"
+                  value={text}
+                  onChange={(e) => updateItem(idx, e.target.value)}
+                  placeholder={`${idx + 1}...`}
+                  className="flex-1 bg-transparent text-sm text-text-main placeholder:text-text-light/40 focus:outline-none"
+                  autoFocus={idx === 0}
+                />
               </div>
-              <span className={`text-sm font-medium ${checked ? "text-secondary" : "text-text-light"}`}>
-                {idx + 1}
-              </span>
-            </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -170,9 +173,9 @@ export function GroundingPage({ exercise }: { exercise: Exercise }) {
       <div className="flex justify-center pb-12 pt-4">
         <button
           onClick={handleNext}
-          disabled={!allChecked}
+          disabled={!allFilled}
           className={`flex items-center gap-2 rounded-2xl px-8 py-3.5 text-sm font-bold shadow-lg transition-all ${
-            allChecked
+            allFilled
               ? "bg-gradient-to-r from-primary to-primary-dark text-white"
               : "bg-gray-200 text-gray-400"
           }`}

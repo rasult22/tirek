@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send, History, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Send, ShieldCheck } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { chatApi } from "../api/chat.js";
 import type { ChatMessage } from "@tirek/shared";
@@ -30,15 +30,25 @@ export function ChatPage() {
     enabled: !!activeSessionId,
   });
 
+  // Use a ref to track session ID so we don't depend on stale closures
+  // and don't trigger re-renders mid-stream
+  const sessionRef = useRef<string | null>(activeSessionId);
+  sessionRef.current = activeSessionId;
+
   const handleStream = useCallback(async (content: string) => {
+    let sid = sessionRef.current;
+    let isNewSession = false;
+
     // If no session yet — create one first
-    let sid = activeSessionId;
     if (!sid) {
       const session = await chatApi.create("general");
       sid = session.id;
+      isNewSession = true;
+      // Store in ref immediately so subsequent logic uses it,
+      // but defer state/URL updates until after stream completes
+      sessionRef.current = sid;
       setActiveSessionId(sid);
       queryClient.invalidateQueries({ queryKey: ["chat", "sessions"] });
-      window.history.replaceState(null, "", `/chat/${sid}`);
     }
 
     // Optimistic update: show user message immediately
@@ -98,7 +108,12 @@ export function ChatPage() {
       setIsStreaming(false);
       queryClient.invalidateQueries({ queryKey: ["chat", "messages", sid] });
     }
-  }, [activeSessionId, queryClient]);
+
+    // Update URL after stream is complete to avoid React Router remounting
+    if (isNewSession) {
+      window.history.replaceState(null, "", `/chat/${sid}`);
+    }
+  }, [queryClient]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -123,18 +138,12 @@ export function ChatPage() {
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border-light bg-surface/90 px-4 py-3 backdrop-blur-md">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate("/chat/history")}
           className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary"
         >
           <ArrowLeft size={18} className="text-text-main" />
         </button>
         <h1 className="flex-1 text-base font-bold text-text-main">{t.chat.title}</h1>
-        <button
-          onClick={() => navigate("/chat/history")}
-          className="flex h-9 w-9 items-center justify-center rounded-xl bg-surface-secondary"
-        >
-          <History size={18} className="text-text-light" />
-        </button>
       </div>
 
       {/* Messages */}

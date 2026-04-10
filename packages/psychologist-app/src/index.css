@@ -141,3 +141,8 @@ select:focus {
 .row-hover:hover {
   background-color: var(--color-surface-hover);
 }
+
+/* Safe area for bottom nav on iOS */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

@@ -54,13 +54,13 @@ export function ProfilePage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold text-text-main">{t.profile.title}</h1>
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold text-text-main">{t.profile.title}</h1>
 
       {/* User info card */}
-      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shrink-0">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl font-bold shrink-0">
             {user?.name?.charAt(0)?.toUpperCase() ?? "P"}
           </div>
           <div className="flex-1">
@@ -135,7 +135,7 @@ export function ProfilePage() {
       </div>
 
       {/* Language switcher */}
-      <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
         <div className="flex items-center gap-2 mb-4">
           <Globe size={18} className="text-text-light" />
           <h2 className="text-base font-semibold text-text-main">

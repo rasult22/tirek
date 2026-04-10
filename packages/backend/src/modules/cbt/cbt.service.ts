@@ -11,12 +11,7 @@ import { streaksService } from "../streaks/streaks.service.js";
 import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
 import { achievementsService } from "../achievements/achievements.service.js";
 
-const VALID_TYPES = [
-  "thought_diary",
-  "circle_of_control",
-  "stop_technique",
-  "behavioral_experiment",
-];
+const VALID_TYPES = ["thought_diary"];
 
 function validateCbtData(type: string, data: Record<string, unknown>) {
   switch (type) {
@@ -24,24 +19,6 @@ function validateCbtData(type: string, data: Record<string, unknown>) {
       if (!data.situation || !data.thought || !data.emotion)
         throw new ValidationError(
           "Thought diary requires situation, thought, and emotion",
-        );
-      break;
-    case "circle_of_control":
-      if (!Array.isArray(data.canControl) || !Array.isArray(data.cannotControl))
-        throw new ValidationError(
-          "Circle of control requires canControl and cannotControl arrays",
-        );
-      break;
-    case "stop_technique":
-      if (!data.stop || !data.breathe || !data.observe || !data.proceed)
-        throw new ValidationError(
-          "STOP technique requires all four steps",
-        );
-      break;
-    case "behavioral_experiment":
-      if (!data.hypothesis || !data.experiment)
-        throw new ValidationError(
-          "Behavioral experiment requires hypothesis and experiment",
         );
       break;
   }

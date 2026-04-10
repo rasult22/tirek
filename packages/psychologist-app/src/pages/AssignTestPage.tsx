@@ -82,7 +82,7 @@ export function AssignTestPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-4">
       {/* Back */}
       <button
         onClick={() => navigate("/diagnostics")}
@@ -92,11 +92,11 @@ export function AssignTestPage() {
         {t.common.back}
       </button>
 
-      <h1 className="text-2xl font-bold text-text-main">
+      <h1 className="text-xl font-bold text-text-main">
         {t.psychologist.assignTest}
       </h1>
 
-      <div className="bg-surface rounded-xl border border-border shadow-sm p-6 space-y-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm p-4 space-y-5">
         {/* Select test */}
         <div>
           <label className="block text-sm font-medium text-text-main mb-2">

@@ -65,7 +65,7 @@ export function AppointmentsListPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-text-main">
           {t.appointments.appointments}
@@ -80,7 +80,7 @@ export function AppointmentsListPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mt-4 flex gap-2">
+      <div className="flex gap-2">
         {(["upcoming", "all"] as const).map((key) => (
           <button
             key={key}
@@ -99,7 +99,7 @@ export function AppointmentsListPage() {
       </div>
 
       {/* Appointments list */}
-      <div className="mt-4">
+      <div>
         {isLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 size={24} className="animate-spin text-primary" />

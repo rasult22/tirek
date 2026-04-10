@@ -21,5 +21,8 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"
+  },
+  "dependencies": {
+    "@google/genai": "^1.49.0"
   }
 }

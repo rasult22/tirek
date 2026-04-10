@@ -1,11 +1,16 @@
-import { eq, desc, count as dbCount } from "drizzle-orm";
+import { eq, desc, count as dbCount, notInArray } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { exercises, exerciseCompletions } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 
+const REMOVED_SLUGS = ["circle-of-control", "stop-technique", "behavioral-experiment"];
+
 export const exercisesRepository = {
   async findAll() {
-    return db.select().from(exercises);
+    return db
+      .select()
+      .from(exercises)
+      .where(notInArray(exercises.slug, REMOVED_SLUGS));
   },
 
   async findById(id: string) {

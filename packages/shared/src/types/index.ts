@@ -147,11 +147,7 @@ export interface CbtExerciseConfig {
 }
 
 // ── CBT types ──────────────────────────────────────────────────────
-export type CbtType =
-  | "thought_diary"
-  | "circle_of_control"
-  | "stop_technique"
-  | "behavioral_experiment";
+export type CbtType = "thought_diary";
 
 export interface ThoughtDiaryData {
   situation: string;
@@ -162,32 +158,7 @@ export interface ThoughtDiaryData {
   alternative?: string;
 }
 
-export interface CircleOfControlData {
-  canControl: string[];
-  cannotControl: string[];
-}
-
-export interface StopTechniqueData {
-  stop: string;
-  breathe: string;
-  observe: string;
-  proceed: string;
-}
-
-export interface BehavioralExperimentData {
-  hypothesis: string;
-  experiment: string;
-  prediction: string;
-  result?: string;
-  conclusion?: string;
-  completed?: boolean;
-}
-
-export type CbtData =
-  | ThoughtDiaryData
-  | CircleOfControlData
-  | StopTechniqueData
-  | BehavioralExperimentData;
+export type CbtData = ThoughtDiaryData;
 
 export interface CbtEntry {
   id: string;

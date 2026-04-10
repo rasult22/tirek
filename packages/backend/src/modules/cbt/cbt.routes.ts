@@ -30,7 +30,7 @@ cbtStudentRouter.post("/", async (c) => {
   }
 });
 
-// PUT /:id — update CBT entry (for behavioral experiment results)
+// PUT /:id — update CBT entry
 cbtStudentRouter.put("/:id", async (c) => {
   try {
     const body = await c.req.json();

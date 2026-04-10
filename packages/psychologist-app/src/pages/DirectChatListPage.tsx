@@ -31,10 +31,8 @@ export function DirectChatListPage() {
   const conversations = convData?.data ?? [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-text-main">{t.directChat.title}</h1>
-      </div>
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold text-text-main">{t.directChat.title}</h1>
 
       {isLoading && (
         <div className="flex justify-center py-12">

@@ -195,39 +195,12 @@ async function seed() {
       description: "Ситуация → Мысль → Эмоция → Искажение → Альтернатива",
       config: { cbtType: "thought_diary" },
     },
-    {
-      id: uuidv4(),
-      type: "cbt",
-      slug: "circle-of-control",
-      nameRu: "Круг контроля",
-      nameKz: "Бақылау шеңбері",
-      description: "Что я могу и не могу контролировать",
-      config: { cbtType: "circle_of_control" },
-    },
-    {
-      id: uuidv4(),
-      type: "cbt",
-      slug: "stop-technique",
-      nameRu: "Техника СТОП",
-      nameKz: "ТОҚ техникасы",
-      description: "Стоп → Вздохни → Наблюдай → Продолжай",
-      config: { cbtType: "stop_technique" },
-    },
-    {
-      id: uuidv4(),
-      type: "cbt",
-      slug: "behavioral-experiment",
-      nameRu: "Поведенческий эксперимент",
-      nameKz: "Мінез-құлық эксперименті",
-      description: "Гипотеза → Эксперимент → Результат → Вывод",
-      config: { cbtType: "behavioral_experiment" },
-    },
   );
 
   for (const ex of exerciseData) {
     await db.insert(exercises).values(ex).onConflictDoNothing();
   }
-  console.log("  ✓ 9 exercises (3 breathing + 1 grounding + 1 relaxation + 4 CBT)");
+  console.log("  ✓ 6 exercises (3 breathing + 1 grounding + 1 relaxation + 1 CBT)");
 
   // ── 4. Motivational quotes ──────────────────────────────────────────
   const quotes = [

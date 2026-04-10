@@ -402,7 +402,7 @@ export const cbtEntries = pgTable("cbt_entries", {
   userId: text("user_id")
     .notNull()
     .references(() => users.id),
-  type: text("type").notNull(), // "thought_diary" | "circle_of_control" | "stop_technique" | "behavioral_experiment"
+  type: text("type").notNull(), // "thought_diary"
   data: jsonb("data").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

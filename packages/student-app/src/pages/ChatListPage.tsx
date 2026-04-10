@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, MessageCircle, ArrowLeft, Clock } from "lucide-react";
+import { Plus, MessageCircle, Clock } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { chatApi } from "../api/chat.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
@@ -32,13 +32,7 @@ export function ChatListPage() {
       <div className="mx-auto max-w-md px-5 pt-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate("/chat")}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface shadow-sm"
-          >
-            <ArrowLeft size={20} className="text-text-main" />
-          </button>
-          <h1 className="flex-1 text-xl font-bold text-text-main">{t.chat.history}</h1>
+          <h1 className="flex-1 text-xl font-bold text-text-main">{t.chat.title}</h1>
         </div>
 
         {/* New chat button */}

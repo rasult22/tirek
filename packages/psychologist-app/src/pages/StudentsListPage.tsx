@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { useT } from "../hooks/useLanguage.js";
 import { getStudents } from "../api/students.js";
 import { StatusBadge } from "../components/ui/StatusBadge.js";
-import { Search, Filter, ChevronUp, ChevronDown, Users, Loader2 } from "lucide-react";
+import { Search, Filter, Users, Loader2, ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 
 type SortField = "name" | "class" | "status" | "lastActive";
@@ -25,8 +25,8 @@ export function StudentsListPage() {
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState<string>("");
   const [classLetter, setClassLetter] = useState<string>("");
-  const [sortField, setSortField] = useState<SortField>("name");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [sortField] = useState<SortField>("name");
+  const [sortDir] = useState<SortDir>("asc");
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["students", { grade: grade || undefined, classLetter: classLetter || undefined }],
@@ -41,13 +41,11 @@ export function StudentsListPage() {
     if (!students?.data) return [];
     let result = students.data;
 
-    // Client-side search filter
     if (search) {
       const s = search.toLowerCase();
       result = result.filter((st) => st.name.toLowerCase().includes(s));
     }
 
-    // Sort
     result = [...result].sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -72,56 +70,37 @@ export function StudentsListPage() {
     return result;
   }, [students, search, sortField, sortDir]);
 
-  function toggleSort(field: SortField) {
-    if (sortField === field) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDir("asc");
-    }
-  }
-
-  function SortIcon({ field }: { field: SortField }) {
-    if (sortField !== field) return null;
-    return sortDir === "asc" ? (
-      <ChevronUp size={14} />
-    ) : (
-      <ChevronDown size={14} />
-    );
-  }
-
   function formatDate(dateStr: string | null) {
     if (!dateStr) return "\u2014";
     return new Date(dateStr).toLocaleDateString();
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-text-main">
+    <div className="space-y-4">
+      <h1 className="text-xl font-bold text-text-main">
         {t.psychologist.students}
       </h1>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light"
-          />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t.common.search + "..."}
-            className="w-full h-10 pl-9 pr-3 rounded-lg border border-input-border bg-surface text-sm
-              text-text-main placeholder:text-text-light
-              focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-          />
-        </div>
+      {/* Search */}
+      <div className="relative">
+        <Search
+          size={16}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light"
+        />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t.common.search + "..."}
+          className="w-full h-10 pl-9 pr-3 rounded-xl border border-input-border bg-surface text-sm
+            text-text-main placeholder:text-text-light
+            focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+        />
+      </div>
 
-        {/* Grade filter */}
-        <div className="relative">
+      {/* Filters row */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
           <Filter
             size={14}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light pointer-events-none"
@@ -129,7 +108,7 @@ export function StudentsListPage() {
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value)}
-            className="h-10 pl-8 pr-8 rounded-lg border border-input-border bg-surface text-sm text-text-main
+            className="w-full h-10 pl-8 pr-8 rounded-xl border border-input-border bg-surface text-sm text-text-main
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
           >
             <option value="">{t.auth.selectGrade}</option>
@@ -141,11 +120,10 @@ export function StudentsListPage() {
           </select>
         </div>
 
-        {/* Class letter filter */}
         <select
           value={classLetter}
           onChange={(e) => setClassLetter(e.target.value)}
-          className="h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
+          className="h-10 px-3 rounded-xl border border-input-border bg-surface text-sm text-text-main
             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         >
           <option value="">{t.auth.selectClass}</option>
@@ -157,99 +135,57 @@ export function StudentsListPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-surface rounded-xl border border-border shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 size={28} className="animate-spin text-text-light" />
-          </div>
-        ) : filteredAndSorted.length === 0 ? (
-          <div className="flex flex-col items-center py-16">
-            <Users size={40} className="text-text-light mb-3" />
-            <p className="text-sm text-text-light">{t.common.noData}</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border-light bg-surface-secondary/50">
-                  <th
-                    className="text-left px-5 py-3 font-semibold text-text-light cursor-pointer select-none"
-                    onClick={() => toggleSort("name")}
-                  >
-                    <span className="flex items-center gap-1">
-                      Name <SortIcon field="name" />
-                    </span>
-                  </th>
-                  <th
-                    className="text-left px-5 py-3 font-semibold text-text-light cursor-pointer select-none"
-                    onClick={() => toggleSort("class")}
-                  >
-                    <span className="flex items-center gap-1">
-                      Class <SortIcon field="class" />
-                    </span>
-                  </th>
-                  <th className="text-center px-5 py-3 font-semibold text-text-light">
-                    Mood
-                  </th>
-                  <th
-                    className="text-left px-5 py-3 font-semibold text-text-light cursor-pointer select-none"
-                    onClick={() => toggleSort("status")}
-                  >
-                    <span className="flex items-center gap-1">
-                      Status <SortIcon field="status" />
-                    </span>
-                  </th>
-                  <th
-                    className="text-left px-5 py-3 font-semibold text-text-light cursor-pointer select-none"
-                    onClick={() => toggleSort("lastActive")}
-                  >
-                    <span className="flex items-center gap-1">
-                      Last Active <SortIcon field="lastActive" />
-                    </span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAndSorted.map((student) => (
-                  <tr
-                    key={student.id}
-                    className="border-b border-border-light hover:bg-surface-hover/50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/students/${student.id}`)}
-                  >
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
-                          {student.name.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="font-medium text-text-main">
-                          {student.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5 text-text-light">
-                      {student.grade != null
-                        ? `${student.grade}${student.classLetter ?? ""}`
-                        : "\u2014"}
-                    </td>
-                    <td className="px-5 py-3.5 text-center text-lg">
-                      {student.lastMood != null
-                        ? moodEmojis[student.lastMood] ?? "\u2014"
-                        : "\u2014"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <StatusBadge status={student.status} size="sm" />
-                    </td>
-                    <td className="px-5 py-3.5 text-text-light">
-                      {formatDate(student.lastActive)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Student cards */}
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 size={24} className="animate-spin text-text-light" />
+        </div>
+      ) : filteredAndSorted.length === 0 ? (
+        <div className="flex flex-col items-center py-12">
+          <Users size={36} className="text-text-light mb-2" />
+          <p className="text-sm text-text-light">{t.common.noData}</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filteredAndSorted.map((student) => (
+            <button
+              key={student.id}
+              onClick={() => navigate(`/students/${student.id}`)}
+              className="btn-press w-full flex items-center gap-3 p-3 rounded-xl bg-surface border border-border shadow-sm transition-all hover:shadow-md text-left"
+            >
+              <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-semibold shrink-0">
+                {student.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-text-main truncate">
+                    {student.name}
+                  </span>
+                  <StatusBadge status={student.status} size="sm" />
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-text-light">
+                    {student.grade != null
+                      ? `${student.grade}${student.classLetter ?? ""}`
+                      : "\u2014"}
+                  </span>
+                  <span className="text-xs text-text-light">&middot;</span>
+                  <span className="text-xs text-text-light">
+                    {student.lastMood != null
+                      ? moodEmojis[student.lastMood] ?? "\u2014"
+                      : "\u2014"}
+                  </span>
+                  <span className="text-xs text-text-light">&middot;</span>
+                  <span className="text-xs text-text-light">
+                    {formatDate(student.lastActive)}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-text-light/40 shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
