@@ -16,7 +16,7 @@
     "@mastra/loggers": "^1.0.2",
     "@mastra/memory": "^1.8.2",
     "@mastra/pg": "^1.7.0",
-    "@tirek/shared": "*",
+    "@tirek/shared": "file:../shared",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.7.0",

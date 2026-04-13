@@ -232,6 +232,9 @@ export const ru = {
     language: "Язык",
     changeLanguage: "Сменить язык",
     theme: "Тема оформления",
+    themeSystem: "Системная",
+    themeLight: "Светлая",
+    themeDark: "Тёмная",
   },
   journal: {
     title: "Дневник",
@@ -269,6 +272,7 @@ export const ru = {
     profile: "Профиль",
     messages: "Сообщения",
     appointments: "Приёмы",
+    notifications: "Уведомления",
   },
   psychologist: {
     dashboard: "Панель управления",
@@ -339,6 +343,17 @@ export const ru = {
     detachStudent: "Отсоединить ученика",
     detachConfirmTitle: "Отсоединить ученика?",
     detachConfirmDescription: "Вы перестанете получать данные об этом ученике. Его аккаунт останется активным. Это действие нельзя отменить.",
+    callStudent: "Позвонить",
+    viewProfile: "Профиль",
+    notifications: {
+      title: "Уведомления",
+      noNotifications: "Нет уведомлений",
+      noNotificationsDesc: "Новые уведомления появятся здесь",
+      today: "Сегодня",
+      yesterday: "Вчера",
+      markAsRead: "Отметить прочитанным",
+      justNow: "Только что",
+    },
     studentDetail: {
       moodTrend: "Тренд настроения",
       days14: "14 дней",

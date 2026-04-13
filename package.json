@@ -5,19 +5,17 @@
   "engines": {
     "node": ">=22.13.0"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "dev:backend": "npm run dev:api -w @tirek/backend",
-    "dev:student": "npm run dev -w @tirek/student-app",
-    "dev:psychologist": "npm run dev -w @tirek/psychologist-app",
-    "dev:mastra": "npm run dev -w @tirek/backend",
-    "build": "npm run build --workspaces",
+    "dev:backend": "cd packages/backend && npm run dev:api",
+    "dev:student": "cd packages/student-app && npm run dev",
+    "dev:psychologist": "cd packages/psychologist-app && npm run dev",
+    "dev:mastra": "cd packages/backend && npm run dev",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx --env-file=.env packages/backend/src/db/seed.ts",
     "db:studio": "drizzle-kit studio",
+    "start:psychologist-mob": "cd packages/psychologist-mobapp && npm start",
+    "start:student-mob": "cd packages/student-mobapp && npm start",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"

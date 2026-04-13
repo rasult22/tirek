@@ -234,6 +234,9 @@ export const kz: TranslationKeys = {
     language: "Тіл",
     changeLanguage: "Тілді ауыстыру",
     theme: "Безендіру тақырыбы",
+    themeSystem: "Жүйелік",
+    themeLight: "Жарық",
+    themeDark: "Қараңғы",
   },
   journal: {
     title: "Күнделік",
@@ -271,6 +274,7 @@ export const kz: TranslationKeys = {
     profile: "Профиль",
     messages: "Хабарламалар",
     appointments: "Қабылдау",
+    notifications: "Хабарландырулар",
   },
   psychologist: {
     dashboard: "Басқару панелі",
@@ -341,6 +345,17 @@ export const kz: TranslationKeys = {
     detachStudent: "Оқушыны ажырату",
     detachConfirmTitle: "Оқушыны ажырату керек пе?",
     detachConfirmDescription: "Сіз бұл оқушы туралы деректерді алуды тоқтатасыз. Оның аккаунты белсенді болып қалады. Бұл әрекетті қайтару мүмкін емес.",
+    callStudent: "Қоңырау шалу",
+    viewProfile: "Профиль",
+    notifications: {
+      title: "Хабарландырулар",
+      noNotifications: "Хабарландырулар жоқ",
+      noNotificationsDesc: "Жаңа хабарландырулар осында пайда болады",
+      today: "Бүгін",
+      yesterday: "Кеше",
+      markAsRead: "Оқылды деп белгілеу",
+      justNow: "Дәл қазір",
+    },
     studentDetail: {
       moodTrend: "Көңіл-күй тренді",
       days14: "14 күн",
