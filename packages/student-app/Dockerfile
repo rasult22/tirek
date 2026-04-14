@@ -2,7 +2,8 @@ FROM node:22-slim AS build
 
 WORKDIR /app
 
-# Copy shared package (dependency)
+# Copy tsconfig and shared package
+COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 
 # Install deps
@@ -10,9 +11,9 @@ COPY packages/student-app/package.json packages/student-app/
 WORKDIR /app/packages/student-app
 RUN npm install
 
-# Copy source and build
+# Copy source and build (skip tsc, Vite handles transpilation)
 COPY packages/student-app/ /app/packages/student-app/
-RUN npm run build
+RUN npx vite build
 
 # Serve with lightweight static server
 FROM node:22-slim
