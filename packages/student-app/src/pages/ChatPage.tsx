@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { chatApi } from "../api/chat.js";
@@ -173,16 +173,11 @@ export function ChatPage() {
               </div>
             </div>
           ))}
-          {toolCalls.map((tc) => (
-            <div key={tc.id} className="flex justify-center">
-              <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 dark:bg-emerald-900/30">
-                <ShieldCheck size={14} className="text-emerald-600 dark:text-emerald-400" />
-                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                  {t.chat.psychologistNotified}
-                </span>
-              </div>
+          {toolCalls.length > 0 && (
+            <div className="flex justify-center">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/60" title="debug: tool_call" />
             </div>
-          ))}
+          )}
           {isStreaming && streamingText && (
             <div className="flex justify-start">
               <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-sm leading-relaxed text-text-main shadow-sm">

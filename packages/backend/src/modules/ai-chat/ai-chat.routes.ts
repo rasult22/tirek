@@ -42,7 +42,10 @@ aiChatRouter.post("/sessions/:id/stream", async (c) => {
           if (chunk.type === "text-delta" && chunk.payload?.text) {
             fullText += chunk.payload.text;
             await stream.writeSSE({ data: JSON.stringify({ type: "token", content: chunk.payload.text }) });
+          } else if (chunk.type === "tool-call") {
+            console.log(JSON.stringify({ event: "tool-call", tool: chunk.payload?.toolName, args: chunk.payload?.args }));
           } else if (chunk.type === "tool-result" && chunk.payload?.toolName) {
+            console.log(JSON.stringify({ event: "tool-result", tool: chunk.payload.toolName, result: chunk.payload.result }));
             await stream.writeSSE({
               data: JSON.stringify({
                 type: "tool_call",

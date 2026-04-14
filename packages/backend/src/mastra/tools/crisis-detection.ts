@@ -44,8 +44,8 @@ export const crisisDetectionTool = createTool({
     recorded: z.boolean(),
     severity: z.enum(["low", "medium", "high"]),
   }),
-  execute: async (params) => {
-    const { userId, sessionId, severity, markers, summary } = params;
+  execute: async ({ context }) => {
+    const { userId, sessionId, severity, markers, summary } = context;
 
     // Create SOS event for high and medium severity
     if (severity === "high" || severity === "medium") {
@@ -70,6 +70,10 @@ export const crisisDetectionTool = createTool({
           .innerJoin(users, eq(users.id, studentPsychologist.psychologistId))
           .where(eq(studentPsychologist.studentId, userId));
 
+        if (linkedPsychologists.length === 0) {
+          console.warn(`[crisis-detection] No linked psychologists for student ${userId} — SOS event ${sosId} created but no notifications sent`);
+        }
+
         for (const psych of linkedPsychologists) {
           await db.insert(notifications).values({
             id: uuidv4(),
@@ -88,8 +92,10 @@ export const crisisDetectionTool = createTool({
             },
           });
         }
+
+        console.log(`[crisis-detection] SOS event ${sosId} created (${severity}), ${linkedPsychologists.length} psychologist(s) notified`);
       } catch (error) {
-        console.error("Failed to create SOS event or notifications:", error);
+        console.error("[crisis-detection] Failed to create SOS event or notifications:", error);
       }
     }
 

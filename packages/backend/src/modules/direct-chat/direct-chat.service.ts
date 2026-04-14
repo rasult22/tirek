@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { directChatRepository } from "./direct-chat.repository.js";
 import { notificationsRepository } from "../notifications/notifications.repository.js";
-import { runDirectChatCrisisCheck } from "../../lib/crisis-keywords.js";
 import {
   ForbiddenError,
   NotFoundError,
@@ -140,18 +139,6 @@ export const directChatService = {
     });
 
     await directChatRepository.updateConversationLastMessage(conversationId);
-
-    // Crisis detection for student messages only (non-blocking)
-    if (role === "student") {
-      runDirectChatCrisisCheck(
-        body.content,
-        userId,
-        conversationId,
-        message.id,
-      ).catch((err) => {
-        console.error("Direct chat crisis check error (non-blocking):", err);
-      });
-    }
 
     // Create notification for recipient
     const recipientId = getRecipientId(conv, userId);

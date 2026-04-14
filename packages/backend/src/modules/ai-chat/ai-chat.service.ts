@@ -11,7 +11,6 @@ import { mastra } from "../../core/ai/mastra.js";
 import { db } from "../../db/index.js";
 import { users, moodEntries, diagnosticSessions, diagnosticTests, studentPsychologist } from "../../db/schema.js";
 import { eq, desc, and, gte } from "drizzle-orm";
-import { runMandatoryCrisisCheck } from "../../lib/crisis-keywords.js";
 
 const VALID_MODES = ["general", "talk", "problem", "exam", "discovery"] as const;
 
@@ -122,13 +121,6 @@ export const aiChatService = {
       content: body.content,
     });
 
-    // Mandatory crisis detection — runs on EVERY incoming message BEFORE agent
-    try {
-      await runMandatoryCrisisCheck(body.content, userId, sessionId, userMessage.id);
-    } catch (err) {
-      console.error("Mandatory crisis check error (non-blocking):", err);
-    }
-
     // Build student context for agent awareness
     const { context: studentContext } = await buildStudentContext(userId, session.mode);
 
@@ -183,13 +175,6 @@ export const aiChatService = {
       role: "user",
       content: body.content,
     });
-
-    // Mandatory crisis detection — runs on EVERY incoming message BEFORE agent
-    try {
-      await runMandatoryCrisisCheck(body.content, userId, sessionId, userMsg.id);
-    } catch (err) {
-      console.error("Mandatory crisis check error (non-blocking):", err);
-    }
 
     let assistantContent: string;
     try {
