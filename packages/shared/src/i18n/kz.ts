@@ -228,6 +228,8 @@ export const kz: TranslationKeys = {
     pmrRest: "Демалыс",
     pmrMuscleGroup: "Бұлшықет тобы",
     pmrStep: "Топ",
+    emptyTitle: "Жаттығулар әзірге қолжетімсіз",
+    emptyDescription: "Тізім әзірге бос. Біраздан кейін бетті жаңартып көріңіз.",
   },
   sos: {
     title: "Шұғыл көмек",

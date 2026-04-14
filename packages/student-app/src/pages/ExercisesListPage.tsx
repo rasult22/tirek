@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, Wind, Loader2 } from "lucide-react";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
+import { EmptyState } from "../components/ui/EmptyState.js";
 import { exercisesApi } from "../api/exercises.js";
 
 const EMOJI_MAP: Record<string, { emoji: string; iconBg: string }> = {
@@ -60,6 +61,13 @@ export function ExercisesListPage() {
             <div className="flex justify-center py-8">
               <Loader2 size={28} className="animate-spin text-primary" />
             </div>
+          )}
+          {!isLoading && exercises && exercises.length === 0 && (
+            <EmptyState
+              icon={Wind}
+              title={t.exercises.emptyTitle}
+              description={t.exercises.emptyDescription}
+            />
           )}
           {exercises?.map((ex) => {
             const visual = EMOJI_MAP[ex.slug] ?? { emoji: "\u{1F33F}", iconBg: "bg-gray-100" };
