@@ -11,6 +11,7 @@ import { NotFoundPage } from "./pages/NotFoundPage.js";
 // Pages
 import { LoginPage } from "./pages/LoginPage.js";
 import { RegisterPage } from "./pages/RegisterPage.js";
+import { OnboardingPage } from "./pages/OnboardingPage.js";
 import { DashboardPage } from "./pages/DashboardPage.js";
 import { StudentsListPage } from "./pages/StudentsListPage.js";
 import { StudentDetailPage } from "./pages/StudentDetailPage.js";
@@ -33,11 +34,22 @@ const queryClient = new QueryClient({
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
   const user = useAuthStore((s) => s.user);
+  const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted);
   if (!token) return <Navigate to="/login" replace />;
   if (user && user.role !== "psychologist" && user.role !== "admin") {
     return <Navigate to="/login" replace />;
   }
+  if (!onboardingCompleted) return <Navigate to="/onboarding" replace />;
   return <AppLayout>{children}</AppLayout>;
+}
+
+function OnboardingRoute() {
+  const token = useAuthStore((s) => s.token);
+  const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted);
+  const completeOnboarding = useAuthStore((s) => s.completeOnboarding);
+  if (!token) return <Navigate to="/login" replace />;
+  if (onboardingCompleted) return <Navigate to="/" replace />;
+  return <OnboardingPage onComplete={completeOnboarding} />;
 }
 
 export function App() {
@@ -51,6 +63,7 @@ export function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/onboarding" element={<OnboardingRoute />} />
             <Route
               path="/"
               element={
