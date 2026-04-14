@@ -8,6 +8,18 @@ export function login(email: string, password: string) {
   });
 }
 
+export function registerPsychologist(data: {
+  email: string;
+  password: string;
+  name: string;
+  schoolId?: string;
+}) {
+  return apiFetch<AuthResponse>("/auth/register-psychologist", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export function getMe() {
   return apiFetch<User>("/auth/me");
 }

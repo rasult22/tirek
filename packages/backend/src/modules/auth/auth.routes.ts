@@ -16,6 +16,17 @@ authRouter.post("/register", async (c) => {
   }
 });
 
+// POST /register-psychologist
+authRouter.post("/register-psychologist", async (c) => {
+  try {
+    const body = await c.req.json();
+    const result = await authService.registerPsychologist(body);
+    return c.json(result, 201);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 // POST /login
 authRouter.post("/login", async (c) => {
   try {

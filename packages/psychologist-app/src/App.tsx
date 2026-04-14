@@ -8,6 +8,7 @@ import { NetworkStatus } from "./components/ui/NetworkStatus.js";
 
 // Pages
 import { LoginPage } from "./pages/LoginPage.js";
+import { RegisterPage } from "./pages/RegisterPage.js";
 import { DashboardPage } from "./pages/DashboardPage.js";
 import { StudentsListPage } from "./pages/StudentsListPage.js";
 import { StudentDetailPage } from "./pages/StudentDetailPage.js";
@@ -46,6 +47,7 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route
               path="/"
               element={

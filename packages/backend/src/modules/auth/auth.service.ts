@@ -104,6 +104,60 @@ export const authService = {
     };
   },
 
+  async registerPsychologist(body: {
+    email?: string;
+    password?: string;
+    name?: string;
+    schoolId?: string;
+  }) {
+    const { email, password, name, schoolId } = body;
+
+    if (!email || !password || !name) {
+      throw new ValidationError("Email, password, and name are required");
+    }
+
+    // Check for existing user
+    const existing = await authRepository.findByEmail(email);
+    if (existing) {
+      throw new ConflictError("Email already registered");
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create psychologist user
+    const userId = uuidv4();
+    const user = await authRepository.create({
+      id: userId,
+      email,
+      passwordHash,
+      name,
+      role: "psychologist",
+      schoolId: schoolId || null,
+    });
+
+    // Generate token
+    const token = signToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        language: user.language,
+        avatarId: user.avatarId,
+        grade: user.grade,
+        classLetter: user.classLetter,
+      },
+    };
+  },
+
   async login(body: { email?: string; password?: string }) {
     const { email, password } = body;
 
