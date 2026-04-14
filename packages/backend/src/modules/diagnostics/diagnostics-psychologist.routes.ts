@@ -38,4 +38,53 @@ diagnosticsPsychologistRouter.post("/assign", async (c) => {
   }
 });
 
+// GET /sessions/:sessionId/report - AI-generated report for a session
+diagnosticsPsychologistRouter.get("/sessions/:sessionId/report", async (c) => {
+  try {
+    const sessionId = c.req.param("sessionId");
+    const report = await diagnosticsService.getAiReportForPsychologist(
+      c.var.user.userId,
+      sessionId,
+    );
+    // If still generating, return 202 so the client knows to keep polling.
+    if (report.status === "pending") {
+      return c.json(report, 202);
+    }
+    return c.json(report);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
+// POST /sessions/:sessionId/report/regenerate - trigger a fresh generation
+diagnosticsPsychologistRouter.post(
+  "/sessions/:sessionId/report/regenerate",
+  async (c) => {
+    try {
+      const sessionId = c.req.param("sessionId");
+      const result = await diagnosticsService.regenerateAiReport(
+        c.var.user.userId,
+        sessionId,
+      );
+      return c.json(result, 202);
+    } catch (err) {
+      return handleError(c, err);
+    }
+  },
+);
+
+// GET /sessions/:sessionId/answers - per-item answers with question text
+diagnosticsPsychologistRouter.get("/sessions/:sessionId/answers", async (c) => {
+  try {
+    const sessionId = c.req.param("sessionId");
+    const result = await diagnosticsService.getSessionAnswersForPsychologist(
+      c.var.user.userId,
+      sessionId,
+    );
+    return c.json(result);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 export { diagnosticsPsychologistRouter };

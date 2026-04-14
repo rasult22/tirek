@@ -86,6 +86,83 @@ export interface DiagnosticSession {
   severity: Severity | null;
 }
 
+export type AssignmentStatus = "not_started" | "in_progress" | "completed";
+
+export interface AssignedTest {
+  assignmentId: string;
+  testId: string;
+  dueDate: string | null;
+  status: AssignmentStatus;
+  completedSessionId: string | null;
+  overdue: boolean;
+  assignedAt: string;
+  test: {
+    id: string;
+    slug: string;
+    nameRu: string;
+    nameKz: string | null;
+    description: string | null;
+    questionCount: number;
+  } | null;
+}
+
+export type AiReportStatus = "pending" | "ready" | "error";
+
+export interface AiReportRiskFactor {
+  factor: string;
+  severity: "low" | "moderate" | "high";
+  evidence?: string;
+}
+
+export type AiReportRecommendationType =
+  | "therapy"
+  | "exercise"
+  | "referral"
+  | "monitoring"
+  | "conversation";
+
+export interface AiReportRecommendation {
+  type: AiReportRecommendationType;
+  text: string;
+}
+
+export interface AiReportFlaggedItem {
+  questionIndex: number;
+  reason: string;
+}
+
+export interface DiagnosticAiReport {
+  sessionId: string;
+  status: AiReportStatus;
+  model: string | null;
+  summary: string | null;
+  interpretation: string | null;
+  riskFactors: AiReportRiskFactor[] | null;
+  recommendations: AiReportRecommendation[] | null;
+  trend: string | null;
+  flaggedItems: AiReportFlaggedItem[] | null;
+  tokensUsed: number | null;
+  errorMessage: string | null;
+  generatedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionAnswerItem {
+  questionIndex: number;
+  questionText: string | null;
+  answer: number;
+  answerLabel: string | null;
+  score: number | null;
+}
+
+export interface SessionAnswersResponse {
+  sessionId: string;
+  testSlug: string | null;
+  testName: string | null;
+  items: SessionAnswerItem[];
+}
+
 export interface TestResultStudent {
   severity: Severity;
   friendlyMessage: string;

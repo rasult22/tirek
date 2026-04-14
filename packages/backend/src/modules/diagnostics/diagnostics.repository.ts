@@ -66,6 +66,31 @@ export const diagnosticsRepository = {
     return assignments;
   },
 
+  /**
+   * Returns the most recent session for the user on the given test that was
+   * created at or after the given timestamp. Used to compute the "status" of
+   * a test assignment (not_started | in_progress | completed).
+   */
+  async findLatestSessionSinceForUser(
+    userId: string,
+    testId: string,
+    since: Date,
+  ) {
+    const [row] = await db
+      .select()
+      .from(diagnosticSessions)
+      .where(
+        and(
+          eq(diagnosticSessions.userId, userId),
+          eq(diagnosticSessions.testId, testId),
+          sql`${diagnosticSessions.startedAt} >= ${since.toISOString()}`,
+        ),
+      )
+      .orderBy(desc(diagnosticSessions.startedAt))
+      .limit(1);
+    return row ?? null;
+  },
+
   async createSession(data: {
     id: string;
     userId: string;
@@ -200,6 +225,37 @@ export const diagnosticsRepository = {
       .orderBy(desc(diagnosticSessions.completedAt))
       .limit(pagination.limit)
       .offset(pagination.offset);
+  },
+
+  /**
+   * Returns true if the given psychologist is linked to the student who owns
+   * the session (or if the psychologist is the session owner themselves).
+   */
+  async canPsychologistAccessSession(
+    psychologistId: string,
+    sessionId: string,
+  ) {
+    const [row] = await db
+      .select({
+        sessionUserId: diagnosticSessions.userId,
+        psychologistId: studentPsychologist.psychologistId,
+      })
+      .from(diagnosticSessions)
+      .leftJoin(
+        studentPsychologist,
+        and(
+          eq(studentPsychologist.studentId, diagnosticSessions.userId),
+          eq(studentPsychologist.psychologistId, psychologistId),
+        ),
+      )
+      .where(eq(diagnosticSessions.id, sessionId))
+      .limit(1);
+    if (!row) return { found: false as const };
+    return {
+      found: true as const,
+      linked: Boolean(row.psychologistId),
+      sessionUserId: row.sessionUserId,
+    };
   },
 
   async countSessionsByPsychologist(psychologistId: string, studentId?: string) {

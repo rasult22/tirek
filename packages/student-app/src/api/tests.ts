@@ -1,5 +1,5 @@
 import { apiFetch } from "./client.js";
-import type { DiagnosticTest, DiagnosticSession, Severity, PaginatedResponse } from "@tirek/shared";
+import type { AssignedTest, DiagnosticTest, DiagnosticSession, Severity, PaginatedResponse } from "@tirek/shared";
 
 export interface SessionResult {
   sessionId: string;
@@ -15,7 +15,7 @@ export interface SessionResult {
 export const testsApi = {
   list: () => apiFetch<DiagnosticTest[]>("/student/tests/"),
 
-  assigned: () => apiFetch<DiagnosticTest[]>("/student/tests/assigned"),
+  assigned: () => apiFetch<AssignedTest[]>("/student/tests/assigned"),
 
   start: (testId: string) =>
     apiFetch<DiagnosticSession>(`/student/tests/${testId}/start`, { method: "POST" }),

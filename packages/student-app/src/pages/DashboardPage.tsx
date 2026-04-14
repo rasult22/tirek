@@ -11,6 +11,7 @@ import { plantApi } from "../api/plant.js";
 import { exercisesApi } from "../api/exercises.js";
 import { appointmentsApi } from "../api/appointments.js";
 import { achievementsApi } from "../api/achievements.js";
+import { testsApi } from "../api/tests.js";
 import { moodLevels } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
@@ -64,15 +65,24 @@ export function DashboardPage() {
     queryFn: achievementsApi.getSummary,
   });
 
+  const { data: assignedTests = [] } = useQuery({
+    queryKey: ["tests", "assigned"],
+    queryFn: () => testsApi.assigned(),
+  });
+
+  const pendingTestsCount = assignedTests.filter(
+    (a) => a.status !== "completed",
+  ).length;
+
   const quickLinks = [
-    { to: "/chat", icon: MessageCircle, label: t.nav.chat, iconBg: "bg-teal-100", color: "text-teal-700" },
-    { to: "/tests", icon: ClipboardList, label: t.nav.tests, iconBg: "bg-emerald-100", color: "text-emerald-700" },
-    { to: "/exercises", icon: Wind, label: t.nav.exercises, iconBg: "bg-sky-100", color: "text-sky-700" },
-    { to: "/journal", icon: BookOpen, label: t.nav.journal, iconBg: "bg-amber-100", color: "text-amber-700" },
-    { to: "/messages", icon: Mail, label: t.directChat.title, iconBg: "bg-green-100", color: "text-green-700" },
-    { to: "/mood/calendar", icon: CalendarDays, label: t.mood.calendar, iconBg: "bg-blue-100", color: "text-blue-700" },
-    { to: "/appointments", icon: Calendar, label: t.nav.appointments, iconBg: "bg-violet-100", color: "text-violet-700" },
-    { to: "/achievements", icon: Award, label: t.achievements.title, iconBg: "bg-yellow-100", color: "text-yellow-700" },
+    { to: "/chat", icon: MessageCircle, label: t.nav.chat, iconBg: "bg-teal-100", color: "text-teal-700", badge: 0 },
+    { to: "/tests", icon: ClipboardList, label: t.nav.tests, iconBg: "bg-emerald-100", color: "text-emerald-700", badge: pendingTestsCount },
+    { to: "/exercises", icon: Wind, label: t.nav.exercises, iconBg: "bg-sky-100", color: "text-sky-700", badge: 0 },
+    { to: "/journal", icon: BookOpen, label: t.nav.journal, iconBg: "bg-amber-100", color: "text-amber-700", badge: 0 },
+    { to: "/messages", icon: Mail, label: t.directChat.title, iconBg: "bg-green-100", color: "text-green-700", badge: 0 },
+    { to: "/mood/calendar", icon: CalendarDays, label: t.mood.calendar, iconBg: "bg-blue-100", color: "text-blue-700", badge: 0 },
+    { to: "/appointments", icon: Calendar, label: t.nav.appointments, iconBg: "bg-violet-100", color: "text-violet-700", badge: 0 },
+    { to: "/achievements", icon: Award, label: t.achievements.title, iconBg: "bg-yellow-100", color: "text-yellow-700", badge: 0 },
   ];
 
   const avatarEmoji = user?.avatarId ? (AVATAR_MAP[user.avatarId] ?? "\u{1F60A}") : "\u{1F60A}";
@@ -291,10 +301,15 @@ export function DashboardPage() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="btn-press flex flex-col items-center gap-2.5 rounded-2xl bg-white p-5 shadow-sm border border-border-light transition-all hover:shadow-md"
+                className="btn-press relative flex flex-col items-center gap-2.5 rounded-2xl bg-white p-5 shadow-sm border border-border-light transition-all hover:shadow-md"
               >
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${item.iconBg}`}>
+                <div className={`relative flex h-11 w-11 items-center justify-center rounded-xl ${item.iconBg}`}>
                   <item.icon size={22} className={item.color} />
+                  {item.badge > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm">
+                      {item.badge > 9 ? "9+" : item.badge}
+                    </span>
+                  )}
                 </div>
                 <span className="text-xs font-bold text-text-main">{item.label}</span>
               </Link>

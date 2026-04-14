@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Loader2, FileText, Brain, Award, Lock } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, FileText, Brain, Award, Lock } from "lucide-react";
 import { clsx } from "clsx";
 import { useT } from "../../hooks/useLanguage.js";
 import { useLanguage } from "../../hooks/useLanguage.js";
 import { SeverityBadge } from "../ui/SeverityBadge.js";
+import { AiReportCard } from "../diagnostics/AiReportCard.js";
 import type { DiagnosticSession, CbtEntry, ThoughtDiaryData, UserAchievementItem } from "@tirek/shared";
 
 type SubTab = "tests" | "cbt" | "achievements";
@@ -27,6 +28,7 @@ export function StudentAssessmentsTab({
   const { language } = useLanguage();
   const d = t.psychologist.studentDetail;
   const [subTab, setSubTab] = useState<SubTab>("tests");
+  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   const subTabs: { key: SubTab; label: string }[] = [
     { key: "tests", label: d.testsTab },
@@ -64,33 +66,58 @@ export function StudentAssessmentsTab({
             </div>
           ) : (
             <div className="space-y-2">
-              {testResults.map((result) => (
-                <div
-                  key={result.id}
-                  className="bg-surface rounded-xl border border-border shadow-sm p-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-text-main">
-                        {result.testName ?? result.testSlug ?? result.testId}
-                      </p>
-                      <p className="text-xs text-text-light mt-0.5">
-                        {result.completedAt
-                          ? new Date(result.completedAt).toLocaleDateString()
-                          : "—"}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {result.totalScore != null && (
-                        <span className="text-sm font-bold text-text-main">
-                          {result.totalScore}/{result.maxScore ?? "?"}
-                        </span>
-                      )}
-                      {result.severity && <SeverityBadge severity={result.severity} />}
-                    </div>
+              {testResults.map((result) => {
+                const isExpanded = expandedSessionId === result.id;
+                const hasReport = Boolean(result.completedAt);
+                return (
+                  <div
+                    key={result.id}
+                    className="bg-surface rounded-xl border border-border shadow-sm"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        hasReport &&
+                        setExpandedSessionId(isExpanded ? null : result.id)
+                      }
+                      disabled={!hasReport}
+                      className="w-full text-left p-4 flex items-start justify-between gap-3 disabled:cursor-default"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-text-main">
+                          {result.testName ?? result.testSlug ?? result.testId}
+                        </p>
+                        <p className="text-xs text-text-light mt-0.5">
+                          {result.completedAt
+                            ? new Date(result.completedAt).toLocaleDateString()
+                            : "—"}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {result.totalScore != null && (
+                          <span className="text-sm font-bold text-text-main">
+                            {result.totalScore}/{result.maxScore ?? "?"}
+                          </span>
+                        )}
+                        {result.severity && (
+                          <SeverityBadge severity={result.severity} />
+                        )}
+                        {hasReport &&
+                          (isExpanded ? (
+                            <ChevronUp size={16} className="text-text-light" />
+                          ) : (
+                            <ChevronDown size={16} className="text-text-light" />
+                          ))}
+                      </div>
+                    </button>
+                    {isExpanded && hasReport && (
+                      <div className="border-t border-border p-4 bg-surface-secondary/30">
+                        <AiReportCard sessionId={result.id} />
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

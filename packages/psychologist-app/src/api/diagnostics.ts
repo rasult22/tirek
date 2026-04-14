@@ -1,5 +1,10 @@
 import { apiFetch } from "./client.js";
-import type { Severity, PaginatedResponse } from "@tirek/shared";
+import type {
+  DiagnosticAiReport,
+  PaginatedResponse,
+  SessionAnswersResponse,
+  Severity,
+} from "@tirek/shared";
 
 export interface DiagnosticsFilters {
   testSlug?: string;
@@ -52,4 +57,27 @@ export function assignTest(data: AssignTestData) {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+/**
+ * Server returns the full report when ready, or a minimal { status: "pending" }
+ * stub (with HTTP 202) while the LLM is still generating.
+ */
+export function getReport(sessionId: string) {
+  return apiFetch<DiagnosticAiReport | { status: "pending" }>(
+    `/psychologist/diagnostics/sessions/${sessionId}/report`,
+  );
+}
+
+export function regenerateReport(sessionId: string) {
+  return apiFetch<{ status: "pending" }>(
+    `/psychologist/diagnostics/sessions/${sessionId}/report/regenerate`,
+    { method: "POST" },
+  );
+}
+
+export function getSessionAnswers(sessionId: string) {
+  return apiFetch<SessionAnswersResponse>(
+    `/psychologist/diagnostics/sessions/${sessionId}/answers`,
+  );
 }
