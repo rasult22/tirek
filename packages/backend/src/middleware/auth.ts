@@ -12,6 +12,7 @@ export type AppVariables = {
 // ── Public routes that skip auth ─────────────────────────────────────
 const PUBLIC_PATTERNS = [
   /^\/auth\/register$/,
+  /^\/auth\/register-psychologist$/,
   /^\/auth\/login$/,
   /^\/docs$/,
   /^\/openapi\.json$/,
