@@ -2,7 +2,7 @@ FROM node:22-slim AS build
 
 WORKDIR /app
 
-# Copy tsconfig and shared package
+# Copy tsconfig and shared package (no deps needed)
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 

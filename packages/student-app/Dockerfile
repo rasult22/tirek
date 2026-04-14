@@ -6,7 +6,7 @@ WORKDIR /app
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 
-# Install deps
+# Install frontend deps
 COPY packages/student-app/package.json packages/student-app/
 WORKDIR /app/packages/student-app
 RUN npm install

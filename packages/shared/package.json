@@ -10,8 +10,5 @@
     "./constants": "./src/constants/index.ts",
     "./i18n": "./src/i18n/index.ts",
     "./validators": "./src/validators/index.ts"
-  },
-  "dependencies": {
-    "zod": "^3.24.0"
   }
 }
