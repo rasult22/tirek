@@ -46,8 +46,9 @@ export const notifyPsychologistTool = createTool({
     notified: z.boolean(),
     psychologistCount: z.number(),
   }),
-  execute: async ({ context }) => {
-    const { userId, sessionId, concern, category, urgency } = context;
+  execute: async (params) => {
+    console.log(JSON.stringify({ event: "tool-execute", tool: "notifyPsychologistTool", params: Object.keys(params), context: params.context }));
+    const { userId, sessionId, concern, category, urgency } = params.context;
 
     try {
       const linkedPsychologists = await db
