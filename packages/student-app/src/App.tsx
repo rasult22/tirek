@@ -37,7 +37,17 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
+  const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted);
   if (!token) return <Navigate to="/login" replace />;
+  if (!onboardingCompleted) return <Navigate to="/onboarding" replace />;
+  return <>{children}</>;
+}
+
+function OnboardingRoute({ children }: { children: React.ReactNode }) {
+  const token = useAuthStore((s) => s.token);
+  const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted);
+  if (!token) return <Navigate to="/login" replace />;
+  if (onboardingCompleted) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -52,7 +62,7 @@ export function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/onboarding" element={<OnboardingRoute><OnboardingPage /></OnboardingRoute>} />
             <Route
               path="/"
               element={
