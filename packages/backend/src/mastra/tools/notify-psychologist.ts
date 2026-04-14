@@ -1,7 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { db } from "../../db/index.js";
-import { notifications, studentPsychologist, users } from "../../db/schema.js";
+import { notifications, studentPsychologist, users, sosEvents } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 
@@ -73,7 +73,17 @@ export const notifyPsychologistTool = createTool({
         other: "Другое",
       };
 
+      const sosLevel = urgency === "medium" ? 1 : 0;
+      const sosId = uuidv4();
       const icon = urgency === "medium" ? "⚠️" : "📋";
+
+      // Create SOS event so it appears on the Crisis page
+      await db.insert(sosEvents).values({
+        id: sosId,
+        userId,
+        level: sosLevel,
+        notes: `${categoryLabels[category]}: ${concern}. Session: ${sessionId}`,
+      });
 
       for (const psych of linkedPsychologists) {
         await db.insert(notifications).values({
@@ -83,6 +93,7 @@ export const notifyPsychologistTool = createTool({
           title: `${icon} ${categoryLabels[category]}: выявлена проблема в чате`,
           body: concern,
           metadata: {
+            sosEventId: sosId,
             sessionId,
             studentId: userId,
             category,
