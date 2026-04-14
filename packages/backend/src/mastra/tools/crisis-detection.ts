@@ -45,8 +45,7 @@ export const crisisDetectionTool = createTool({
     severity: z.enum(["low", "medium", "high"]),
   }),
   execute: async (params) => {
-    console.log(JSON.stringify({ event: "tool-execute", tool: "crisisDetectionTool", params: Object.keys(params), context: params.context }));
-    const { userId, sessionId, severity, markers, summary } = params.context;
+    const { userId, sessionId, severity, markers, summary } = params;
 
     // Create SOS event for high and medium severity
     if (severity === "high" || severity === "medium") {

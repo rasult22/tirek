@@ -17,8 +17,8 @@ export const moodAnalysisTool = createTool({
     recentEntries: z.number(),
     insights: z.array(z.string()),
   }),
-  execute: async ({ context }) => {
-    const { userId } = context;
+  execute: async (params) => {
+    const { userId } = params;
 
     const fourteenDaysAgo = new Date();
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
