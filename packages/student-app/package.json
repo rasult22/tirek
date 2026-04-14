@@ -6,6 +6,7 @@
     "dev": "vite --port 5173",
     "dev:prod": "vite --port 5173 --mode production",
     "build": "tsc -b && vite build",
+    "build:prod": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {

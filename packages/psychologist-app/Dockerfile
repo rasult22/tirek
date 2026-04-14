@@ -13,7 +13,7 @@ RUN npm install
 
 # Copy source and build (skip tsc, Vite handles transpilation)
 COPY packages/psychologist-app/ /app/packages/psychologist-app/
-RUN npx vite build
+RUN npm run build:prod
 
 # Serve with lightweight static server
 FROM node:22-slim

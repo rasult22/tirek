@@ -13,7 +13,7 @@ RUN npm install
 
 # Copy source and build (skip tsc, Vite handles transpilation)
 COPY packages/student-app/ /app/packages/student-app/
-RUN npx vite build
+RUN npm run build:prod
 
 # Serve with lightweight static server
 FROM node:22-slim
