@@ -1,7 +1,10 @@
 import { eq, and, desc, isNull, sql, count as dbCount } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db/index.js";
 import { sosEvents, studentPsychologist, users } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
+
+const resolverUser = alias(users, "resolver");
 
 const sosWithStudent = {
   id: sosEvents.id,
@@ -11,6 +14,9 @@ const sosWithStudent = {
   resolvedAt: sosEvents.resolvedAt,
   resolvedBy: sosEvents.resolvedBy,
   notes: sosEvents.notes,
+  contactedStudent: sosEvents.contactedStudent,
+  contactedParent: sosEvents.contactedParent,
+  documented: sosEvents.documented,
   studentName: users.name,
   studentGrade: users.grade,
   studentClassLetter: users.classLetter,
@@ -70,7 +76,13 @@ export const sosRepository = {
 
   async resolve(
     id: string,
-    data: { resolvedBy: string; notes?: string | null },
+    data: {
+      resolvedBy: string;
+      notes?: string | null;
+      contactedStudent?: boolean;
+      contactedParent?: boolean;
+      documented?: boolean;
+    },
   ) {
     const [event] = await db
       .update(sosEvents)
@@ -78,6 +90,9 @@ export const sosRepository = {
         resolvedAt: sql`NOW()`,
         resolvedBy: data.resolvedBy,
         notes: data.notes ?? null,
+        contactedStudent: data.contactedStudent ?? false,
+        contactedParent: data.contactedParent ?? false,
+        documented: data.documented ?? false,
       })
       .where(eq(sosEvents.id, id))
       .returning();
@@ -86,13 +101,17 @@ export const sosRepository = {
 
   async findHistory(psychologistId: string, pagination: PaginationParams) {
     return db
-      .select(sosWithStudent)
+      .select({
+        ...sosWithStudent,
+        resolvedByName: resolverUser.name,
+      })
       .from(sosEvents)
       .innerJoin(
         studentPsychologist,
         eq(sosEvents.userId, studentPsychologist.studentId),
       )
       .innerJoin(users, eq(sosEvents.userId, users.id))
+      .leftJoin(resolverUser, eq(sosEvents.resolvedBy, resolverUser.id))
       .where(eq(studentPsychologist.psychologistId, psychologistId))
       .orderBy(desc(sosEvents.createdAt))
       .limit(pagination.limit)

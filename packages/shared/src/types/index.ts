@@ -260,7 +260,11 @@ export interface SOSEvent {
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;
+  resolvedByName?: string;
   notes: string | null;
+  contactedStudent: boolean;
+  contactedParent: boolean;
+  documented: boolean;
   studentName?: string;
   studentGrade?: number;
   studentClass?: string;

@@ -21,6 +21,9 @@ import {
   MessageCircle,
   ChevronDown,
   X,
+  Info,
+  Check,
+  Minus,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { clsx } from "clsx";
@@ -46,6 +49,8 @@ export function CrisisPage() {
   const [resolveSheetId, setResolveSheetId] = useState<string | null>(null);
   const [openingChat, setOpeningChat] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   const openStudentChat = useCallback(
     async (studentId: string) => {
@@ -141,6 +146,86 @@ export function CrisisPage() {
         <h1 className="text-xl font-bold tracking-tight text-text-main">
           {t.psychologist.crisis}
         </h1>
+
+        {/* ── LEVEL LEGEND ── */}
+        <section>
+          <button
+            onClick={() => setLegendOpen(!legendOpen)}
+            className="w-full flex items-center justify-between py-2 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Info size={14} className="text-primary" />
+              </div>
+              <h2 className="text-sm font-bold text-text-main">
+                {t.psychologist.crisisLevelLegend}
+              </h2>
+            </div>
+            <ChevronDown
+              size={16}
+              className={clsx(
+                "text-text-light transition-transform duration-200",
+                legendOpen && "rotate-180",
+              )}
+            />
+          </button>
+
+          {legendOpen && (
+            <div className="mt-2 space-y-2 animate-fade-in-up">
+              {([
+                {
+                  level: 1,
+                  title: t.psychologist.crisisLevel1Title,
+                  desc: t.psychologist.crisisLevel1Desc,
+                  bg: "bg-yellow-400/10",
+                  text: "text-yellow-600",
+                  badge: "bg-yellow-400",
+                },
+                {
+                  level: 2,
+                  title: t.psychologist.crisisLevel2Title,
+                  desc: t.psychologist.crisisLevel2Desc,
+                  bg: "bg-warning/10",
+                  text: "text-warning",
+                  badge: "bg-warning",
+                },
+                {
+                  level: 3,
+                  title: t.psychologist.crisisLevel3Title,
+                  desc: t.psychologist.crisisLevel3Desc,
+                  bg: "bg-danger/10",
+                  text: "text-danger",
+                  badge: "bg-danger",
+                },
+              ] as const).map(({ level, title, desc, bg, text, badge }) => (
+                <div
+                  key={level}
+                  className={clsx(
+                    "flex items-start gap-3 p-3 rounded-xl border border-transparent",
+                    bg,
+                  )}
+                >
+                  <span
+                    className={clsx(
+                      "shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold text-white",
+                      badge,
+                    )}
+                  >
+                    {level}
+                  </span>
+                  <div className="min-w-0">
+                    <p className={clsx("text-sm font-semibold", text)}>
+                      {title}
+                    </p>
+                    <p className="text-xs text-text-light mt-0.5 leading-relaxed">
+                      {desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* ── ACTIVE ALERTS ── */}
         <section>
@@ -371,45 +456,159 @@ export function CrisisPage() {
                   />
                 </div>
               ) : historyEvents.length > 0 ? (
-                <div className="space-y-1.5 stagger-children">
-                  {historyEvents.map((event: SOSEvent) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-success/8 flex items-center justify-center shrink-0">
-                        <CheckCircle size={14} className="text-success" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-text-main truncate">
-                          {event.studentName ?? t.psychologist.student}
-                        </p>
-                        {event.notes && (
-                          <p className="text-xs text-text-light truncate mt-0.5">
-                            {event.notes}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span
-                          className={clsx(
-                            "px-1.5 py-0.5 text-[10px] font-bold rounded-md",
-                            event.level >= 3 && "bg-danger/10 text-danger",
-                            event.level === 2 && "bg-warning/10 text-warning",
-                            event.level <= 1 &&
-                              "bg-yellow-400/10 text-yellow-600",
-                          )}
+                <div className="space-y-2 stagger-children">
+                  {historyEvents.map((event: SOSEvent) => {
+                    const isExpanded = expandedHistoryId === event.id;
+                    const actions = [
+                      { done: event.contactedStudent, label: t.psychologist.contactedStudentDone },
+                      { done: event.contactedParent, label: t.psychologist.contactedParentDone },
+                      { done: event.documented, label: t.psychologist.documentedDone },
+                    ];
+                    const hasAnyAction = actions.some((a) => a.done);
+
+                    return (
+                      <div
+                        key={event.id}
+                        className="rounded-xl bg-surface border border-border overflow-hidden"
+                      >
+                        {/* Collapsed header */}
+                        <button
+                          onClick={() =>
+                            setExpandedHistoryId(isExpanded ? null : event.id)
+                          }
+                          className="w-full flex items-center gap-3 p-3 text-left"
                         >
-                          L{event.level}
-                        </span>
-                        {event.resolvedAt && (
-                          <p className="text-[10px] text-text-light mt-1">
-                            {new Date(event.resolvedAt).toLocaleDateString()}
-                          </p>
+                          <div className="w-8 h-8 rounded-lg bg-success/8 flex items-center justify-center shrink-0">
+                            <CheckCircle size={14} className="text-success" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-text-main truncate">
+                              {event.studentName ?? t.psychologist.student}
+                            </p>
+                            {!isExpanded && event.notes && (
+                              <p className="text-xs text-text-light truncate mt-0.5">
+                                {event.notes}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span
+                              className={clsx(
+                                "px-1.5 py-0.5 text-[10px] font-bold rounded-md",
+                                event.level >= 3 && "bg-danger/10 text-danger",
+                                event.level === 2 && "bg-warning/10 text-warning",
+                                event.level <= 1 && "bg-yellow-400/10 text-yellow-600",
+                              )}
+                            >
+                              L{event.level}
+                            </span>
+                            <ChevronDown
+                              size={14}
+                              className={clsx(
+                                "text-text-light transition-transform duration-200",
+                                isExpanded && "rotate-180",
+                              )}
+                            />
+                          </div>
+                        </button>
+
+                        {/* Expanded details */}
+                        {isExpanded && (
+                          <div className="px-3 pb-3 pt-0 border-t border-border animate-fade-in-up">
+                            <div className="grid grid-cols-2 gap-2.5 mt-3">
+                              {/* Triggered at */}
+                              <div>
+                                <p className="text-[10px] text-text-light uppercase tracking-wide">
+                                  {t.psychologist.triggeredAt}
+                                </p>
+                                <p className="text-xs font-medium text-text-main mt-0.5">
+                                  {new Date(event.createdAt).toLocaleString()}
+                                </p>
+                              </div>
+                              {/* Resolved at */}
+                              {event.resolvedAt && (
+                                <div>
+                                  <p className="text-[10px] text-text-light uppercase tracking-wide">
+                                    {t.psychologist.resolvedAtLabel}
+                                  </p>
+                                  <p className="text-xs font-medium text-text-main mt-0.5">
+                                    {new Date(event.resolvedAt).toLocaleString()}
+                                  </p>
+                                </div>
+                              )}
+                              {/* Student */}
+                              <div>
+                                <p className="text-[10px] text-text-light uppercase tracking-wide">
+                                  {t.psychologist.student}
+                                </p>
+                                <p className="text-xs font-medium text-text-main mt-0.5">
+                                  {event.studentName ?? "—"}
+                                  {event.studentGrade
+                                    ? ` · ${event.studentGrade}${event.studentClassLetter ?? ""}`
+                                    : ""}
+                                </p>
+                              </div>
+                              {/* Resolved by */}
+                              {event.resolvedByName && (
+                                <div>
+                                  <p className="text-[10px] text-text-light uppercase tracking-wide">
+                                    {t.psychologist.resolvedByPsychologist}
+                                  </p>
+                                  <p className="text-xs font-medium text-text-main mt-0.5">
+                                    {event.resolvedByName}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Notes */}
+                            {event.notes && (
+                              <div className="mt-3 bg-surface-secondary rounded-lg px-3 py-2">
+                                <p className="text-[13px] text-text-main leading-relaxed">
+                                  {event.notes}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Actions checklist */}
+                            <div className="mt-3">
+                              <p className="text-[10px] text-text-light uppercase tracking-wide mb-1.5">
+                                {t.psychologist.actionsTaken}
+                              </p>
+                              {hasAnyAction ? (
+                                <div className="space-y-1">
+                                  {actions.map(({ done, label }) => (
+                                    <div
+                                      key={label}
+                                      className="flex items-center gap-2"
+                                    >
+                                      {done ? (
+                                        <Check size={12} className="text-success shrink-0" />
+                                      ) : (
+                                        <Minus size={12} className="text-text-light shrink-0" />
+                                      )}
+                                      <span
+                                        className={clsx(
+                                          "text-xs",
+                                          done ? "text-text-main" : "text-text-light",
+                                        )}
+                                      >
+                                        {label}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-text-light">
+                                  {t.psychologist.noActionsTaken}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm text-text-light text-center py-6">
@@ -489,10 +688,16 @@ export function CrisisPage() {
                 ).map(({ key, icon: Icon, label }) => {
                   const state = getState(resolveAlert.id);
                   return (
-                    <label
+                    <button
+                      type="button"
                       key={key}
+                      onClick={() =>
+                        updateState(resolveAlert.id, {
+                          [key]: !state[key],
+                        })
+                      }
                       className={clsx(
-                        "flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all",
+                        "flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all w-full text-left",
                         state[key]
                           ? "bg-success/8 border border-success/20"
                           : "bg-surface-secondary border border-transparent",
@@ -530,7 +735,7 @@ export function CrisisPage() {
                       >
                         {label}
                       </span>
-                    </label>
+                    </button>
                   );
                 })}
               </div>

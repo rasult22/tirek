@@ -238,6 +238,9 @@ export const sosEvents = pgTable("sos_events", {
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   resolvedBy: text("resolved_by").references(() => users.id),
   notes: text("notes"),
+  contactedStudent: boolean("contacted_student").default(false).notNull(),
+  contactedParent: boolean("contacted_parent").default(false).notNull(),
+  documented: boolean("documented").default(false).notNull(),
 });
 
 // ── 14. chat_sessions ───────────────────────────────────────────────

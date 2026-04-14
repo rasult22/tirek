@@ -65,7 +65,12 @@ export const sosService = {
   async resolve(
     psychologistId: string,
     eventId: string,
-    body: { notes?: string },
+    body: {
+      notes?: string;
+      contactedStudent?: boolean;
+      contactedParent?: boolean;
+      documented?: boolean;
+    },
   ) {
     const event = await sosRepository.findById(eventId);
     if (!event) {
@@ -79,6 +84,9 @@ export const sosService = {
     return sosRepository.resolve(eventId, {
       resolvedBy: psychologistId,
       notes: body.notes ?? null,
+      contactedStudent: body.contactedStudent,
+      contactedParent: body.contactedParent,
+      documented: body.documented,
     });
   },
 
