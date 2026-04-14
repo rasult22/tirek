@@ -13,6 +13,10 @@ RUN npm install
 # Copy backend source
 COPY packages/backend/ /app/packages/backend/
 
+# Copy drizzle migrations
+COPY drizzle/ /app/drizzle/
+
 ENV NODE_ENV=production
 
-CMD ["npx", "tsx", "src/server.ts"]
+# Run migrations then start server
+CMD ["sh", "-c", "npx tsx src/db/migrate.ts && npx tsx src/server.ts"]
