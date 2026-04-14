@@ -158,6 +158,32 @@ export const diagnosticAnswers = pgTable("diagnostic_answers", {
   score: integer("score"),
 });
 
+// ── 9a. diagnostic_ai_reports ───────────────────────────────────────
+export const diagnosticAiReports = pgTable("diagnostic_ai_reports", {
+  id: text("id").primaryKey(),
+  sessionId: text("session_id")
+    .notNull()
+    .unique()
+    .references(() => diagnosticSessions.id),
+  status: text("status").notNull().default("pending"), // "pending" | "ready" | "error"
+  model: text("model"),
+  summary: text("summary"),
+  interpretation: text("interpretation"),
+  riskFactors: jsonb("risk_factors"), // [{ factor, severity, evidence }]
+  recommendations: jsonb("recommendations"), // [{ type, text }]
+  trend: text("trend"),
+  flaggedItems: jsonb("flagged_items"), // [{ questionIndex, reason }]
+  tokensUsed: integer("tokens_used"),
+  errorMessage: text("error_message"),
+  generatedAt: timestamp("generated_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // ── 10. exercises ───────────────────────────────────────────────────
 export const exercises = pgTable("exercises", {
   id: text("id").primaryKey(),
