@@ -1,0 +1,22 @@
+FROM node:22-slim AS build
+
+WORKDIR /app
+
+# Copy shared package (dependency)
+COPY packages/shared/ packages/shared/
+
+# Install deps
+COPY packages/psychologist-app/package.json packages/psychologist-app/
+WORKDIR /app/packages/psychologist-app
+RUN npm install
+
+# Copy source and build
+COPY packages/psychologist-app/ /app/packages/psychologist-app/
+RUN npm run build
+
+# Serve with lightweight static server
+FROM node:22-slim
+RUN npm i -g serve
+COPY --from=build /app/packages/psychologist-app/dist /app
+WORKDIR /app
+CMD sh -c "serve -s . -l tcp://0.0.0.0:${PORT:-3000}"
