@@ -28,7 +28,7 @@ const moodEmojis: Record<number, string> = {
 };
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const CLASS_LETTERS = ["A", "B", "C", "D", "E"];
+const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
 
 export default function StudentsScreen() {
   const t = useT();

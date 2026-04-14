@@ -132,7 +132,7 @@ export function StudentsListPage() {
             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         >
           <option value="">{t.auth.selectClass}</option>
-          {["A", "B", "C", "D", "E"].map((l) => (
+          {["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"].map((l) => (
             <option key={l} value={l}>
               {l}
             </option>

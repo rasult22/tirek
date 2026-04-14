@@ -76,7 +76,7 @@ export function AnalyticsPage() {
             focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
         >
           <option value="">{t.psychologist.allClasses}</option>
-          {["A", "B", "C", "D", "E"].map((l) => (
+          {["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"].map((l) => (
             <option key={l} value={l}>
               {l}
             </option>

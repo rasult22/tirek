@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useT } from "../hooks/useLanguage.js";
+import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { list, generate, revoke } from "../api/inviteCodes.js";
 import {
   KeyRound,
@@ -27,6 +27,7 @@ function getCodeStatus(
 
 export function InviteCodesPage() {
   const t = useT();
+  const { language } = useLanguage();
   const queryClient = useQueryClient();
 
   const [showForm, setShowForm] = useState(false);
@@ -131,26 +132,26 @@ export function InviteCodesPage() {
             {t.psychologist.generateCodes}
           </h2>
           <div className="space-y-3">
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-text-main mb-1">
-                  Count
-                </label>
-                <input
-                  type="number"
-                  value={count}
-                  onChange={(e) =>
-                    setCount(
-                      Math.max(1, Math.min(50, Number(e.target.value) || 1)),
-                    )
-                  }
-                  min={1}
-                  max={50}
-                  className="w-full h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
-                    focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
-              </div>
-              <div className="flex-1">
+            <div>
+              <label className="block text-xs font-medium text-text-main mb-1">
+                {t.psychologist.codeCount}
+              </label>
+              <input
+                type="number"
+                value={count}
+                onChange={(e) =>
+                  setCount(
+                    Math.max(1, Math.min(50, Number(e.target.value) || 1)),
+                  )
+                }
+                min={1}
+                max={50}
+                className="w-full h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
+                  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
                 <label className="block text-xs font-medium text-text-main mb-1">
                   {t.auth.selectGrade}
                 </label>
@@ -160,15 +161,15 @@ export function InviteCodesPage() {
                   className="w-full h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                     focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
                 >
-                  <option value="">Any</option>
+                  <option value="">{t.psychologist.codeAny}</option>
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((g) => (
                     <option key={g} value={g}>
-                      {g}
+                      {g} {language === "kz" ? "сынып" : "класс"}
                     </option>
                   ))}
                 </select>
               </div>
-              <div className="flex-1">
+              <div>
                 <label className="block text-xs font-medium text-text-main mb-1">
                   {t.auth.selectClass}
                 </label>
@@ -178,8 +179,8 @@ export function InviteCodesPage() {
                   className="w-full h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                     focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
                 >
-                  <option value="">Any</option>
-                  {["A", "B", "C", "D", "E"].map((l) => (
+                  <option value="">{t.psychologist.codeAny}</option>
+                  {["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"].map((l) => (
                     <option key={l} value={l}>
                       {l}
                     </option>
@@ -196,7 +197,7 @@ export function InviteCodesPage() {
               {generateMutation.isPending && (
                 <Loader2 size={14} className="animate-spin" />
               )}
-              Generate
+              {t.psychologist.generate}
             </button>
           </div>
           {generateMutation.isError && (

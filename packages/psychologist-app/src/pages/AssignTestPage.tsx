@@ -253,8 +253,8 @@ export function AssignTestPage() {
                 className="w-full h-10 px-3 rounded-lg border border-input-border bg-surface text-sm text-text-main
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               >
-                <option value="">All letters</option>
-                {["A", "B", "C", "D", "E"].map((l) => (
+                <option value="">{t.psychologist.allClasses}</option>
+                {["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"].map((l) => (
                   <option key={l} value={l}>
                     {l}
                   </option>

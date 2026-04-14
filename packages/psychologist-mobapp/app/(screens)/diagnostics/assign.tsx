@@ -24,7 +24,7 @@ import { hapticLight } from "../../../lib/haptics";
 type Target = "student" | "class";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const CLASS_LETTERS = ["A", "B", "C", "D", "E"];
+const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
 
 export default function AssignTestScreen() {
   const t = useT();
