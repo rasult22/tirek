@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Pencil, Check } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { plantApi } from "../api/plant.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
@@ -43,6 +44,7 @@ export function VirtualPlantPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   if (isError) {

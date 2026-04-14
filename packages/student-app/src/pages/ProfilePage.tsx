@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, LogOut, Globe, User, Pencil, Check, X } from "lucide-react";
+import { toast } from "sonner";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { authApi } from "../api/auth.js";
@@ -36,7 +37,9 @@ export function ProfilePage() {
     onSuccess: (data) => {
       updateUser({ name: data.name, avatarId: data.avatarId });
       setEditing(false);
+      toast.success(t.common.saved);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   const handleLogout = () => {

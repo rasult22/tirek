@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { clsx } from "clsx";
+import { toast } from "sonner";
 import type { SOSEvent, FlaggedMessage } from "@tirek/shared";
 import { ErrorState } from "../components/ui/ErrorState.js";
 
@@ -53,10 +54,11 @@ export function CrisisPage() {
         const conv = await directChatApi.createConversation(studentId);
         navigate(`/messages/${conv.id}`);
       } catch {
+        toast.error(t.common.actionFailed);
         setOpeningChat(null);
       }
     },
-    [navigate],
+    [navigate, t],
   );
 
   const {
@@ -88,6 +90,7 @@ export function CrisisPage() {
       setResolveSheetId(null);
       queryClient.invalidateQueries({ queryKey: ["crisis"] });
     },
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   function getState(id: string): ResolveState {

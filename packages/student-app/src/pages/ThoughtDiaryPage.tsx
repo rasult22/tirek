@@ -9,6 +9,7 @@ import {
   Loader2,
   BookOpen,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
@@ -64,6 +65,7 @@ export function ThoughtDiaryPage({ exercise }: { exercise: Exercise }) {
       queryClient.invalidateQueries({ queryKey: ["cbt", "list"] });
       setCompleted(true);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   const deleteMutation = useMutation({
@@ -71,6 +73,7 @@ export function ThoughtDiaryPage({ exercise }: { exercise: Exercise }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cbt", "list"] });
     },
+    onError: () => toast.error(t.common.deleteFailed),
   });
 
   const steps = [

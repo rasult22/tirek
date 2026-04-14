@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, MessageSquare, ClipboardList, StickyNote } from "lucide-react";
 import { clsx } from "clsx";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { getStudent } from "../api/students.js";
 import { getNotes } from "../api/notes.js";
@@ -62,6 +63,7 @@ export function StudentDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       navigate("/students");
     },
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const moodTrend = useMemo(
@@ -114,7 +116,7 @@ export function StudentDetailPage() {
             onClick={() => {
               directChatApi.createConversation(id!).then((conv) => {
                 navigate(`/messages/${conv.id}`);
-              });
+              }).catch(() => toast.error(t.common.actionFailed));
             }}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs
               font-medium hover:bg-primary-dark transition-colors btn-press"

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Send, Check } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { moodApi } from "../api/mood.js";
 import { moodLevels } from "@tirek/shared";
@@ -100,6 +101,7 @@ export function MoodCheckInPage() {
       setSaved(true);
       setTimeout(() => navigate("/"), 1500);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   if (saved) {

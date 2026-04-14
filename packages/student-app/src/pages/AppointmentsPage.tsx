@@ -8,6 +8,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { appointmentsApi } from "../api/appointments.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
@@ -68,7 +69,9 @@ export function AppointmentsPage() {
       queryClient.invalidateQueries({ queryKey: ["appointments", "next"] });
       setBookingSlot(null);
       setNote("");
+      toast.success(t.appointments.bookSuccess);
     },
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const cancelMutation = useMutation({
@@ -77,7 +80,9 @@ export function AppointmentsPage() {
       queryClient.invalidateQueries({ queryKey: ["available-slots"] });
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       queryClient.invalidateQueries({ queryKey: ["appointments", "next"] });
+      toast.success(t.appointments.cancelled);
     },
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const slotsForDate = slots?.filter((s) => s.date === selectedDate) ?? [];

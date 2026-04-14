@@ -4,7 +4,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { login } from "../api/auth.js";
-import { Shield, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import logoSrc from "../assets/logo.png";
 
 export function LoginPage() {
   const { language, setLanguage, t } = useLanguage();
@@ -39,9 +40,7 @@ export function LoginPage() {
       <div className="w-full max-w-md animate-fade-in-up">
         {/* Logo area */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark mb-4 shadow-lg shadow-primary/15">
-            <Shield className="w-8 h-8 text-white" />
-          </div>
+          <img src={logoSrc} alt="Tirek" className="mx-auto w-20 h-20 mb-4 rounded-2xl shadow-lg shadow-primary/25" />
           <h1 className="text-2xl font-bold tracking-tight text-text-main">
             Tirek
           </h1>

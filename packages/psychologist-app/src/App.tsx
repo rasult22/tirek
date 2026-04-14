@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import { LanguageProvider } from "./hooks/useLanguage.js";
 import { useAuthStore } from "./store/auth-store.js";
 import { AppLayout } from "./components/ui/AppLayout.js";
 import { ErrorBoundary } from "./components/ui/ErrorBoundary.js";
 import { NetworkStatus } from "./components/ui/NetworkStatus.js";
+import { NotFoundPage } from "./pages/NotFoundPage.js";
 
 // Pages
 import { LoginPage } from "./pages/LoginPage.js";
@@ -43,6 +45,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
         <ErrorBoundary>
+        <Toaster position="top-center" richColors closeButton duration={3000} />
         <NetworkStatus />
         <BrowserRouter>
           <Routes>
@@ -69,7 +72,7 @@ export function App() {
             <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>
         </ErrorBoundary>

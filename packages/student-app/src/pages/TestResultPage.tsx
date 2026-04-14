@@ -44,7 +44,7 @@ export function TestResultPage() {
   if (!result) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
-        <p className="text-text-light">{t.common.error}</p>
+        <ErrorState onRetry={() => refetch()} />
       </div>
     );
   }

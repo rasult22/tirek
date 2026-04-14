@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Save, X, StickyNote, Edit3 } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../../hooks/useLanguage.js";
 import { addNote, updateNote } from "../../api/notes.js";
 import type { PsychologistNote } from "@tirek/shared";
@@ -26,7 +27,9 @@ export function StudentNotesTab({ studentId, notes, notesLoading }: StudentNotes
       queryClient.invalidateQueries({ queryKey: ["notes", studentId] });
       setContent("");
       setShowForm(false);
+      toast.success(t.common.saved);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   const updateMutation = useMutation({
@@ -36,7 +39,9 @@ export function StudentNotesTab({ studentId, notes, notesLoading }: StudentNotes
       setContent("");
       setEditingId(null);
       setShowForm(false);
+      toast.success(t.common.saved);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   function handleSave() {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Play, Pause, RotateCcw } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 import { exercisesApi } from "../api/exercises.js";
 import { exerciseConfigs } from "@tirek/shared";
 
@@ -170,7 +171,7 @@ export function BreathingPage() {
   if (!config) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
-        <p className="text-text-light">{t.common.error}</p>
+        <ErrorState onRetry={() => navigate("/exercises")} />
       </div>
     );
   }

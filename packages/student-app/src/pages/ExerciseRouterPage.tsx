@@ -2,6 +2,7 @@ import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { exercisesApi } from "../api/exercises.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 import { BreathingPage } from "./BreathingPage.js";
 import { GroundingPage } from "./GroundingPage.js";
 import { PMRPage } from "./PMRPage.js";
@@ -11,7 +12,7 @@ import type { CbtExerciseConfig } from "@tirek/shared";
 export function ExerciseRouterPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data: exercises, isLoading } = useQuery({
+  const { data: exercises, isLoading, isError, refetch } = useQuery({
     queryKey: ["exercises"],
     queryFn: exercisesApi.list,
   });
@@ -22,6 +23,14 @@ export function ExerciseRouterPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
         <Loader2 size={28} className="animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-bg">
+        <ErrorState onRetry={() => refetch()} />
       </div>
     );
   }

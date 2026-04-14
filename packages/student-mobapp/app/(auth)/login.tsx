@@ -5,6 +5,7 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
@@ -76,14 +77,11 @@ export default function LoginScreen() {
 
         {/* Logo */}
         <View style={styles.logoWrap}>
-          <View
-            style={[
-              styles.logoBox,
-              { backgroundColor: c.primary, ...shadow(2) },
-            ]}
-          >
-            <Text style={styles.logoLetter}>T</Text>
-          </View>
+          <Image
+            source={require("../../assets/images/logo.png")}
+            style={styles.logoImg}
+            resizeMode="contain"
+          />
           <Text variant="h1" style={styles.appName}>
             {t.common.appName}
           </Text>
@@ -188,18 +186,10 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 32,
   },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
+  logoImg: {
+    width: 80,
+    height: 80,
     marginBottom: 16,
-  },
-  logoLetter: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#FFFFFF",
   },
   appName: {
     textAlign: "center",

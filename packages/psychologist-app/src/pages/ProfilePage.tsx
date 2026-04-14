@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { toast } from "sonner";
 
 export function ProfilePage() {
   const t = useT();
@@ -34,7 +35,9 @@ export function ProfilePage() {
     onSuccess: (data) => {
       updateUser({ name: data.name });
       setEditing(false);
+      toast.success(t.common.saved);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   function handleLogout() {

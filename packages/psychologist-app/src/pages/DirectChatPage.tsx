@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Send } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { directChatApi } from "../api/direct-chat.js";
@@ -43,7 +44,7 @@ export function DirectChatPage() {
     if (conversationId) {
       directChatApi.markRead(conversationId).then(() => {
         queryClient.invalidateQueries({ queryKey: ["direct-chat", "unread-count"] });
-      });
+      }).catch(() => {});
     }
   }, [conversationId, messagesData, queryClient]);
 
@@ -63,6 +64,7 @@ export function DirectChatPage() {
         queryKey: ["direct-chat", "conversations"],
       });
     },
+    onError: () => toast.error(t.common.sendFailed),
   });
 
   const handleSend = () => {

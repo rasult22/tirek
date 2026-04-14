@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { LogIn, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import logoSrc from "../assets/logo.png";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { authApi } from "../api/auth.js";
 import { useAuthStore } from "../store/auth-store.js";
@@ -60,9 +61,7 @@ export function LoginPage() {
 
       {/* Logo */}
       <div className="mb-10 text-center animate-fade-in-up">
-        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-primary-dark glow-primary">
-          <span className="text-3xl font-extrabold text-white drop-shadow-sm">T</span>
-        </div>
+        <img src={logoSrc} alt="Tirek" className="mx-auto mb-5 h-20 w-20 rounded-2xl shadow-lg shadow-primary/25" />
         <h1 className="text-3xl font-extrabold tracking-tight text-text-main">{t.common.appName}</h1>
         <p className="mt-1.5 text-sm text-text-light">{t.onboarding.welcomeDesc}</p>
       </div>

@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
+import { ErrorState } from "../components/ui/ErrorState.js";
 import { useLanguage } from "../hooks/useLanguage.js";
 import { testsApi } from "../api/tests.js";
 import { testDefinitions } from "@tirek/shared";
@@ -24,16 +26,19 @@ export function TestPage() {
   const startMutation = useMutation({
     mutationFn: () => testsApi.start(testId!),
     onSuccess: (session) => setSessionId(session.sessionId ?? session.id),
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const answerMutation = useMutation({
     mutationFn: (data: { questionIndex: number; answer: number }) =>
       testsApi.answer(sessionId!, data),
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const completeMutation = useMutation({
     mutationFn: () => testsApi.complete(sessionId!),
     onSuccess: (session) => navigate(`/tests/results/${(session as any).sessionId ?? session.id}`, { replace: true }),
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   useEffect(() => {
@@ -45,7 +50,7 @@ export function TestPage() {
   if (!testDef) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg">
-        <p className="text-text-light">{t.common.error}</p>
+        <ErrorState onRetry={() => navigate("/tests")} />
       </div>
     );
   }

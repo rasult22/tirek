@@ -6,6 +6,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -92,14 +93,11 @@ export default function LoginScreen() {
 
         {/* Logo */}
         <View style={styles.logoWrap}>
-          <View
-            style={[
-              styles.logoBox,
-              { backgroundColor: c.primary, ...shadow(2) },
-            ]}
-          >
-            <Ionicons name="shield-checkmark" size={32} color="#FFFFFF" />
-          </View>
+          <Image
+            source={require("../../assets/images/logo.png")}
+            style={styles.logoImg}
+            resizeMode="contain"
+          />
           <Text variant="h1" style={styles.appName}>
             {t.common.appName}
           </Text>
@@ -193,12 +191,9 @@ const styles = StyleSheet.create({
     marginTop: 48,
     marginBottom: 36,
   },
-  logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
+  logoImg: {
+    width: 80,
+    height: 80,
     marginBottom: 16,
   },
   appName: {

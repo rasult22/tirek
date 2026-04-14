@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Phone, Wind, MessageCircle, Heart, ShieldAlert, AlertTriangle, Check } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { useLanguage } from "../hooks/useLanguage.js";
 import { sosApi } from "../api/sos.js";
@@ -21,6 +22,7 @@ export function SOSPage() {
 
   const sosMutation = useMutation({
     mutationFn: (level: 1 | 2 | 3) => sosApi.trigger(level),
+    onError: () => toast.error(t.common.sendFailed),
   });
 
   const levelLabels: Record<1 | 2 | 3, { name: string; desc: string }> = {

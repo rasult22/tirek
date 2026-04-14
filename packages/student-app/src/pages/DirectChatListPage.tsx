@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail, ArrowRight, UserCircle } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { directChatApi } from "../api/direct-chat.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
@@ -43,6 +44,7 @@ export function DirectChatListPage() {
       queryClient.invalidateQueries({ queryKey: ["direct-chat", "conversations"] });
       navigate(`/messages/${conv.id}`);
     },
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const conversations = convData?.data ?? [];

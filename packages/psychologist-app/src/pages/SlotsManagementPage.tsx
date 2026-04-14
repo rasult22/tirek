@@ -10,6 +10,7 @@ import {
   Loader2,
   Calendar,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { appointmentsApi } from "../api/appointments.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
@@ -55,14 +56,18 @@ export function SlotsManagementPage() {
       appointmentsApi.createSlots(newSlots),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointment-slots"] });
+      toast.success(t.common.saved);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => appointmentsApi.deleteSlot(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointment-slots"] });
+      toast.success(t.appointments.slotDeleted);
     },
+    onError: () => toast.error(t.common.deleteFailed),
   });
 
   const slotsForDate = slots?.filter((s) => s.date === selectedDate) ?? [];

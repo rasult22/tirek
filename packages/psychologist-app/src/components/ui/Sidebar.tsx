@@ -3,6 +3,7 @@ import { useT } from "../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
 import { getActive } from "../../api/crisis.js";
 import { clsx } from "clsx";
+import logoSrc from "../../assets/logo.png";
 import {
   LayoutDashboard,
   Users,
@@ -74,9 +75,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-5 border-b border-border-light">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-dark">
-              <span className="text-sm font-extrabold text-white">T</span>
-            </div>
+            <img src={logoSrc} alt="Tirek" className="h-8 w-8 rounded-lg shadow-md shadow-primary/25" />
             <span className="text-lg font-bold tracking-tight text-text-main">
               Tirek
             </span>

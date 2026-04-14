@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { toast } from "sonner";
 import type { InviteCode } from "@tirek/shared";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
@@ -54,6 +55,7 @@ export function InviteCodesPage() {
       setGrade("");
       setClassLetter("");
     },
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const revokeMutation = useMutation({
@@ -61,12 +63,18 @@ export function InviteCodesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invite-codes"] });
     },
+    onError: () => toast.error(t.common.deleteFailed),
   });
 
   async function copyCode(code: string, id: string) {
-    await navigator.clipboard.writeText(code);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+      toast.success(t.common.copied);
+    } catch {
+      toast.error(t.common.copyFailed);
+    }
   }
 
   const statusConfig = {

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, Sparkles, Trash2, Loader2, Send } from "lucide-react";
+import { toast } from "sonner";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
@@ -36,6 +37,7 @@ export function JournalPage() {
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
     },
+    onError: () => toast.error(t.common.saveFailed),
   });
 
   const deleteMutation = useMutation({
@@ -43,6 +45,7 @@ export function JournalPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["journal", "list"] });
     },
+    onError: () => toast.error(t.common.deleteFailed),
   });
 
   const promptText = prompt

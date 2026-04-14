@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Send, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { chatApi } from "../api/chat.js";
 import type { ChatMessage } from "@tirek/shared";
@@ -107,13 +108,14 @@ export function ChatPage() {
       setStreamingText("");
       setIsStreaming(false);
       queryClient.invalidateQueries({ queryKey: ["chat", "messages", sid] });
+      toast.error(t.common.sendFailed);
     }
 
     // Update URL after stream is complete to avoid React Router remounting
     if (isNewSession) {
       window.history.replaceState(null, "", `/chat/${sid}`);
     }
-  }, [queryClient]);
+  }, [queryClient, t]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

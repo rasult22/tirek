@@ -10,6 +10,7 @@ import {
   User,
   Settings,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { appointmentsApi } from "../api/appointments.js";
 import type { Appointment } from "@tirek/shared";
@@ -42,6 +43,7 @@ export function AppointmentsListPage() {
         queryKey: ["psychologist-appointments"],
       });
     },
+    onError: () => toast.error(t.common.actionFailed),
   });
 
   const appointments = data?.data ?? [];
