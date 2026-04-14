@@ -18,5 +18,5 @@ COPY drizzle/ /app/drizzle/
 
 ENV NODE_ENV=production
 
-# Run migrations then start server
-CMD ["sh", "-c", "npx tsx src/db/migrate.ts && npx tsx src/server.ts"]
+# Run migrations, seed reference data, then start server
+CMD ["sh", "-c", "npx tsx src/db/migrate.ts && npx tsx src/db/seed-reference.ts && npx tsx src/server.ts"]

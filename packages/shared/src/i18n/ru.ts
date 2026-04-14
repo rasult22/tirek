@@ -226,6 +226,8 @@ export const ru = {
     pmrRest: "Отдых",
     pmrMuscleGroup: "Группа мышц",
     pmrStep: "Группа",
+    emptyTitle: "Упражнения пока недоступны",
+    emptyDescription: "Список пока пуст. Попробуйте обновить страницу чуть позже.",
   },
   sos: {
     title: "Экстренная помощь",
