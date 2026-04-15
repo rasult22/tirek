@@ -317,7 +317,7 @@ export default function ProfileScreen() {
             >
               <Ionicons name="cloud-download-outline" size={16} color={c.primary} />
               <Text variant="small" style={{ color: c.primary, fontWeight: "600" }}>
-                Обновить
+                {t.profile.update}
               </Text>
             </Pressable>
           </View>

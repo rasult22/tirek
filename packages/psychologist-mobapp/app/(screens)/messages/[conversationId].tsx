@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../../lib/hooks/useLanguage";
 import { Text } from "../../../components/ui";
@@ -139,6 +139,8 @@ export default function ChatScreen() {
   }
 
   return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
     <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
       <KeyboardAvoidingView
         style={styles.flex}
@@ -212,6 +214,7 @@ export default function ChatScreen() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </>
   );
 }
 

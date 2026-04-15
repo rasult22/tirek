@@ -158,6 +158,23 @@ export default function LoginScreen() {
             loading={loginMutation.isPending}
             disabled={!email.trim() || !password.trim()}
           />
+
+          <View style={styles.linkRow}>
+            <Text variant="small" style={{ color: c.textLight }}>
+              {t.auth.noAccount}{" "}
+            </Text>
+            <Pressable onPress={() => router.push("/(auth)/register")}>
+              <Text
+                style={{
+                  color: c.primary,
+                  fontWeight: "700",
+                  fontSize: 14,
+                }}
+              >
+                {t.auth.register}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
       </KeyboardAvoidingView>
@@ -227,5 +244,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     alignItems: "center",
+  },
+  linkRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 4,
   },
 });

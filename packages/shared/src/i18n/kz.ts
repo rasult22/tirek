@@ -268,6 +268,7 @@ export const kz: TranslationKeys = {
     themeSystem: "Жүйелік",
     themeLight: "Жарық",
     themeDark: "Қараңғы",
+    update: "Жаңарту",
   },
   journal: {
     title: "Күнделік",

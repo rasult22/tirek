@@ -5,6 +5,7 @@ import { useThemeColors } from "../lib/theme";
 
 export default function Index() {
   const token = useAuthStore((s) => s.token);
+  const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted);
   const hydrated = useAuthStore((s) => s._hasHydrated);
   const c = useThemeColors();
 
@@ -17,6 +18,9 @@ export default function Index() {
   }
 
   if (token) {
+    if (!onboardingCompleted) {
+      return <Redirect href="/(auth)/onboarding" />;
+    }
     return <Redirect href="/(tabs)" />;
   }
 

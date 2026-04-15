@@ -8,6 +8,16 @@ export const authApi = {
       body: JSON.stringify(data),
     }),
 
+  registerPsychologist: (data: {
+    email: string;
+    password: string;
+    name: string;
+  }) =>
+    apiFetch<AuthResponse>("/auth/register-psychologist", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
   me: () => apiFetch<User>("/auth/me"),
 
   updateProfile: (data: Record<string, unknown>) =>

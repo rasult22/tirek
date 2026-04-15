@@ -80,9 +80,8 @@ export default function AnalyticsScreen() {
     <>
       <Stack.Screen options={{ title: t.psychologist.analytics }} />
       <View style={[styles.container, { backgroundColor: c.bg }]}>
-        {/* Header */}
+        {/* Header — export button only, title is in Stack header */}
         <View style={styles.headerRow}>
-          <Text variant="h2">{t.psychologist.analytics}</Text>
           <Pressable
             onPress={handleExport}
             style={[
@@ -353,7 +352,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 8,

@@ -3,10 +3,12 @@ import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, Button } from "../components/ui";
 import { useThemeColors, radius } from "../lib/theme";
+import { useT } from "../lib/hooks/useLanguage";
 
 export default function NotFoundScreen() {
   const c = useThemeColors();
   const router = useRouter();
+  const t = useT();
 
   return (
     <>
@@ -16,13 +18,13 @@ export default function NotFoundScreen() {
           <Ionicons name="help-circle-outline" size={48} color={c.textLight} />
         </View>
         <Text variant="h2" style={styles.title}>
-          Страница не найдена
+          {t.common.notFound}
         </Text>
         <Text variant="bodyLight" style={styles.desc}>
-          Запрашиваемая страница не существует или была удалена.
+          {t.common.notFoundDescription}
         </Text>
         <Button
-          title="На главную"
+          title={t.common.goHome}
           onPress={() => router.replace("/(tabs)")}
           style={styles.btn}
         />

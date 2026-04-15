@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColors } from "../../lib/theme";
 import { useT } from "../../lib/hooks/useLanguage";
 import { crisisApi } from "../../lib/api/crisis";
@@ -27,6 +28,7 @@ const tabConfigs: TabConfig[] = [
 export default function TabsLayout() {
   const c = useThemeColors();
   const t = useT();
+  const insets = useSafeAreaInsets();
 
   const { data: activeAlerts } = useQuery({
     queryKey: ["crisis", "active"],
@@ -60,8 +62,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: c.surface,
           borderTopColor: c.borderLight,
-          paddingBottom: 4,
-          height: 56,
+          paddingBottom: Math.max(insets.bottom, 4),
+          height: 56 + Math.max(insets.bottom - 4, 0),
         },
         tabBarLabelStyle: {
           fontFamily: "DMSans-SemiBold",

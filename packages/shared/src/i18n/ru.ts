@@ -266,6 +266,7 @@ export const ru = {
     themeSystem: "Системная",
     themeLight: "Светлая",
     themeDark: "Тёмная",
+    update: "Обновить",
   },
   journal: {
     title: "Дневник",

@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../../lib/hooks/useLanguage";
 import { Text, Button } from "../../../components/ui";
@@ -86,13 +86,18 @@ export default function AppointmentsScreen() {
 
   if (isError) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
-        <ErrorState onRetry={() => refetch()} />
-      </SafeAreaView>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
+          <ErrorState onRetry={() => refetch()} />
+        </SafeAreaView>
+      </>
     );
   }
 
   return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
     <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
       <ConfirmDialog
         open={cancelApptId !== null}
@@ -185,6 +190,7 @@ export default function AppointmentsScreen() {
         </ScrollView>
       )}
     </SafeAreaView>
+    </>
   );
 }
 
@@ -215,7 +221,7 @@ function AppointmentCard({
             </Text>
             {appt.studentGrade && (
               <Text variant="caption">
-                {appt.studentGrade}{appt.studentClassLetter} класс
+                {appt.studentGrade}{appt.studentClassLetter} {t.psychologist.studentDetail.class}
               </Text>
             )}
           </View>

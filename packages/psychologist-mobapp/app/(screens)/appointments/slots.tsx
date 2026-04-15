@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { Stack } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../../lib/hooks/useLanguage";
 import { Text } from "../../../components/ui";
@@ -111,13 +112,18 @@ export default function SlotsScreen() {
 
   if (isError) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
-        <ErrorState onRetry={() => refetch()} />
-      </SafeAreaView>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
+          <ErrorState onRetry={() => refetch()} />
+        </SafeAreaView>
+      </>
     );
   }
 
   return (
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
     <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
       <ConfirmDialog
         open={deleteSlotId !== null}
@@ -377,6 +383,7 @@ export default function SlotsScreen() {
       </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </>
   );
 }
 

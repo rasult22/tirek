@@ -129,9 +129,8 @@ export default function InviteCodesScreen() {
         }
         keyboardShouldPersistTaps="handled"
       >
-        {/* Header row */}
+        {/* Header row — generate button only, title is in Stack header */}
         <View style={styles.headerRow}>
-          <Text variant="h2">{t.psychologist.inviteCodes}</Text>
           <Pressable
             onPress={() => {
               hapticLight();
@@ -159,7 +158,7 @@ export default function InviteCodesScreen() {
 
             {/* Count */}
             <Text variant="body" style={styles.fieldLabel}>
-              Count (1-50)
+              {t.psychologist.codeCount} (1-50)
             </Text>
             <View
               style={[
@@ -206,7 +205,7 @@ export default function InviteCodesScreen() {
                     color: grade === null ? "#FFF" : c.textLight,
                   }}
                 >
-                  Any
+                  {t.psychologist.codeAny}
                 </Text>
               </Pressable>
               {GRADES.map((g) => (
@@ -266,7 +265,7 @@ export default function InviteCodesScreen() {
                     color: classLetter === null ? "#FFF" : c.textLight,
                   }}
                 >
-                  Any
+                  {t.psychologist.codeAny}
                 </Text>
               </Pressable>
               {CLASS_LETTERS.map((l) => (
@@ -452,7 +451,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     marginBottom: 16,
   },
   headerBtn: {
