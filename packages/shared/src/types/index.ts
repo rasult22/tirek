@@ -183,7 +183,7 @@ export interface Exercise {
   nameRu: string;
   nameKz: string;
   description: string;
-  config: BreathingConfig | GroundingConfig | PMRConfig | CbtExerciseConfig;
+  config: BreathingConfig | GroundingConfig | PMRConfig | CbtExerciseConfig | BodyScanConfig | SafePlaceConfig;
 }
 
 export interface BreathingConfig {
@@ -223,8 +223,32 @@ export interface CbtExerciseConfig {
   cbtType: CbtType;
 }
 
+// ── Body Scan config ───────────────────────────────────────────────
+export interface BodyScanStep {
+  nameRu: string;
+  nameKz: string;
+  durationSec: number;
+}
+
+export interface BodyScanConfig {
+  steps: BodyScanStep[];
+}
+
+// ── Safe Place config ──────────────────────────────────────────────
+export interface SafePlaceStep {
+  promptRu: string;
+  promptKz: string;
+  icon: string;
+  placeholderRu: string;
+  placeholderKz: string;
+}
+
+export interface SafePlaceConfig {
+  steps: SafePlaceStep[];
+}
+
 // ── CBT types ──────────────────────────────────────────────────────
-export type CbtType = "thought_diary";
+export type CbtType = "thought_diary" | "joy_jar" | "body_emotion_map";
 
 export interface ThoughtDiaryData {
   situation: string;
@@ -235,7 +259,22 @@ export interface ThoughtDiaryData {
   alternative?: string;
 }
 
-export type CbtData = ThoughtDiaryData;
+export interface JoyJarData {
+  text: string;
+}
+
+export interface BodyEmotionMapRegion {
+  regionId: string;
+  emotion: string;
+  color: string;
+}
+
+export interface BodyEmotionMapData {
+  regions: BodyEmotionMapRegion[];
+  note?: string;
+}
+
+export type CbtData = ThoughtDiaryData | JoyJarData | BodyEmotionMapData;
 
 export interface CbtEntry {
   id: string;
@@ -249,7 +288,7 @@ export interface ContentQuote {
   id: number;
   textRu: string;
   textKz: string | null;
-  category: "motivation" | "proverb" | "affirmation";
+  category: "motivation" | "proverb" | "affirmation" | "story";
   author: string | null;
 }
 

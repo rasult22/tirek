@@ -104,6 +104,7 @@ export default function DashboardScreen() {
     { route: "/(screens)/mood-calendar", icon: "calendar", labelKey: "moodCalendar", iconBg: "rgba(59,130,246,0.1)", iconColor: "#1D4ED8" },
     { route: "/(screens)/appointments", icon: "time", labelKey: "appointments", iconBg: "rgba(139,92,246,0.1)", iconColor: "#6D28D9" },
     { route: "/(screens)/achievements", icon: "trophy", labelKey: "achievements", iconBg: "rgba(234,179,8,0.1)", iconColor: "#92400E" },
+    { route: "/(screens)/inspiration", icon: "sparkles", labelKey: "inspiration", iconBg: "rgba(168,85,247,0.1)", iconColor: "#7C3AED" },
   ];
 
   const quickLinkLabels: Record<string, string> = {
@@ -112,6 +113,7 @@ export default function DashboardScreen() {
     moodCalendar: t.mood.calendar,
     appointments: t.nav.appointments,
     achievements: t.achievements.title,
+    inspiration: t.inspiration.title,
   };
 
   const avatarEmoji = user?.avatarId
@@ -342,26 +344,30 @@ export default function DashboardScreen() {
 
         {/* Quote of the day */}
         {quote && (
-          <Card style={styles.quoteCard}>
-            <View style={styles.quoteHeader}>
-              <Ionicons name="sparkles" size={13} color={c.primaryDark} />
-              <Text style={[styles.quoteCaption, { color: c.primaryDark }]}>
-                {t.dashboard.quoteOfTheDay}
+          <Pressable onPress={() => push("/(screens)/inspiration" as any)}>
+            <Card style={styles.quoteCard}>
+              <View style={styles.quoteHeader}>
+                <Ionicons name="sparkles" size={13} color={c.primaryDark} />
+                <Text style={[styles.quoteCaption, { color: c.primaryDark }]}>
+                  {t.dashboard.quoteOfTheDay}
+                </Text>
+                <View style={{ flex: 1 }} />
+                <Ionicons name="chevron-forward" size={14} color={c.textLight} />
+              </View>
+              <Text style={[styles.quoteText, { color: c.text }]}>
+                «
+                {language === "kz" && quote.textKz
+                  ? quote.textKz
+                  : quote.textRu}
+                »
               </Text>
-            </View>
-            <Text style={[styles.quoteText, { color: c.text }]}>
-              «
-              {language === "kz" && quote.textKz
-                ? quote.textKz
-                : quote.textRu}
-              »
-            </Text>
-            {quote.author && (
-              <Text style={[styles.quoteAuthor, { color: c.textLight }]}>
-                — {quote.author}
-              </Text>
-            )}
-          </Card>
+              {quote.author && (
+                <Text style={[styles.quoteAuthor, { color: c.textLight }]}>
+                  — {quote.author}
+                </Text>
+              )}
+            </Card>
+          </Pressable>
         )}
 
         {/* Quick access grid */}

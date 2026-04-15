@@ -26,6 +26,10 @@ const EMOJI_MAP: Record<string, { emoji: string; bg: string }> = {
   "grounding-54321": { emoji: "\uD83C\uDF3F", bg: "rgba(34,197,94,0.12)" },
   pmr: { emoji: "\uD83D\uDCAA", bg: "rgba(245,158,11,0.12)" },
   "thought-diary": { emoji: "\uD83D\uDCD3", bg: "rgba(139,92,246,0.12)" },
+  "body-scan": { emoji: "\uD83E\uDDD8", bg: "rgba(20,184,166,0.12)" },
+  "safe-place": { emoji: "\uD83C\uDFE1", bg: "rgba(99,102,241,0.12)" },
+  "joy-jar": { emoji: "\uD83E\uDED9", bg: "rgba(234,179,8,0.12)" },
+  "body-emotion-map": { emoji: "\uD83E\uDEC0", bg: "rgba(244,63,94,0.12)" },
 };
 
 const SLUG_TO_ROUTE: Record<string, string> = {
@@ -35,6 +39,10 @@ const SLUG_TO_ROUTE: Record<string, string> = {
   "grounding-54321": "/(screens)/exercises/grounding",
   pmr: "/(screens)/exercises/pmr",
   "thought-diary": "/(screens)/exercises/thought-diary",
+  "body-scan": "/(screens)/exercises/body-scan",
+  "safe-place": "/(screens)/exercises/safe-place",
+  "joy-jar": "/(screens)/exercises/joy-jar",
+  "body-emotion-map": "/(screens)/exercises/body-emotion-map",
 };
 
 function ExerciseItem({

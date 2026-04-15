@@ -41,6 +41,11 @@ export default function ScreensLayout() {
       <Stack.Screen name="exercises/grounding" options={{ title: t.exercises.title }} />
       <Stack.Screen name="exercises/pmr" options={{ title: t.exercises.title }} />
       <Stack.Screen name="exercises/thought-diary" options={{ title: t.exercises.title }} />
+      <Stack.Screen name="exercises/body-scan" options={{ title: t.exercises.bodyScan }} />
+      <Stack.Screen name="exercises/safe-place" options={{ title: t.exercises.safePlaceName }} />
+      <Stack.Screen name="exercises/joy-jar" options={{ title: t.exercises.joyJar }} />
+      <Stack.Screen name="exercises/body-emotion-map" options={{ title: t.exercises.bodyEmotionMap }} />
+      <Stack.Screen name="inspiration" options={{ title: t.inspiration.title }} />
     </Stack>
   );
 }

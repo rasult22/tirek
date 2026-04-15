@@ -11,7 +11,7 @@ import { streaksService } from "../streaks/streaks.service.js";
 import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
 import { achievementsService } from "../achievements/achievements.service.js";
 
-const VALID_TYPES = ["thought_diary"];
+const VALID_TYPES = ["thought_diary", "joy_jar", "body_emotion_map"];
 
 function validateCbtData(type: string, data: Record<string, unknown>) {
   switch (type) {
@@ -19,6 +19,16 @@ function validateCbtData(type: string, data: Record<string, unknown>) {
       if (!data.situation || !data.thought || !data.emotion)
         throw new ValidationError(
           "Thought diary requires situation, thought, and emotion",
+        );
+      break;
+    case "joy_jar":
+      if (!data.text || typeof data.text !== "string")
+        throw new ValidationError("Joy jar requires text");
+      break;
+    case "body_emotion_map":
+      if (!Array.isArray(data.regions) || data.regions.length === 0)
+        throw new ValidationError(
+          "Body emotion map requires at least one region",
         );
       break;
   }
