@@ -16,6 +16,14 @@ export const lightColors = {
   border: "#D4DEDE",
   borderLight: "#E4EAEA",
   inputBorder: "#B8C8C6",
+  streakOrange: "#EA580C",
+  streakOrangeBg: "rgba(251,191,36,0.15)",
+  achieveGold: "#CA8A04",
+  achieveGoldDark: "#A16207",
+  appointmentPurple: "#6D28D9",
+  appointmentPurpleBg: "rgba(139,92,246,0.12)",
+  plantGreen: "#10B981",
+  plantGreenBg: "rgba(16,185,129,0.12)",
 } as const;
 
 export const darkColors = {
@@ -36,6 +44,14 @@ export const darkColors = {
   border: "#2A3840",
   borderLight: "#1F2D34",
   inputBorder: "#3A4D55",
+  streakOrange: "#FB923C",
+  streakOrangeBg: "rgba(251,191,36,0.2)",
+  achieveGold: "#EAB308",
+  achieveGoldDark: "#CA8A04",
+  appointmentPurple: "#A78BFA",
+  appointmentPurpleBg: "rgba(139,92,246,0.2)",
+  plantGreen: "#34D399",
+  plantGreenBg: "rgba(16,185,129,0.2)",
 } as const;
 
 export type ThemeColors = {

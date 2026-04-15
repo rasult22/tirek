@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useT } from "../../lib/hooks/useLanguage";
+import { useRefresh } from "../../lib/hooks/useRefresh";
 import { appointmentsApi } from "../../lib/api/appointments";
 import { ErrorState } from "../../components/ErrorState";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -54,7 +55,6 @@ export default function AppointmentsScreen() {
   const [bookingSlot, setBookingSlot] = useState<AppointmentSlot | null>(null);
   const [note, setNote] = useState("");
   const [cancelId, setCancelId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   const weekFrom = fmt(weekDates[0]!);
   const weekTo = fmt(weekDates[6]!);
@@ -91,11 +91,7 @@ export default function AppointmentsScreen() {
     },
   });
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const slotsForDate = slots?.filter((s) => s.date === selectedDate) ?? [];
   const upcoming =
@@ -112,20 +108,19 @@ export default function AppointmentsScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["bottom"]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
             tintColor={c.primary}
             colors={[c.primary]}
           />
         }
       >
-        <Text variant="h2">{t.appointments.title}</Text>
 
         {/* Upcoming appointments */}
         {upcoming.length > 0 && (

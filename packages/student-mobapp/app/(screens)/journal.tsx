@@ -17,6 +17,7 @@ import { Text, Card } from "../../components/ui";
 import { ErrorState } from "../../components/ErrorState";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
+import { useRefresh } from "../../lib/hooks/useRefresh";
 import { journalApi } from "../../lib/api/journal";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
@@ -31,7 +32,6 @@ export default function JournalScreen() {
   const [content, setContent] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   const { data: prompt } = useQuery({
     queryKey: ["journal", "prompt"],
@@ -71,11 +71,7 @@ export default function JournalScreen() {
       : prompt.ru
     : "";
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const handleSubmit = () => {
     if (!content.trim()) return;
@@ -130,7 +126,7 @@ export default function JournalScreen() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={handleRefresh}
+              onRefresh={onRefresh}
               tintColor={c.primary}
               colors={[c.primary]}
             />

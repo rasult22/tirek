@@ -69,7 +69,7 @@ function SliderRow({
 
 export default function MoodScreen() {
   const t = useT();
-  const router = useRouter();
+  const { push, navigate } = useRouter();
   const c = useThemeColors();
 
   const [mood, setMood] = useState<number | null>(null);
@@ -117,7 +117,7 @@ export default function MoodScreen() {
     onSuccess: () => {
       hapticSuccess();
       setSaved(true);
-      setTimeout(() => router.navigate("/"), 1500);
+      setTimeout(() => navigate("/"), 1500);
     },
   });
 
@@ -147,7 +147,7 @@ export default function MoodScreen() {
         <View style={styles.header}>
           <Text variant="h1">{t.mood.checkin}</Text>
           <Pressable
-            onPress={() => router.push("/(screens)/mood-calendar")}
+            onPress={() => push("/(screens)/mood-calendar")}
             style={({ pressed }) => [
               styles.calendarBtn,
               { backgroundColor: c.surface },

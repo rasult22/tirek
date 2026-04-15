@@ -37,7 +37,7 @@ export default function GroundingScreen() {
   const t = useT();
   const c = useThemeColors();
   const { language } = useLanguage();
-  const router = useRouter();
+  const { back } = useRouter();
   const { slug, exerciseId } = useLocalSearchParams<{
     slug: string;
     exerciseId: string;
@@ -112,7 +112,7 @@ export default function GroundingScreen() {
           <Text style={[styles.doneTitle, { color: c.text }]}>{t.exercises.groundingDone}</Text>
           <Text style={[styles.doneDesc, { color: c.textLight }]}>{t.exercises.complete}</Text>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => back()}
             style={({ pressed }) => [
               styles.doneBtn,
               { backgroundColor: c.primary },

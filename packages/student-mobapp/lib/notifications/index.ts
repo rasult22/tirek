@@ -5,6 +5,7 @@ import type { EventSubscription } from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth-store";
 import { apiFetch } from "../api/client";
 
@@ -49,6 +50,11 @@ export async function registerForPushNotifications(): Promise<string | undefined
   }
 
   const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+  if (!projectId) {
+    // Dev build without EAS — push tokens unavailable
+    return undefined;
+  }
+
   const tokenData = await Notifications.getExpoPushTokenAsync({
     projectId,
   });
@@ -76,6 +82,7 @@ async function registerTokenOnServer(pushToken: string) {
 type NotificationType =
   | "direct_message"
   | "appointment_reminder"
+  | "test_assigned"
   | "test_result"
   | "crisis_alert";
 
@@ -90,9 +97,43 @@ interface NotificationData {
  * Hook: handles push token registration and notification tap navigation.
  * Call once in root layout.
  */
+/**
+ * Invalidate relevant React Query caches based on notification type.
+ */
+function invalidateCacheForNotification(
+  queryClient: ReturnType<typeof useQueryClient>,
+  data: NotificationData | undefined,
+) {
+  if (!data?.type) return;
+
+  switch (data.type) {
+    case "direct_message":
+      queryClient.invalidateQueries({ queryKey: ["direct-chat", "unread-count"] });
+      queryClient.invalidateQueries({ queryKey: ["direct-chat", "conversations"] });
+      if (data.conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: ["direct-chat", "messages", data.conversationId],
+        });
+      }
+      break;
+    case "test_assigned":
+      queryClient.invalidateQueries({ queryKey: ["tests", "assigned"] });
+      break;
+    case "test_result":
+      queryClient.invalidateQueries({ queryKey: ["tests", "assigned"] });
+      break;
+    case "appointment_reminder":
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", "next"] });
+      break;
+  }
+}
+
 export function useNotifications() {
-  const router = useRouter();
+  const { push } = useRouter();
   const token = useAuthStore((s) => s.token);
+  const queryClient = useQueryClient();
+  const receivedListener = useRef<EventSubscription>(null);
   const responseListener = useRef<EventSubscription>(null);
 
   useEffect(() => {
@@ -105,38 +146,52 @@ export function useNotifications() {
       }
     });
 
+    // Handle notification received (foreground) — refresh data
+    receivedListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        const data = notification.request.content.data as NotificationData;
+        invalidateCacheForNotification(queryClient, data);
+      });
+
     // Handle notification tap — navigate to relevant screen
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content
           .data as NotificationData;
 
+        // Also invalidate cache on tap
+        invalidateCacheForNotification(queryClient, data);
+
         switch (data?.type) {
           case "direct_message":
             if (data.conversationId) {
-              router.push(`/(screens)/messages/${data.conversationId}`);
+              push(`/(screens)/messages/${data.conversationId}`);
             } else {
-              router.push("/(screens)/messages");
+              push("/(screens)/messages");
             }
             break;
           case "appointment_reminder":
-            router.push("/(screens)/appointments");
+            push("/(screens)/appointments");
             break;
           case "test_result":
             if (data.testSessionId) {
-              router.push(
+              push(
                 `/(screens)/tests/results/${data.testSessionId}` as any,
               );
             }
             break;
+          case "test_assigned":
+            push("/(tabs)/diagnostics");
+            break;
           case "crisis_alert":
-            router.push("/(screens)/sos");
+            push("/(screens)/sos");
             break;
         }
       });
 
     return () => {
+      receivedListener.current?.remove();
       responseListener.current?.remove();
     };
-  }, [token, router]);
+  }, [token, push, queryClient]);
 }

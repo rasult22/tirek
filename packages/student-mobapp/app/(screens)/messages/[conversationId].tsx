@@ -31,7 +31,7 @@ export default function ConversationScreen() {
   const t = useT();
   const c = useThemeColors();
   const { conversationId } = useLocalSearchParams<{ conversationId: string }>();
-  const router = useRouter();
+  const { back } = useRouter();
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
   const userId = useAuthStore((s) => s.user?.id);
@@ -129,7 +129,7 @@ export default function ConversationScreen() {
         {/* Header */}
         <View style={[styles.header, { backgroundColor: c.surface, borderBottomColor: c.borderLight }]}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => back()}
             style={({ pressed }) => [styles.backBtn, { backgroundColor: c.surfaceSecondary }, pressed && styles.pressed]}
           >
             <Ionicons name="arrow-back" size={20} color={c.text} />

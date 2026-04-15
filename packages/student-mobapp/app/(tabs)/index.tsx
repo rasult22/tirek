@@ -1,10 +1,8 @@
-import { useState } from "react";
 import {
   View,
   ScrollView,
   StyleSheet,
   Pressable,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,18 +11,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, Card } from "../../components/ui";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
+import { useRefresh } from "../../lib/hooks/useRefresh";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { moodApi } from "../../lib/api/mood";
 import { contentApi } from "../../lib/api/content";
 import { streaksApi } from "../../lib/api/streaks";
 import { plantApi } from "../../lib/api/plant";
-import { exercisesApi } from "../../lib/api/exercises";
 import { appointmentsApi } from "../../lib/api/appointments";
 import { achievementsApi } from "../../lib/api/achievements";
-import { useDirectChatUnread } from "../../lib/hooks/useDirectChatUnread";
 import { moodLevels } from "@tirek/shared";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
+import { getRandomPlantName } from "../../lib/plant-names";
 
 const AVATAR_MAP: Record<string, string> = {
   "avatar-1": "😊",
@@ -53,25 +51,22 @@ type QuickLink = {
 export default function DashboardScreen() {
   const t = useT();
   const { language } = useLanguage();
-  const router = useRouter();
+  const { push } = useRouter();
   const user = useAuthStore((s) => s.user);
   const c = useThemeColors();
   const queryClient = useQueryClient();
 
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
+  const { refreshing, onRefresh } = useRefresh(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["mood", "today"] }),
       queryClient.invalidateQueries({ queryKey: ["quote"] }),
       queryClient.invalidateQueries({ queryKey: ["streak"] }),
       queryClient.invalidateQueries({ queryKey: ["plant"] }),
-      queryClient.invalidateQueries({ queryKey: ["progress-stats"] }),
       queryClient.invalidateQueries({ queryKey: ["appointments", "next"] }),
       queryClient.invalidateQueries({ queryKey: ["achievements-summary"] }),
+      queryClient.invalidateQueries({ queryKey: ["tests", "assigned"] }),
     ]);
-    setRefreshing(false);
-  };
+  });
 
   const { data: todayMood } = useQuery({
     queryKey: ["mood", "today"],
@@ -93,11 +88,6 @@ export default function DashboardScreen() {
     queryFn: plantApi.get,
   });
 
-  const { data: stats } = useQuery({
-    queryKey: ["progress-stats"],
-    queryFn: exercisesApi.stats,
-  });
-
   const { data: nextAppointment } = useQuery({
     queryKey: ["appointments", "next"],
     queryFn: appointmentsApi.next,
@@ -108,25 +98,17 @@ export default function DashboardScreen() {
     queryFn: achievementsApi.getSummary,
   });
 
-  const unreadCount = useDirectChatUnread();
-
   const quickLinks: QuickLink[] = [
-    { route: "/(tabs)/chat", icon: "chatbubble", labelKey: "chat", iconBg: "rgba(15,118,110,0.1)", iconColor: "#0F766E" },
-    { route: "/(screens)/tests", icon: "clipboard", labelKey: "tests", iconBg: "rgba(16,185,129,0.1)", iconColor: "#047857" },
     { route: "/(tabs)/exercises", icon: "leaf", labelKey: "exercises", iconBg: "rgba(14,165,233,0.1)", iconColor: "#0369A1" },
     { route: "/(screens)/journal", icon: "book", labelKey: "journal", iconBg: "rgba(245,158,11,0.1)", iconColor: "#92400E" },
-    { route: "/(screens)/messages", icon: "mail", labelKey: "messages", iconBg: "rgba(34,197,94,0.1)", iconColor: "#15803D" },
     { route: "/(screens)/mood-calendar", icon: "calendar", labelKey: "moodCalendar", iconBg: "rgba(59,130,246,0.1)", iconColor: "#1D4ED8" },
     { route: "/(screens)/appointments", icon: "time", labelKey: "appointments", iconBg: "rgba(139,92,246,0.1)", iconColor: "#6D28D9" },
     { route: "/(screens)/achievements", icon: "trophy", labelKey: "achievements", iconBg: "rgba(234,179,8,0.1)", iconColor: "#92400E" },
   ];
 
   const quickLinkLabels: Record<string, string> = {
-    chat: t.nav.chat,
-    tests: t.nav.tests,
     exercises: t.nav.exercises,
     journal: t.nav.journal,
-    messages: t.directChat.title,
     moodCalendar: t.mood.calendar,
     appointments: t.nav.appointments,
     achievements: t.achievements.title,
@@ -157,7 +139,7 @@ export default function DashboardScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
             tintColor={c.primary}
             colors={[c.primary]}
           />
@@ -170,12 +152,12 @@ export default function DashboardScreen() {
               {t.dashboard.greeting},{" "}
               {user?.name?.split(" ")[0] ?? ""}!
             </Text>
-            <Text variant="bodyLight" style={{ marginTop: 4 }}>
+            <Text variant="bodyLight" style={styles.greetingSub}>
               {t.dashboard.howAreYou}
             </Text>
           </View>
           <Pressable
-            onPress={() => router.push("/(tabs)/profile")}
+            onPress={() => push("/(tabs)/profile")}
             style={[styles.avatarBtn, { backgroundColor: `${c.primary}14` }]}
           >
             <Text style={styles.avatarEmoji}>{avatarEmoji}</Text>
@@ -183,7 +165,7 @@ export default function DashboardScreen() {
         </View>
 
         {/* Mood check-in widget */}
-        <View style={{ marginTop: 20 }}>
+        <View style={styles.moodSection}>
           {todayMood ? (
             <Card style={styles.moodDoneCard}>
               <View style={styles.moodDoneIcon}>
@@ -203,7 +185,7 @@ export default function DashboardScreen() {
             </Card>
           ) : (
             <Pressable
-              onPress={() => router.push("/(tabs)/mood")}
+              onPress={() => push("/(tabs)/mood")}
               style={({ pressed }) => [
                 styles.moodCheckinCard,
                 {
@@ -215,7 +197,7 @@ export default function DashboardScreen() {
             >
               <View>
                 <Text variant="h3">{t.dashboard.moodCheckin}</Text>
-                <Text variant="small" style={{ marginTop: 2 }}>
+                <Text variant="small" style={styles.moodCheckinSub}>
                   {t.dashboard.howAreYou}
                 </Text>
               </View>
@@ -258,7 +240,7 @@ export default function DashboardScreen() {
         {/* Plant widget */}
         {plant && (
           <Pressable
-            onPress={() => router.push("/(screens)/plant")}
+            onPress={() => push("/(screens)/plant")}
             style={({ pressed }) => pressed && { opacity: 0.9 }}
           >
             <Card
@@ -268,13 +250,13 @@ export default function DashboardScreen() {
               ]}
             >
               <View style={styles.plantIcon}>
-                <Text style={{ fontSize: 24 }}>
+                <Text style={styles.widgetEmoji}>
                   {PLANT_EMOJI[plant.stage] ?? "🌸"}
                 </Text>
               </View>
               <View style={styles.widgetBody}>
-                <Text variant="body" style={{ fontWeight: "700" }}>
-                  {plant.name ?? t.plant.unnamed}
+                <Text variant="body" style={styles.boldText}>
+                  {plant.name || getRandomPlantName(plant.createdAt ?? "default")}
                 </Text>
                 <View style={styles.progressBarOuter}>
                   <View
@@ -289,7 +271,7 @@ export default function DashboardScreen() {
                     ? `💤 ${t.plant.sleeping}`
                     : plant.stage >= 4
                       ? t.plant.maxStage
-                      : `${t.plant.pointsToNext}: ${plant.pointsToNextStage}`}
+                      : `${t.plant.pointsToNext}: ${plant.pointsToNextStage} ${t.plant.pointsUnit}`}
                 </Text>
               </View>
             </Card>
@@ -299,13 +281,13 @@ export default function DashboardScreen() {
         {/* Achievements widget */}
         {achievementsSummary && achievementsSummary.totalCount > 0 && (
           <Pressable
-            onPress={() => router.push("/(screens)/achievements")}
+            onPress={() => push("/(screens)/achievements")}
             style={({ pressed }) => pressed && { opacity: 0.9 }}
           >
             <Card style={styles.widgetCard}>
               <View style={styles.achieveIcon}>
                 {achievementsSummary.recentAchievements.length > 0 ? (
-                  <Text style={{ fontSize: 24 }}>
+                  <Text style={styles.widgetEmoji}>
                     {
                       achievementsSummary.recentAchievements[0]
                         .achievement.emoji
@@ -335,7 +317,7 @@ export default function DashboardScreen() {
         {/* Next appointment widget */}
         {nextAppointment && (
           <Pressable
-            onPress={() => router.push("/(screens)/appointments")}
+            onPress={() => push("/(screens)/appointments")}
             style={({ pressed }) => pressed && { opacity: 0.9 }}
           >
             <Card style={styles.widgetCard}>
@@ -346,7 +328,7 @@ export default function DashboardScreen() {
                 <Text style={styles.apptCaption}>
                   {t.appointments.nextAppointment}
                 </Text>
-                <Text variant="body" style={{ fontWeight: "700" }}>
+                <Text variant="body" style={styles.boldText}>
                   {nextAppointment.date} · {nextAppointment.startTime}–
                   {nextAppointment.endTime}
                 </Text>
@@ -382,83 +364,13 @@ export default function DashboardScreen() {
           </Card>
         )}
 
-        {/* Progress stats */}
-        {stats &&
-          (stats.exercisesCompleted > 0 ||
-            stats.testsCompleted > 0 ||
-            stats.journalEntries > 0) && (
-            <View style={{ marginTop: 24 }}>
-              <Text style={[styles.sectionCaption, { color: c.textLight }]}>
-                {t.dashboard.progress}
-              </Text>
-              <View style={styles.statsRow}>
-                {[
-                  {
-                    icon: "leaf" as const,
-                    value: stats.exercisesCompleted,
-                    label: t.dashboard.exercisesDone,
-                    iconBg: "rgba(15,118,110,0.1)",
-                    iconColor: "#0F766E",
-                  },
-                  {
-                    icon: "clipboard" as const,
-                    value: stats.testsCompleted,
-                    label: t.dashboard.testsPassed,
-                    iconBg: "rgba(16,185,129,0.1)",
-                    iconColor: "#047857",
-                  },
-                  {
-                    icon: "book" as const,
-                    value: stats.journalEntries,
-                    label: t.dashboard.journalEntries,
-                    iconBg: "rgba(245,158,11,0.1)",
-                    iconColor: "#92400E",
-                  },
-                ].map((item) => (
-                  <View
-                    key={item.label}
-                    style={[
-                      styles.statCard,
-                      {
-                        backgroundColor: c.surface,
-                        borderColor: c.borderLight,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.statIcon,
-                        { backgroundColor: item.iconBg },
-                      ]}
-                    >
-                      <Ionicons
-                        name={item.icon}
-                        size={18}
-                        color={item.iconColor}
-                      />
-                    </View>
-                    <Text style={[styles.statValue, { color: c.text }]}>
-                      {item.value}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: c.textLight }]}>
-                      {item.label}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-
         {/* Quick access grid */}
-        <View style={{ marginTop: 24, marginBottom: 16 }}>
-          <Text style={[styles.sectionCaption, { color: c.textLight }]}>
-            {t.dashboard.quickAccess}
-          </Text>
+        <View style={styles.quickSection}>
           <View style={styles.quickGrid}>
             {quickLinks.map((item) => (
               <Pressable
                 key={item.route}
-                onPress={() => router.push(item.route as any)}
+                onPress={() => push(item.route as any)}
                 style={({ pressed }) => [
                   styles.quickItem,
                   {
@@ -479,13 +391,6 @@ export default function DashboardScreen() {
                     size={22}
                     color={item.iconColor}
                   />
-                  {item.labelKey === "messages" && unreadCount > 0 && (
-                    <View style={[styles.unreadBadge, { backgroundColor: c.danger }]}>
-                      <Text style={styles.unreadText}>
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </Text>
-                    </View>
-                  )}
                 </View>
                 <Text style={[styles.quickLabel, { color: c.text }]}>
                   {quickLinkLabels[item.labelKey]}
@@ -715,38 +620,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  // Stats
-  statsRow: {
-    flexDirection: "row",
-    gap: 10,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    padding: 12,
-    ...shadow(1),
-  },
-  statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "800",
-    marginTop: 4,
-  },
-  statLabel: {
-    fontSize: 10,
-    textAlign: "center",
-    marginTop: 2,
-    lineHeight: 13,
-  },
-
   // Quick access
   quickGrid: {
     flexDirection: "row",
@@ -773,20 +646,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "700",
   },
-  unreadBadge: {
-    position: "absolute",
-    top: -4,
-    right: -4,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 4,
+
+  // Extracted inline styles
+  greetingSub: {
+    marginTop: 4,
   },
-  unreadText: {
-    fontSize: 10,
+  moodSection: {
+    marginTop: 20,
+  },
+  moodCheckinSub: {
+    marginTop: 2,
+  },
+  widgetEmoji: {
+    fontSize: 24,
+  },
+  boldText: {
     fontWeight: "700",
-    color: "#FFFFFF",
+  },
+  quickSection: {
+    marginTop: 24,
+    marginBottom: 16,
   },
 });

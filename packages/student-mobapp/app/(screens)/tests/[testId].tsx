@@ -21,7 +21,7 @@ export default function TestScreen() {
   const c = useThemeColors();
   const { language } = useLanguage();
   const { testId } = useLocalSearchParams<{ testId: string }>();
-  const router = useRouter();
+  const { back, replace } = useRouter();
 
   const testDef = testDefinitions[testId as keyof typeof testDefinitions];
   const questions = testDef?.questions ?? [];
@@ -45,7 +45,7 @@ export default function TestScreen() {
   const completeMutation = useMutation({
     mutationFn: () => testsApi.complete(sessionId!),
     onSuccess: (session) =>
-      router.replace({
+      replace({
         pathname: "/(screens)/tests/results/[sessionId]",
         params: {
           sessionId: (session as any).sessionId ?? session.id,
@@ -61,7 +61,7 @@ export default function TestScreen() {
 
   if (!testDef) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top", "bottom"]}>
         <View style={styles.centered}>
           <Text style={{ color: c.textLight }}>{t.common.error}</Text>
         </View>
@@ -91,11 +91,11 @@ export default function TestScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top", "bottom"]}>
       {/* Header */}
       <View style={styles.header}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => back()}
           style={({ pressed }) => [
             styles.backBtn,
             { backgroundColor: c.surface },

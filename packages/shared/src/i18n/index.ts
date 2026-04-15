@@ -1,5 +1,5 @@
-export { ru, type TranslationKeys } from "./ru.js";
-export { kz } from "./kz.js";
+export { ru, type TranslationKeys } from "./ru";
+export { kz } from "./kz";
 
 export type Language = "ru" | "kz";
 
@@ -8,9 +8,9 @@ export const languages: Record<Language, string> = {
   kz: "Қазақша",
 };
 
-export function getTranslations(lang: Language): import("./ru.js").TranslationKeys {
+export function getTranslations(lang: Language): import("./ru").TranslationKeys {
   if (lang === "kz") {
-    return import("./kz.js").then((m) => m.kz) as any;
+    return import("./kz").then((m) => m.kz) as any;
   }
-  return import("./ru.js").then((m) => m.ru) as any;
+  return import("./ru").then((m) => m.ru) as any;
 }

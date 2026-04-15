@@ -20,7 +20,7 @@ export default function SOSScreen() {
   const t = useT();
   const c = useThemeColors();
   const { language } = useLanguage();
-  const router = useRouter();
+  const { push } = useRouter();
   const [selectedLevel, setSelectedLevel] = useState<1 | 2 | 3 | null>(null);
 
   const sosMutation = useMutation({
@@ -82,7 +82,7 @@ export default function SOSScreen() {
 
         {/* Breathing shortcut */}
         <Pressable
-          onPress={() => router.push("/(screens)/exercises/breathing")}
+          onPress={() => push("/(screens)/exercises/breathing")}
           style={({ pressed }) => [
             styles.breatheCard,
             pressed && { opacity: 0.85 },

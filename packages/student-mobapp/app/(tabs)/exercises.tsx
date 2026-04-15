@@ -1,21 +1,23 @@
-import { useState } from "react";
 import {
   View,
-  ScrollView,
   Pressable,
   StyleSheet,
   RefreshControl,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FlashList } from "@shopify/flash-list";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../components/ui";
 import { ErrorState } from "../../components/ErrorState";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
+import { useRefresh } from "../../lib/hooks/useRefresh";
 import { exercisesApi } from "../../lib/api/exercises";
-import { useThemeColors, spacing, radius } from "../../lib/theme";
+import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { SkeletonList } from "../../components/Skeleton";
+import { EmptyState } from "../../components/EmptyState";
 
 const EMOJI_MAP: Record<string, { emoji: string; bg: string }> = {
   "square-breathing": { emoji: "\u2B1B", bg: "rgba(59,130,246,0.12)" },
@@ -35,10 +37,58 @@ const SLUG_TO_ROUTE: Record<string, string> = {
   "thought-diary": "/(screens)/exercises/thought-diary",
 };
 
+function ExerciseItem({
+  item,
+  language,
+  push,
+  c,
+}: {
+  item: any;
+  language: string;
+  push: ReturnType<typeof useRouter>["push"];
+  c: ReturnType<typeof useThemeColors>;
+}) {
+  const visual = EMOJI_MAP[item.slug] ?? { emoji: "\uD83C\uDF3F", bg: "rgba(107,114,128,0.1)" };
+  const name = language === "kz" && item.nameKz ? item.nameKz : item.nameRu;
+  const route = SLUG_TO_ROUTE[item.slug];
+
+  return (
+    <Pressable
+      onPress={() => {
+        if (route) {
+          push({
+            pathname: route as any,
+            params: { slug: item.slug, exerciseId: item.id },
+          });
+        }
+      }}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: c.surface,
+          borderColor: c.borderLight,
+        },
+        pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+      ]}
+    >
+      <View style={[styles.cardIcon, { backgroundColor: visual.bg }]}>
+        <Text style={styles.cardEmoji}>{visual.emoji}</Text>
+      </View>
+      <View style={styles.cardContent}>
+        <Text style={[styles.cardName, { color: c.text }]}>{name}</Text>
+        <Text style={[styles.cardDesc, { color: c.textLight }]} numberOfLines={2}>
+          {item.description}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={c.textLight} />
+    </Pressable>
+  );
+}
+
 export default function ExercisesScreen() {
   const t = useT();
   const { language } = useLanguage();
-  const router = useRouter();
+  const { push } = useRouter();
   const c = useThemeColors();
 
   const { data: exercises, isLoading, isError, refetch } = useQuery({
@@ -46,92 +96,65 @@ export default function ExercisesScreen() {
     queryFn: exercisesApi.list,
   });
 
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (isError) {
     return (
-      <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
         <ErrorState onRetry={() => refetch()} />
-      </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
+        <View style={styles.scroll}>
+          <Text style={[styles.title, { color: c.text }]}>{t.exercises.title}</Text>
+          <SkeletonList count={5} />
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: c.bg }]}>
-      <ScrollView
+    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
+      <FlashList
+        data={exercises ?? []}
+        renderItem={({ item }) => (
+          <ExerciseItem item={item} language={language} push={push} c={c} />
+        )}
+        keyExtractor={(item) => item.id}
+        estimatedItemSize={80}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
             tintColor={c.primary}
             colors={[c.primary]}
           />
         }
-      >
-        {/* Header */}
-        <Text style={[styles.title, { color: c.text }]}>{t.exercises.title}</Text>
-
-        {/* Hero icon */}
-        <View style={styles.heroWrap}>
-          <View style={styles.heroIcon}>
-            <Ionicons name="leaf" size={48} color={c.primary} />
-          </View>
-        </View>
-
-        {/* Exercise cards */}
-        {isLoading && <SkeletonList count={5} />}
-
-        {exercises?.map((ex) => {
-          const visual = EMOJI_MAP[ex.slug] ?? { emoji: "\uD83C\uDF3F", bg: "rgba(107,114,128,0.1)" };
-          const name = language === "kz" && ex.nameKz ? ex.nameKz : ex.nameRu;
-          const route = SLUG_TO_ROUTE[ex.slug];
-
-          return (
-            <Pressable
-              key={ex.id}
-              onPress={() => {
-                if (route) {
-                  router.push({
-                    pathname: route as any,
-                    params: { slug: ex.slug, exerciseId: ex.id },
-                  });
-                }
-              }}
-              style={({ pressed }) => [
-                styles.card,
-                {
-                  backgroundColor: c.surface,
-                  borderColor: c.borderLight,
-                },
-                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
-              ]}
-            >
-              <View style={[styles.cardIcon, { backgroundColor: visual.bg }]}>
-                <Text style={styles.cardEmoji}>{visual.emoji}</Text>
+        ListHeaderComponent={
+          <>
+            <Text style={[styles.title, { color: c.text }]}>{t.exercises.title}</Text>
+            <View style={styles.heroWrap}>
+              <View style={styles.heroIcon}>
+                <Ionicons name="leaf" size={48} color={c.primary} />
               </View>
-              <View style={styles.cardContent}>
-                <Text style={[styles.cardName, { color: c.text }]}>{name}</Text>
-                <Text style={[styles.cardDesc, { color: c.textLight }]} numberOfLines={2}>
-                  {ex.description}
-                </Text>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={c.textLight}
-              />
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-    </View>
+            </View>
+          </>
+        }
+        ListEmptyComponent={
+          <EmptyState
+            icon="leaf-outline"
+            title={t.exercises.emptyTitle}
+            description={t.exercises.emptyDescription}
+          />
+        }
+      />
+    </SafeAreaView>
   );
 }
 

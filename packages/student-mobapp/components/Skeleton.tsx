@@ -26,15 +26,15 @@ export function Skeleton({
   const opacity = useSharedValue(0.4);
 
   useEffect(() => {
-    opacity.value = withRepeat(
+    opacity.set(withRepeat(
       withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
       -1,
       true,
-    );
+    ));
   }, [opacity]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
+    opacity: opacity.get(),
   }));
 
   return (

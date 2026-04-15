@@ -5,6 +5,7 @@ import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { Text, Card, SeverityBadge } from "../ui";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
+import { AiReportCard } from "../diagnostics/AiReportCard";
 import type {
   DiagnosticSession,
   CbtEntry,
@@ -41,6 +42,7 @@ export function StudentAssessmentsTab({
   const c = useThemeColors();
   const d = t.psychologist.studentDetail;
   const [subTab, setSubTab] = useState<SubTab>("tests");
+  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   const subTabs: { key: SubTab; label: string }[] = [
     { key: "tests", label: d.testsTab },
@@ -90,35 +92,61 @@ export function StudentAssessmentsTab({
             />
           ) : (
             <View style={styles.cardList}>
-              {testResults.map((result) => (
-                <Card key={result.id}>
-                  <View style={styles.testRow}>
-                    <View style={styles.testInfo}>
-                      <Text variant="body" style={{ fontFamily: "DMSans-SemiBold" }}>
-                        {result.testName ?? result.testSlug ?? result.testId}
-                      </Text>
-                      <Text variant="caption">
-                        {result.completedAt
-                          ? new Date(result.completedAt).toLocaleDateString()
-                          : "—"}
-                      </Text>
-                    </View>
-                    <View style={styles.testRight}>
-                      {result.totalScore != null && (
-                        <Text
-                          variant="body"
-                          style={{ fontFamily: "DMSans-Bold", color: c.text }}
-                        >
-                          {result.totalScore}/{result.maxScore ?? "?"}
-                        </Text>
-                      )}
-                      {result.severity && (
-                        <SeverityBadge severity={result.severity} />
-                      )}
-                    </View>
-                  </View>
-                </Card>
-              ))}
+              {testResults.map((result) => {
+                const isExpanded = expandedSessionId === result.id;
+                const canExpand = !!result.completedAt;
+                return (
+                  <Card key={result.id}>
+                    <Pressable
+                      onPress={() => {
+                        if (canExpand) {
+                          setExpandedSessionId(isExpanded ? null : result.id);
+                        }
+                      }}
+                      disabled={!canExpand}
+                    >
+                      <View style={styles.testRow}>
+                        <View style={styles.testInfo}>
+                          <Text variant="body" style={{ fontFamily: "DMSans-SemiBold" }}>
+                            {result.testName ?? result.testSlug ?? result.testId}
+                          </Text>
+                          <Text variant="caption">
+                            {result.completedAt
+                              ? new Date(result.completedAt).toLocaleDateString()
+                              : "—"}
+                          </Text>
+                        </View>
+                        <View style={styles.testRight}>
+                          {result.totalScore != null && (
+                            <Text
+                              variant="body"
+                              style={{ fontFamily: "DMSans-Bold", color: c.text }}
+                            >
+                              {result.totalScore}/{result.maxScore ?? "?"}
+                            </Text>
+                          )}
+                          {result.severity && (
+                            <SeverityBadge severity={result.severity} />
+                          )}
+                          {canExpand && (
+                            <Ionicons
+                              name="chevron-down"
+                              size={14}
+                              color={c.textLight}
+                              style={{ transform: [{ rotate: isExpanded ? "180deg" : "0deg" }] }}
+                            />
+                          )}
+                        </View>
+                      </View>
+                    </Pressable>
+                    {isExpanded && (
+                      <View style={[styles.reportContainer, { borderTopColor: c.borderLight }]}>
+                        <AiReportCard sessionId={result.id} />
+                      </View>
+                    )}
+                  </Card>
+                );
+              })}
             </View>
           )}
         </View>
@@ -418,5 +446,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 9,
     color: "#D97706",
+  },
+  reportContainer: {
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12,
   },
 });

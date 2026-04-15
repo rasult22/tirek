@@ -23,7 +23,7 @@ export default function PMRScreen() {
   const t = useT();
   const c = useThemeColors();
   const { language } = useLanguage();
-  const router = useRouter();
+  const { back } = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
 
   const PHASE_COLORS: Record<Phase, string> = {
@@ -325,7 +325,7 @@ export default function PMRScreen() {
               <Ionicons name="checkmark" size={32} color={c.success} />
             </View>
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => back()}
               style={({ pressed }) => [
                 styles.doneBtn,
                 { backgroundColor: c.primary },

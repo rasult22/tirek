@@ -4,6 +4,7 @@ import type {
   DiagnosticSession,
   Severity,
   PaginatedResponse,
+  AssignedTest,
 } from "@tirek/shared";
 
 export interface SessionResult {
@@ -20,7 +21,7 @@ export interface SessionResult {
 export const testsApi = {
   list: () => apiFetch<DiagnosticTest[]>("/student/tests/"),
 
-  assigned: () => apiFetch<DiagnosticTest[]>("/student/tests/assigned"),
+  assigned: () => apiFetch<AssignedTest[]>("/student/tests/assigned"),
 
   start: (testId: string) =>
     apiFetch<DiagnosticSession>(`/student/tests/${testId}/start`, {

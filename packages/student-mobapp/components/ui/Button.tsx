@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: radius.lg,
+    borderCurve: 'continuous',
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",

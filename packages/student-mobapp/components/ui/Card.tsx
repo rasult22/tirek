@@ -14,6 +14,7 @@ export function Card({ elevated = false, style, children, ...props }: Props) {
       style={[
         {
           borderRadius: radius.lg,
+          borderCurve: 'continuous',
           padding: spacing.lg,
           borderWidth: 1,
           backgroundColor: c.surface,

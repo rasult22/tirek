@@ -1,5 +1,10 @@
 import { apiFetch } from "./client";
-import type { Severity, PaginatedResponse } from "@tirek/shared";
+import type {
+  Severity,
+  PaginatedResponse,
+  DiagnosticAiReport,
+  SessionAnswersResponse,
+} from "@tirek/shared";
 
 export interface DiagnosticsFilters {
   testSlug?: string;
@@ -55,4 +60,20 @@ export const diagnosticsApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  getReport: (sessionId: string) =>
+    apiFetch<DiagnosticAiReport | { status: "pending" }>(
+      `/psychologist/diagnostics/sessions/${sessionId}/report`,
+    ),
+
+  regenerateReport: (sessionId: string) =>
+    apiFetch<{ status: "pending" }>(
+      `/psychologist/diagnostics/sessions/${sessionId}/report/regenerate`,
+      { method: "POST" },
+    ),
+
+  getSessionAnswers: (sessionId: string) =>
+    apiFetch<SessionAnswersResponse>(
+      `/psychologist/diagnostics/sessions/${sessionId}/answers`,
+    ),
 };

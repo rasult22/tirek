@@ -6,7 +6,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { Stack, useRouter, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -31,7 +31,6 @@ const PHASE_COLORS: Record<Phase, string> = {
 export default function BreathingScreen() {
   const t = useT();
   const c = useThemeColors();
-  const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
 
   const config = exerciseConfigs[slug ?? ""];

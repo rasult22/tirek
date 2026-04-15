@@ -1,10 +1,10 @@
-import { useState } from "react";
 import { View, FlatList, Pressable, StyleSheet, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { useT } from "../../../lib/hooks/useLanguage";
+import { useRefresh } from "../../../lib/hooks/useRefresh";
 import { directChatApi } from "../../../lib/api/direct-chat";
 import { ErrorState } from "../../../components/ErrorState";
 import { Text, Button } from "../../../components/ui";
@@ -29,7 +29,7 @@ function formatTime(dateStr: string) {
 export default function MessagesListScreen() {
   const t = useT();
   const c = useThemeColors();
-  const router = useRouter();
+  const { push } = useRouter();
   const queryClient = useQueryClient();
 
   const { data: convData, isLoading, isError, refetch } = useQuery({
@@ -48,18 +48,13 @@ export default function MessagesListScreen() {
       directChatApi.createConversation(psychologistId),
     onSuccess: (conv) => {
       queryClient.invalidateQueries({ queryKey: ["direct-chat", "conversations"] });
-      router.push(`/(screens)/messages/${conv.id}`);
+      push(`/(screens)/messages/${conv.id}`);
     },
   });
 
   const conversations = convData?.data ?? [];
 
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (isError) {
     return (
@@ -71,7 +66,7 @@ export default function MessagesListScreen() {
 
   const renderConversation = ({ item: conv }: { item: Conversation }) => (
     <Pressable
-      onPress={() => router.push(`/(screens)/messages/${conv.id}`)}
+      onPress={() => push(`/(screens)/messages/${conv.id}`)}
       style={({ pressed }) => [styles.convCard, { backgroundColor: c.surface }, pressed && styles.pressed]}
     >
       <View style={[styles.avatar, { backgroundColor: `${c.primary}20` }]}>
@@ -124,11 +119,7 @@ export default function MessagesListScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
-      <View style={styles.header}>
-        <Text variant="h2">{t.directChat.title}</Text>
-      </View>
-
+    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["bottom"]}>
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <SkeletonList count={4} />
@@ -144,7 +135,7 @@ export default function MessagesListScreen() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={handleRefresh}
+              onRefresh={onRefresh}
               tintColor={c.primary}
               colors={[c.primary]}
             />
@@ -158,11 +149,6 @@ export default function MessagesListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
   },
   loadingContainer: {
     flex: 1,

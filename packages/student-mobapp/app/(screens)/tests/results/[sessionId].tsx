@@ -8,25 +8,14 @@ import { ErrorState } from "../../../../components/ErrorState";
 import { useT } from "../../../../lib/hooks/useLanguage";
 import { testsApi } from "../../../../lib/api/tests";
 import type { SessionResult } from "../../../../lib/api/tests";
-import type { Severity } from "@tirek/shared";
 import { useThemeColors, radius } from "../../../../lib/theme";
 import { shadow } from "../../../../lib/theme/shadows";
-
-const SEVERITY_CONFIG: Record<
-  Severity,
-  { emoji: string; bg: string; border: string }
-> = {
-  minimal: { emoji: "\u{1F60A}", bg: "#F0FDF4", border: "#BBF7D0" },
-  mild: { emoji: "\u{1F642}", bg: "#FEFCE8", border: "#FDE68A" },
-  moderate: { emoji: "\u{1F914}", bg: "#FFF7ED", border: "#FED7AA" },
-  severe: { emoji: "\u{1F917}", bg: "#FEF2F2", border: "#FECACA" },
-};
 
 export default function TestResultScreen() {
   const t = useT();
   const c = useThemeColors();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
-  const router = useRouter();
+  const { replace } = useRouter();
 
   const {
     data: result,
@@ -41,7 +30,7 @@ export default function TestResultScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["bottom"]}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={c.primary} />
         </View>
@@ -49,90 +38,48 @@ export default function TestResultScreen() {
     );
   }
 
-  if (isError) {
+  if (isError || !result) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["bottom"]}>
         <ErrorState onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
 
-  if (!result) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
-        <View style={styles.centered}>
-          <Text style={{ color: c.textLight }}>{t.common.error}</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const sev = result.severity ?? "minimal";
-  const config = SEVERITY_CONFIG[sev];
-  const resultMessages: Record<Severity, string> = {
-    minimal: t.tests.resultGood,
-    mild: t.tests.resultMild,
-    moderate: t.tests.resultModerate,
-    severe: t.tests.resultSevere,
-  };
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["bottom"]}>
       <View style={styles.content}>
-        {/* Result card */}
-        <View
-          style={[
-            styles.resultCard,
-            { backgroundColor: config.bg, borderColor: config.border },
-          ]}
-        >
-          <Text style={styles.emoji}>{config.emoji}</Text>
+        <View style={[styles.resultCard, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }]}>
+          <Text style={styles.emoji}>{"\u2705"}</Text>
           <Text variant="h1" style={styles.resultTitle}>
             {t.tests.result}
           </Text>
-          <Text style={[styles.resultMessage, { color: c.text }]}>{resultMessages[sev]}</Text>
-          {result.message && (
-            <Text style={[styles.resultNote, { color: c.textLight }]}>{result.message}</Text>
-          )}
+          <Text style={[styles.thankYou, { color: c.text }]}>
+            {t.tests.resultThanks}
+          </Text>
+          <Text style={[styles.resultMessage, { color: c.textLight }]}>
+            {t.tests.resultSent}
+          </Text>
+          <Text style={[styles.resultTip, { color: c.primary }]}>
+            {t.tests.resultTip}
+          </Text>
         </View>
 
-        {/* Action buttons */}
         <View style={styles.actions}>
-          {(sev === "moderate" || sev === "severe") && (
-            <Pressable
-              onPress={() => router.replace("/(tabs)/chat")}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { backgroundColor: c.primary },
-                pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
-              ]}
-            >
-              <Ionicons
-                name="chatbubble"
-                size={18}
-                color="#FFFFFF"
-              />
-              <Text style={styles.primaryBtnText}>{t.chat.title}</Text>
-            </Pressable>
-          )}
-
-          {(sev === "mild" || sev === "moderate") && (
-            <Pressable
-              onPress={() => router.replace("/(tabs)/exercises")}
-              style={({ pressed }) => [
-                styles.secondaryBtn,
-                pressed && { opacity: 0.85 },
-              ]}
-            >
-              <Ionicons name="leaf" size={18} color={c.secondary} />
-              <Text style={[styles.secondaryBtnText, { color: c.secondary }]}>
-                {t.exercises.title}
-              </Text>
-            </Pressable>
-          )}
+          <Pressable
+            onPress={() => replace("/(tabs)/chat")}
+            style={({ pressed }) => [
+              styles.chatBtn,
+              { backgroundColor: c.primary },
+              pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
+            ]}
+          >
+            <Ionicons name="chatbubble" size={18} color="#FFFFFF" />
+            <Text style={styles.chatBtnText}>{t.chat.title}</Text>
+          </Pressable>
 
           <Pressable
-            onPress={() => router.replace("/")}
+            onPress={() => replace("/")}
             style={({ pressed }) => [
               styles.homeBtn,
               { backgroundColor: c.surface },
@@ -161,7 +108,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
   },
-
   resultCard: {
     width: "100%",
     maxWidth: 360,
@@ -170,24 +116,28 @@ const styles = StyleSheet.create({
     padding: 32,
     alignItems: "center",
   },
-  emoji: { fontSize: 64 },
-  resultTitle: { marginTop: 16 },
-  resultMessage: {
+  emoji: { fontSize: 56 },
+  resultTitle: { marginTop: 12 },
+  thankYou: {
     marginTop: 16,
+    fontSize: 16,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  resultMessage: {
+    marginTop: 12,
     fontSize: 14,
     lineHeight: 22,
     textAlign: "center",
   },
-  resultNote: {
-    marginTop: 12,
-    fontSize: 12,
-    lineHeight: 18,
+  resultTip: {
+    marginTop: 16,
+    fontSize: 14,
+    fontWeight: "600",
     textAlign: "center",
   },
-
   actions: { width: "100%", maxWidth: 360, marginTop: 24, gap: 12 },
-
-  primaryBtn: {
+  chatBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -196,22 +146,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     ...shadow(2),
   },
-  primaryBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
-
-  secondaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "rgba(45,109,140,0.2)",
-    borderRadius: radius.lg,
-    paddingVertical: 14,
-  },
-  secondaryBtnText: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
+  chatBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
   homeBtn: {
     flexDirection: "row",
     alignItems: "center",

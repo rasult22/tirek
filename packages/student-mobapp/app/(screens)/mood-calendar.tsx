@@ -7,12 +7,12 @@ import {
   StyleSheet,
   RefreshControl,
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../components/ui";
 import { ErrorState } from "../../components/ErrorState";
 import { useT } from "../../lib/hooks/useLanguage";
+import { useRefresh } from "../../lib/hooks/useRefresh";
 import { moodApi } from "../../lib/api/mood";
 import { moodLevels } from "@tirek/shared";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
@@ -47,13 +47,10 @@ function getFirstDayOfWeek(year: number, month: number) {
 export default function MoodCalendarScreen() {
   const t = useT();
   const c = useThemeColors();
-  const router = useRouter();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-
-  const [refreshing, setRefreshing] = useState(false);
 
   const { data: calendarData, isError, refetch } = useQuery({
     queryKey: ["mood", "calendar", `${year}-${String(month + 1).padStart(2, "0")}`],
@@ -91,11 +88,7 @@ export default function MoodCalendarScreen() {
     else setMonth(month + 1);
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const factorLabels: Record<string, string> = {
     school: t.mood.factorSchool,
@@ -109,7 +102,6 @@ export default function MoodCalendarScreen() {
   if (isError) {
     return (
       <View style={[styles.container, { backgroundColor: c.bg }]}>
-        <Stack.Screen options={{ title: t.mood.calendar }} />
         <ErrorState onRetry={() => refetch()} />
       </View>
     );
@@ -119,14 +111,13 @@ export default function MoodCalendarScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
-      <Stack.Screen options={{ title: t.mood.calendar }} />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
             tintColor={c.primary}
             colors={[c.primary]}
           />
@@ -168,29 +159,30 @@ export default function MoodCalendarScreen() {
               const isToday = dateStr === todayStr;
 
               return (
-                <Pressable
-                  key={day}
-                  onPress={() => moodVal ? setSelectedDate(dateStr) : undefined}
-                  style={[
-                    styles.dayCell,
-                    moodVal
-                      ? { backgroundColor: MOOD_COLORS[moodVal], borderRadius: 8 }
-                      : isToday
-                        ? { backgroundColor: `${c.primary}1A`, borderRadius: 8 }
-                        : undefined,
-                  ]}
-                >
-                  <Text
+                <View key={day} style={styles.dayCell}>
+                  <Pressable
+                    onPress={() => moodVal ? setSelectedDate(dateStr) : undefined}
                     style={[
-                      styles.dayText,
-                      { color: c.textLight },
-                      moodVal ? { color: "#FFFFFF", fontWeight: "700" } : undefined,
-                      isToday && !moodVal ? { color: c.primaryDark, fontWeight: "700" } : undefined,
+                      styles.dayInner,
+                      moodVal
+                        ? { backgroundColor: MOOD_COLORS[moodVal] }
+                        : isToday
+                          ? { backgroundColor: `${c.primary}1A` }
+                          : undefined,
                     ]}
                   >
-                    {day}
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={[
+                        styles.dayText,
+                        { color: c.textLight },
+                        moodVal ? { color: "#FFFFFF", fontWeight: "700" } : undefined,
+                        isToday && !moodVal ? { color: c.primaryDark, fontWeight: "700" } : undefined,
+                      ]}
+                    >
+                      {day}
+                    </Text>
+                  </Pressable>
+                </View>
               );
             })}
           </View>
@@ -333,6 +325,13 @@ const styles = StyleSheet.create({
   dayCell: {
     width: "14.28%",
     aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dayInner: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -1,11 +1,11 @@
-import { useState } from "react";
 import { View, ScrollView, Pressable, StyleSheet, RefreshControl } from "react-native";
-import { Stack, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../components/ui";
 import { ErrorState } from "../../components/ErrorState";
 import { useT } from "../../lib/hooks/useLanguage";
+import { useRefresh } from "../../lib/hooks/useRefresh";
 import { chatApi } from "../../lib/api/chat";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
@@ -14,7 +14,7 @@ import { SkeletonList } from "../../components/Skeleton";
 export default function ChatHistoryScreen() {
   const t = useT();
   const c = useThemeColors();
-  const router = useRouter();
+  const { replace } = useRouter();
 
   const {
     data: sessions,
@@ -41,17 +41,11 @@ export default function ChatHistoryScreen() {
 
   const recentSessions = sessions?.data?.slice(0, 6) ?? [];
 
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   if (isError) {
     return (
       <View style={[styles.container, { backgroundColor: c.bg }]}>
-        <Stack.Screen options={{ title: t.chat.title }} />
         <ErrorState onRetry={() => refetch()} />
       </View>
     );
@@ -59,14 +53,13 @@ export default function ChatHistoryScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
-      <Stack.Screen options={{ title: t.chat.title }} />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
             tintColor={c.primary}
             colors={[c.primary]}
           />
@@ -74,7 +67,14 @@ export default function ChatHistoryScreen() {
       >
         {/* New chat button */}
         <Pressable
-          onPress={() => router.replace("/(tabs)/chat")}
+          onPress={() => {
+            chatApi.create("general").then((session) => {
+              replace({
+                pathname: "/(screens)/chat/[sessionId]",
+                params: { sessionId: session.id },
+              } as any);
+            });
+          }}
           style={({ pressed }) => [
             styles.newChatBtn,
             { backgroundColor: c.primary },
@@ -103,10 +103,10 @@ export default function ChatHistoryScreen() {
           <Pressable
             key={session.id}
             onPress={() =>
-              router.replace({
-                pathname: "/(tabs)/chat",
+              replace({
+                pathname: "/(screens)/chat/[sessionId]",
                 params: { sessionId: session.id },
-              })
+              } as any)
             }
             style={({ pressed }) => [
               styles.sessionCard,

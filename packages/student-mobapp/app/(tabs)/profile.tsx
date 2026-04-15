@@ -41,7 +41,7 @@ export default function ProfileScreen() {
   const { language, setLanguage } = useLanguage();
   const { mode, setMode } = useTheme();
   const c = useThemeColors();
-  const router = useRouter();
+  const { replace } = useRouter();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -61,7 +61,7 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     logout();
-    router.replace("/(auth)/login");
+    replace("/(auth)/login");
   };
 
   const startEdit = () => {

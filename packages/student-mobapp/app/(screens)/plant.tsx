@@ -8,15 +8,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, Card } from "../../components/ui";
 import { ErrorState } from "../../components/ErrorState";
 import { useT } from "../../lib/hooks/useLanguage";
 import { plantApi } from "../../lib/api/plant";
+import { exercisesApi } from "../../lib/api/exercises";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
+import { getRandomPlantName } from "../../lib/plant-names";
 
 const STAGE_EMOJI = ["\u{1F331}", "\u{1F33F}", "\u{1F333}", "\u{1F338}"] as const;
 const STAGE_BG = [
@@ -38,7 +39,6 @@ function stageName(stage: number, t: any) {
 export default function PlantScreen() {
   const t = useT();
   const c = useThemeColors();
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   const {
@@ -49,6 +49,11 @@ export default function PlantScreen() {
   } = useQuery({
     queryKey: ["plant"],
     queryFn: plantApi.get,
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ["progress-stats"],
+    queryFn: exercisesApi.stats,
   });
 
   const [editing, setEditing] = useState(false);
@@ -88,6 +93,7 @@ export default function PlantScreen() {
 
   const stageIdx = plant.stage - 1;
   const emoji = STAGE_EMOJI[stageIdx] ?? "\u{1F338}";
+  const displayName = plant.name || getRandomPlantName(plant.createdAt ?? "default");
   const progressPercent =
     plant.stage >= 4
       ? 100
@@ -113,7 +119,7 @@ export default function PlantScreen() {
         >
           <Text style={styles.plantEmoji}>{emoji}</Text>
           <Text variant="h2" style={{ marginTop: 12 }}>
-            {plant.name ?? t.plant.unnamed}
+            {displayName}
           </Text>
           <Text variant="bodyLight" style={{ marginTop: 4 }}>
             {stageName(plant.stage, t.plant)}
@@ -165,7 +171,7 @@ export default function PlantScreen() {
           ) : (
             <View style={styles.nameRow}>
               <Text variant="body" style={{ fontWeight: "600", flex: 1 }}>
-                {plant.name ?? t.plant.unnamed}
+                {displayName}
               </Text>
               <Pressable
                 onPress={() => {
@@ -248,6 +254,102 @@ export default function PlantScreen() {
             </Text>
           )}
         </Card>
+
+        {/* How it works */}
+        <Card style={styles.infoCard}>
+          <View style={styles.infoHeader}>
+            <Ionicons name="help-circle" size={20} color={c.primary} />
+            <Text style={[styles.infoTitle, { color: c.text }]}>
+              {t.plant.infoTitle}
+            </Text>
+          </View>
+          <Text style={[styles.infoDesc, { color: c.textLight }]}>
+            {t.plant.infoDesc}
+          </Text>
+          <View style={styles.infoList}>
+            {[
+              t.plant.infoItem1,
+              t.plant.infoItem2,
+              t.plant.infoItem3,
+              t.plant.infoItem4,
+              t.plant.infoItem5,
+            ].map((item, i) => (
+              <View key={i} style={styles.infoRow}>
+                <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                <Text style={[styles.infoItemText, { color: c.text }]}>
+                  {item}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </Card>
+
+        {/* Progress stats */}
+        {stats &&
+          (stats.exercisesCompleted > 0 ||
+            stats.testsCompleted > 0 ||
+            stats.journalEntries > 0) && (
+            <View style={{ marginTop: 20 }}>
+              <Text variant="caption" style={{ marginBottom: 12 }}>
+                {t.dashboard.progress}
+              </Text>
+              <View style={styles.statsRow}>
+                {[
+                  {
+                    icon: "leaf" as const,
+                    value: stats.exercisesCompleted,
+                    label: t.dashboard.exercisesDone,
+                    iconBg: "rgba(15,118,110,0.1)",
+                    iconColor: "#0F766E",
+                  },
+                  {
+                    icon: "clipboard" as const,
+                    value: stats.testsCompleted,
+                    label: t.dashboard.testsPassed,
+                    iconBg: "rgba(16,185,129,0.1)",
+                    iconColor: "#047857",
+                  },
+                  {
+                    icon: "book" as const,
+                    value: stats.journalEntries,
+                    label: t.dashboard.journalEntries,
+                    iconBg: "rgba(245,158,11,0.1)",
+                    iconColor: "#92400E",
+                  },
+                ].map((item) => (
+                  <View
+                    key={item.label}
+                    style={[
+                      styles.statCard,
+                      {
+                        backgroundColor: c.surface,
+                        borderColor: c.borderLight,
+                      },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.statIcon,
+                        { backgroundColor: item.iconBg },
+                      ]}
+                    >
+                      <Ionicons
+                        name={item.icon}
+                        size={18}
+                        color={item.iconColor}
+                      />
+                    </View>
+                    <Text style={[styles.statValue, { color: c.text }]}>
+                      {item.value}
+                    </Text>
+                    <Text style={[styles.statLabel, { color: c.textLight }]}>
+                      {item.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -379,5 +481,69 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: "#16A34A",
+  },
+
+  // Info card
+  infoCard: {
+    marginTop: 16,
+  },
+  infoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  infoTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  infoDesc: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 12,
+  },
+  infoList: {
+    gap: 8,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  infoItemText: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+
+  // Progress stats
+  statsRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: 12,
+    ...shadow(1),
+  },
+  statIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: "800",
+    marginTop: 4,
+  },
+  statLabel: {
+    fontSize: 10,
+    textAlign: "center",
+    marginTop: 2,
+    lineHeight: 13,
   },
 });

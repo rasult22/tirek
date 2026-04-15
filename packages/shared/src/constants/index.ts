@@ -1,4 +1,4 @@
-export { moodLevels } from "./mood-levels.js";
-export { hotlines } from "./hotlines.js";
-export { exerciseConfigs } from "./exercises.js";
-export { testDefinitions, type ScoringRule } from "./test-definitions.js";
+export { moodLevels } from "./mood-levels";
+export { hotlines } from "./hotlines";
+export { exerciseConfigs } from "./exercises";
+export { testDefinitions, type ScoringRule } from "./test-definitions";

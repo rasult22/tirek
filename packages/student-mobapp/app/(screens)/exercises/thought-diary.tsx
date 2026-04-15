@@ -16,6 +16,7 @@ import { Text } from "../../../components/ui";
 import { ErrorState } from "../../../components/ErrorState";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useT } from "../../../lib/hooks/useLanguage";
+import { useRefresh } from "../../../lib/hooks/useRefresh";
 import { cbtApi } from "../../../lib/api/cbt";
 import { useThemeColors, radius, spacing } from "../../../lib/theme";
 import { shadow } from "../../../lib/theme/shadows";
@@ -39,7 +40,7 @@ const DISTORTION_KEYS = [
 export default function ThoughtDiaryScreen() {
   const t = useT();
   const c = useThemeColors();
-  const router = useRouter();
+  const { back } = useRouter();
   const queryClient = useQueryClient();
 
   const [step, setStep] = useState(0);
@@ -62,12 +63,7 @@ export default function ThoughtDiaryScreen() {
     queryFn: () => cbtApi.list("thought_diary"),
   });
 
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const createMutation = useMutation({
     mutationFn: cbtApi.create,
@@ -176,7 +172,7 @@ export default function ThoughtDiaryScreen() {
               <Text style={[styles.secondaryBtnText, { color: c.text }]}>{t.common.next}</Text>
             </Pressable>
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => back()}
               style={({ pressed }) => [
                 styles.primaryBtn,
                 { backgroundColor: c.primary },
@@ -203,7 +199,7 @@ export default function ThoughtDiaryScreen() {
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
-              onRefresh={handleRefresh}
+              onRefresh={onRefresh}
               tintColor={c.primary}
               colors={[c.primary]}
             />

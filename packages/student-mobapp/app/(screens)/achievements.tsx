@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { View, ScrollView, StyleSheet, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text, Card } from "../../components/ui";
 import { ErrorState } from "../../components/ErrorState";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
+import { useRefresh } from "../../lib/hooks/useRefresh";
 import { achievementsApi } from "../../lib/api/achievements";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { SkeletonList } from "../../components/Skeleton";
@@ -28,12 +28,7 @@ export default function AchievementsScreen() {
     queryFn: achievementsApi.getAll,
   });
 
-  const [refreshing, setRefreshing] = useState(false);
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
-  };
+  const { refreshing, onRefresh } = useRefresh(refetch);
 
   const progressPercent =
     data && data.totalCount > 0
@@ -72,7 +67,7 @@ export default function AchievementsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
+            onRefresh={onRefresh}
             tintColor={c.primary}
             colors={[c.primary]}
           />

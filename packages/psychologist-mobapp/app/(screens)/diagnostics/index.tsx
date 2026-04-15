@@ -6,6 +6,7 @@ import {
   RefreshControl,
   TextInput,
   StyleSheet,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, Stack } from "expo-router";
@@ -19,6 +20,7 @@ import { shadow } from "../../../lib/theme/shadows";
 import { diagnosticsApi } from "../../../lib/api/diagnostics";
 import { exportApi } from "../../../lib/api/export";
 import { hapticLight } from "../../../lib/haptics";
+import { AiReportCard } from "../../../components/diagnostics/AiReportCard";
 import type { Severity } from "@tirek/shared";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -37,6 +39,11 @@ export default function DiagnosticsScreen() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [reportSession, setReportSession] = useState<{
+    sessionId: string;
+    studentName?: string;
+    testName?: string | null;
+  } | null>(null);
 
   const testLabels: Record<string, string> = {
     "phq-a": t.tests.phqName,
@@ -415,6 +422,23 @@ export default function DiagnosticsScreen() {
                   )}
                   {row.severity && <SeverityBadge severity={row.severity} />}
                 </View>
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation?.();
+                    hapticLight();
+                    setReportSession({
+                      sessionId: row.sessionId,
+                      studentName: row.studentName,
+                      testName: row.testName,
+                    });
+                  }}
+                  style={({ pressed }) => [
+                    styles.aiBtn,
+                    pressed && { opacity: 0.7 },
+                  ]}
+                >
+                  <Ionicons name="sparkles" size={12} color="#4338CA" />
+                </Pressable>
                 <Ionicons
                   name="chevron-forward"
                   size={14}
@@ -441,6 +465,53 @@ export default function DiagnosticsScreen() {
           </View>
         )}
       </View>
+
+      {/* AI Report Modal */}
+      <Modal
+        visible={!!reportSession}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setReportSession(null)}
+      >
+        <View style={styles.sheetWrapper}>
+          <Pressable
+            style={styles.sheetBackdrop}
+            onPress={() => setReportSession(null)}
+          />
+          <View style={[styles.sheetContent, { backgroundColor: c.surface }]}>
+            <View style={styles.dragHandle}>
+              <View style={[styles.dragBar, { backgroundColor: c.border }]} />
+            </View>
+            <View style={styles.sheetHeader}>
+              <View style={{ flex: 1 }}>
+                <Text variant="h3" style={{ fontFamily: "DMSans-Bold" }}>
+                  AI-анализ
+                </Text>
+                {reportSession?.studentName && (
+                  <Text variant="caption">
+                    {reportSession.studentName}
+                    {reportSession.testName ? ` · ${reportSession.testName}` : ""}
+                  </Text>
+                )}
+              </View>
+              <Pressable
+                onPress={() => setReportSession(null)}
+                style={[styles.closeBtn, { backgroundColor: c.surfaceSecondary }]}
+              >
+                <Ionicons name="close" size={16} color={c.textLight} />
+              </Pressable>
+            </View>
+            <ScrollView
+              contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
+              showsVerticalScrollIndicator={false}
+            >
+              {reportSession && (
+                <AiReportCard sessionId={reportSession.sessionId} />
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -565,6 +636,51 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sheetWrapper: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  sheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  sheetContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: "85%",
+  },
+  dragHandle: {
+    alignItems: "center",
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  dragBar: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },

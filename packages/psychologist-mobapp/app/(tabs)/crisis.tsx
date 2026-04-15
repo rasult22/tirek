@@ -55,6 +55,8 @@ export default function CrisisScreen() {
   const [resolveSheetId, setResolveSheetId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   const {
     data: active,
@@ -160,6 +162,45 @@ export default function CrisisScreen() {
           />
         }
       >
+        {/* ── LEVEL LEGEND ── */}
+        <Pressable
+          onPress={() => { hapticLight(); setLegendOpen(!legendOpen); }}
+          style={[styles.legendToggle, { marginBottom: 16 }]}
+        >
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIcon, { backgroundColor: `${c.primary}1A` }]}>
+              <Ionicons name="information-circle" size={14} color={c.primary} />
+            </View>
+            <Text variant="h3">{t.psychologist.crisisLevelLegend}</Text>
+          </View>
+          <Ionicons
+            name="chevron-down"
+            size={16}
+            color={c.textLight}
+            style={{ transform: [{ rotate: legendOpen ? "180deg" : "0deg" }] }}
+          />
+        </Pressable>
+
+        {legendOpen && (
+          <View style={styles.legendCards}>
+            {([
+              { level: 1, title: t.psychologist.crisisLevel1Title, desc: t.psychologist.crisisLevel1Desc, bg: "#FACC151A", textColor: "#CA8A04", badgeBg: "#FACC15" },
+              { level: 2, title: t.psychologist.crisisLevel2Title, desc: t.psychologist.crisisLevel2Desc, bg: `${c.warning}1A`, textColor: c.warning, badgeBg: c.warning },
+              { level: 3, title: t.psychologist.crisisLevel3Title, desc: t.psychologist.crisisLevel3Desc, bg: `${c.danger}1A`, textColor: c.danger, badgeBg: c.danger },
+            ] as const).map(({ level, title, desc, bg, textColor, badgeBg }) => (
+              <View key={level} style={[styles.legendCard, { backgroundColor: bg }]}>
+                <View style={[styles.legendBadge, { backgroundColor: badgeBg }]}>
+                  <Text style={{ fontSize: 12, fontFamily: "DMSans-Bold", color: "#FFF" }}>{level}</Text>
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={{ fontSize: 13, fontFamily: "DMSans-SemiBold", color: textColor }}>{title}</Text>
+                  <Text variant="caption" style={{ marginTop: 2, lineHeight: 16 }}>{desc}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* ── ACTIVE ALERTS ── */}
         <View style={styles.sectionHeader}>
           <View
@@ -350,80 +391,112 @@ export default function CrisisScreen() {
               />
             ) : historyEvents.length > 0 ? (
               <View style={styles.alertsList}>
-                {historyEvents.map((event: SOSEvent) => (
-                  <View
-                    key={event.id}
-                    style={[
-                      styles.historyCard,
-                      {
-                        backgroundColor: c.surface,
-                        borderColor: c.borderLight,
-                      },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.historyIcon,
-                        { backgroundColor: `${c.success}12` },
-                      ]}
+                {historyEvents.map((event: SOSEvent) => {
+                  const isExpanded = expandedHistoryId === event.id;
+                  const actions = [
+                    { done: event.contactedStudent, label: t.psychologist.contactedStudentDone },
+                    { done: event.contactedParent, label: t.psychologist.contactedParentDone },
+                    { done: event.documented, label: t.psychologist.documentedDone },
+                  ];
+                  const hasAnyAction = actions.some((a) => a.done);
+
+                  return (
+                    <Pressable
+                      key={event.id}
+                      onPress={() => { hapticLight(); setExpandedHistoryId(isExpanded ? null : event.id); }}
+                      style={[styles.historyCard, { backgroundColor: c.surface, borderColor: c.borderLight }]}
                     >
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={14}
-                        color={c.success}
-                      />
-                    </View>
-                    <View style={styles.historyInfo}>
-                      <Text
-                        variant="body"
-                        style={{ fontFamily: "DMSans-SemiBold" }}
-                        numberOfLines={1}
-                      >
-                        {event.studentName ?? t.psychologist.student}
-                      </Text>
-                      {event.notes && (
-                        <Text variant="caption" numberOfLines={1}>
-                          {event.notes}
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.historyRight}>
-                      <View
-                        style={[
-                          styles.levelBadge,
-                          {
-                            backgroundColor:
-                              event.level >= 3
-                                ? `${c.danger}1A`
-                                : event.level === 2
-                                  ? `${c.warning}1A`
-                                  : "#FACC151A",
-                          },
-                        ]}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 10,
-                            fontFamily: "DMSans-Bold",
-                            color:
-                              event.level >= 3
-                                ? c.danger
-                                : event.level === 2
-                                  ? c.warning
-                                  : "#CA8A04",
-                          }}
-                        >
-                          L{event.level}
-                        </Text>
+                      {/* Collapsed header row */}
+                      <View style={styles.historyHeaderRow}>
+                        <View style={[styles.historyIcon, { backgroundColor: `${c.success}12` }]}>
+                          <Ionicons name="checkmark-circle" size={14} color={c.success} />
+                        </View>
+                        <View style={styles.historyInfo}>
+                          <Text variant="body" style={{ fontFamily: "DMSans-SemiBold" }} numberOfLines={1}>
+                            {event.studentName ?? t.psychologist.student}
+                          </Text>
+                          {!isExpanded && event.notes && (
+                            <Text variant="caption" numberOfLines={1}>{event.notes}</Text>
+                          )}
+                        </View>
+                        <View style={styles.historyRight}>
+                          <View style={[styles.levelBadge, { backgroundColor: event.level >= 3 ? `${c.danger}1A` : event.level === 2 ? `${c.warning}1A` : "#FACC151A" }]}>
+                            <Text style={{ fontSize: 10, fontFamily: "DMSans-Bold", color: event.level >= 3 ? c.danger : event.level === 2 ? c.warning : "#CA8A04" }}>
+                              L{event.level}
+                            </Text>
+                          </View>
+                          <Ionicons
+                            name="chevron-down"
+                            size={14}
+                            color={c.textLight}
+                            style={{ marginTop: 4, transform: [{ rotate: isExpanded ? "180deg" : "0deg" }] }}
+                          />
+                        </View>
                       </View>
-                      {event.resolvedAt && (
-                        <Text variant="caption" style={{ marginTop: 4 }}>
-                          {new Date(event.resolvedAt).toLocaleDateString()}
-                        </Text>
+
+                      {/* Expanded details */}
+                      {isExpanded && (
+                        <View style={[styles.expandedDetails, { borderTopColor: c.borderLight }]}>
+                          <View style={styles.detailGrid}>
+                            <View style={styles.detailGridItem}>
+                              <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.triggeredAt}</Text>
+                              <Text style={[styles.detailValue, { color: c.text }]}>
+                                {new Date(event.createdAt).toLocaleString()}
+                              </Text>
+                            </View>
+                            {event.resolvedAt && (
+                              <View style={styles.detailGridItem}>
+                                <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.resolvedAtLabel}</Text>
+                                <Text style={[styles.detailValue, { color: c.text }]}>
+                                  {new Date(event.resolvedAt).toLocaleString()}
+                                </Text>
+                              </View>
+                            )}
+                            <View style={styles.detailGridItem}>
+                              <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.student}</Text>
+                              <Text style={[styles.detailValue, { color: c.text }]}>
+                                {event.studentName ?? "—"}
+                                {event.studentGrade ? ` · ${event.studentGrade}${event.studentClassLetter ?? ""}` : ""}
+                              </Text>
+                            </View>
+                            {event.resolvedByName && (
+                              <View style={styles.detailGridItem}>
+                                <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.resolvedByPsychologist}</Text>
+                                <Text style={[styles.detailValue, { color: c.text }]}>{event.resolvedByName}</Text>
+                              </View>
+                            )}
+                          </View>
+
+                          {event.notes && (
+                            <View style={[styles.notesBlock, { backgroundColor: c.surfaceSecondary }]}>
+                              <Text style={{ fontSize: 13, color: c.text, lineHeight: 20 }}>{event.notes}</Text>
+                            </View>
+                          )}
+
+                          <View style={styles.checklistSection}>
+                            <Text style={[styles.detailLabel, { color: c.textLight, marginBottom: 6 }]}>{t.psychologist.actionsTaken}</Text>
+                            {hasAnyAction ? (
+                              <View style={{ gap: 4 }}>
+                                {actions.map(({ done, label }) => (
+                                  <View key={label} style={styles.checklistItem}>
+                                    <Ionicons
+                                      name={done ? "checkmark" : "remove"}
+                                      size={12}
+                                      color={done ? c.success : c.textLight}
+                                    />
+                                    <Text style={{ fontSize: 12, color: done ? c.text : c.textLight }}>{label}</Text>
+                                  </View>
+                                ))}
+                              </View>
+                            ) : (
+                              <Text style={{ fontSize: 12, color: c.textLight }}>{t.psychologist.noActionsTaken}</Text>
+                            )}
+                          </View>
+                        </View>
                       )}
-                    </View>
-                  </View>
-                ))}
+                    </Pressable>
+                  );
+                })}
               </View>
             ) : (
               <Text
@@ -986,9 +1059,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   historyCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
     padding: 12,
     borderRadius: radius.md,
     borderWidth: 1,
@@ -1006,6 +1076,70 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
+  },
+  legendToggle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  legendCards: { gap: 8, marginBottom: 16 },
+  legendCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+  },
+  legendBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  expandedDetails: {
+    borderTopWidth: 1,
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  detailGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  detailGridItem: {
+    width: "50%" as any,
+    marginBottom: 10,
+  },
+  detailLabel: {
+    fontSize: 10,
+    fontFamily: "DMSans-SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontSize: 12,
+    fontFamily: "DMSans-Medium",
+    marginTop: 2,
+  },
+  notesBlock: {
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  checklistSection: {
+    marginTop: 2,
+  },
+  checklistItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   // Resolve sheet
   sheetWrapper: {

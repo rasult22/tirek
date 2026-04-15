@@ -1,4 +1,4 @@
-import type { TranslationKeys } from "./ru.js";
+import type { TranslationKeys } from "./ru";
 
 export const kz: TranslationKeys = {
   common: {
@@ -154,6 +154,7 @@ export const kz: TranslationKeys = {
     history: "Чат тарихы",
     newChat: "Жаңа чат",
     emptyState: "Маған жаз — мен осында, сөйлесуге дайынмын!",
+    emptyHistory: "Әзірше чаттар жоқ. Жаңасын бастаңыз!",
     psychologistNotified: "Психолог жағдай туралы хабардар етілді",
   },
   tests: {
@@ -165,14 +166,18 @@ export const kz: TranslationKeys = {
     question: "Сұрақ",
     of: "ішінен",
     submit: "Аяқтау",
-    result: "Нәтиже",
-    resultGood: "Бәрі жақсы! Өзіңе қамқорлық жасай бер 💚",
-    resultMild:
-      "Саған қазір оңай емес сияқты. Тыныс алу жаттығуларын жаса немесе Тірекпен сөйлес 💛",
-    resultModerate:
-      "Саған қазір қиын сияқты. Мектеп психологымен сөйлесуді ұсынамыз 🧡",
-    resultSevere:
-      "Саған қазір қолдау керек. Мектеп психологына хабарлас ❤️",
+    result: "Дайын!",
+    resultThanks: "Тест тапсырғаныңа рахмет!",
+    resultSent: "Нәтиже психологыңа жіберілді. Қажет болса, ол сенімен байланысады.",
+    resultTip: "Ал әзірше — өзіңе қамқорлық жасай бер. Сен жарайсың!",
+    emptyTitle: "Мұнда тесттер болады",
+    emptyDesc: "Психолог саған тест тағайындағанда, ол мұнда пайда болады. Кейінірек қара!",
+    ctaStart: "Өту",
+    ctaResume: "Жалғастыру",
+    ctaViewResult: "Нәтиже",
+    activeSection: "Өту керек",
+    completedSection: "Өтілгендер",
+    dueDate: "Мерзім",
     phqName: "Денсаулық сауалнамасы (PHQ-A)",
     phqDesc: "Эмоциялық жағдайды бағалау",
     gadName: "Алаңдаушылық шкаласы (GAD-7)",
@@ -521,6 +526,14 @@ export const kz: TranslationKeys = {
     grew: "Өсімдік өсті!",
     newStage: "Жаңа кезең:",
     waterMessage: "Жалғастыр!",
+    pointsUnit: "өсу ұпайы",
+    infoTitle: "Өсімдікті қалай өсіруге болады?",
+    infoDesc: "Сенің өсімдігің сенімен бірге өседі! Белсенділік жаса — ол өседі.",
+    infoItem1: "Күн сайын көңіл-күйді белгіле",
+    infoItem2: "Психологтан тесттерді өт",
+    infoItem3: "Жаттығуларды орында",
+    infoItem4: "Күнделікке жаз",
+    infoItem5: "AI-көмекшімен сөйлес",
   },
   cbt: {
     title: "КМТ-жаттығулар",
