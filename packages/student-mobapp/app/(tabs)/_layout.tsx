@@ -4,6 +4,7 @@ import { View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { Text } from "../../components/ui";
+import { SOSButton } from "../../components/SOSButton";
 import { useThemeColors } from "../../lib/theme";
 import { useDirectChatUnread } from "../../lib/hooks/useDirectChatUnread";
 import { testsApi } from "../../lib/api/tests";
@@ -45,6 +46,7 @@ export default function TabsLayout() {
   };
 
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -93,6 +95,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="exercises" options={{ href: null }} />
       <Tabs.Screen name="mood" options={{ href: null }} />
     </Tabs>
+    <SOSButton />
+    </View>
   );
 }
 
