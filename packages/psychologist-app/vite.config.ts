@@ -10,6 +10,7 @@ export default defineConfig({
       "@tirek/shared/i18n": path.resolve(__dirname, "../shared/src/i18n/index.ts"),
       "@tirek/shared/constants": path.resolve(__dirname, "../shared/src/constants/index.ts"),
       "@tirek/shared/types": path.resolve(__dirname, "../shared/src/types/index.ts"),
+      "@tirek/shared/language-sync": path.resolve(__dirname, "../shared/src/language-sync/index.ts"),
       "@tirek/shared/validators": path.resolve(__dirname, "../shared/src/validators/index.ts"),
       "@tirek/shared": path.resolve(__dirname, "../shared/src/index.ts"),
     },

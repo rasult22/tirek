@@ -8,7 +8,7 @@ import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { diagnosticsRepository } from "./diagnostics.repository.js";
 import { achievementsService } from "../achievements/achievements.service.js";
-import { aiReportService } from "./ai-report.service.js";
+import { aiReportService } from "./ai-report.singleton.js";
 
 interface ScoringRule {
   min: number;

@@ -9,6 +9,7 @@
     "./types": "./src/types/index.ts",
     "./constants": "./src/constants/index.ts",
     "./i18n": "./src/i18n/index.ts",
+    "./language-sync": "./src/language-sync/index.ts",
     "./validators": "./src/validators/index.ts"
   }
 }
