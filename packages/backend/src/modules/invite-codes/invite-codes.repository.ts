@@ -8,9 +8,9 @@ export const inviteCodesRepository = {
     id: string;
     code: string;
     psychologistId: string;
+    studentRealName: string;
     grade?: number | null;
     classLetter?: string | null;
-    schoolId?: string | null;
     expiresAt: Date;
   }) {
     const [row] = await db.insert(inviteCodes).values(data).returning();

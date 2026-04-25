@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { AppVariables } from "../../middleware/auth.js";
 import { handleError } from "../../shared/errors.js";
 import { parsePagination } from "../../shared/pagination.js";
-import { inviteCodesService } from "./invite-codes.service.js";
+import { inviteCodesService } from "./invite-codes.singleton.js";
 
 const inviteCodesRouter = new Hono<{ Variables: AppVariables }>();
 

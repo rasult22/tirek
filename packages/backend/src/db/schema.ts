@@ -47,9 +47,9 @@ export const inviteCodes = pgTable("invite_codes", {
   psychologistId: text("psychologist_id")
     .notNull()
     .references(() => users.id),
+  studentRealName: text("student_real_name").notNull(),
   grade: integer("grade"),
   classLetter: text("class_letter"),
-  schoolId: text("school_id").references(() => schools.id),
   usedBy: text("used_by").references(() => users.id),
   usedAt: timestamp("used_at", { withTimezone: true }),
   expiresAt: timestamp("expires_at", { withTimezone: true }),

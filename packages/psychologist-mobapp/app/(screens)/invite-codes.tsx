@@ -43,11 +43,16 @@ export default function InviteCodesScreen() {
   const queryClient = useQueryClient();
 
   const [showForm, setShowForm] = useState(false);
-  const [count, setCount] = useState("5");
+  const [namesText, setNamesText] = useState("");
   const [grade, setGrade] = useState<number | null>(null);
   const [classLetter, setClassLetter] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revokeId, setRevokeId] = useState<string | null>(null);
+
+  const studentNames = namesText
+    .split("\n")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 
   const { data: codes, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ["invite-codes"],
@@ -55,16 +60,23 @@ export default function InviteCodesScreen() {
   });
 
   const generateMutation = useMutation({
-    mutationFn: () =>
-      inviteCodesApi.generate({
-        count: Math.max(1, Math.min(50, Number(count) || 1)),
+    mutationFn: () => {
+      if (studentNames.length < 1) {
+        throw new Error(t.psychologist.namesEmptyError);
+      }
+      if (studentNames.length > 100) {
+        throw new Error(t.psychologist.namesTooManyError);
+      }
+      return inviteCodesApi.generate({
+        studentNames,
         grade: grade ?? undefined,
         classLetter: classLetter ?? undefined,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invite-codes"] });
       setShowForm(false);
-      setCount("5");
+      setNamesText("");
       setGrade(null);
       setClassLetter(null);
     },
@@ -156,25 +168,33 @@ export default function InviteCodesScreen() {
               {t.psychologist.generateCodes}
             </Text>
 
-            {/* Count */}
+            {/* Student names */}
             <Text variant="body" style={styles.fieldLabel}>
-              {t.psychologist.codeCount} (1-50)
+              {t.psychologist.studentNamesLabel}
             </Text>
             <View
               style={[
-                styles.countInput,
+                styles.namesInput,
                 { borderColor: c.borderLight, backgroundColor: c.surface },
               ]}
             >
               <TextInput
-                value={count}
-                onChangeText={(text) => setCount(text.replace(/[^0-9]/g, ""))}
-                keyboardType="number-pad"
-                maxLength={2}
-                style={[styles.countText, { color: c.text }]}
+                value={namesText}
+                onChangeText={setNamesText}
+                multiline
+                numberOfLines={6}
+                placeholder={t.psychologist.studentNamesPlaceholder}
+                style={[styles.namesText, { color: c.text }]}
                 placeholderTextColor={c.textLight}
+                textAlignVertical="top"
               />
             </View>
+            <Text
+              variant="caption"
+              style={{ color: c.textLight, marginTop: 4 }}
+            >
+              {studentNames.length} / 100
+            </Text>
 
             {/* Grade chips */}
             <Text variant="body" style={styles.fieldLabel}>
@@ -345,19 +365,34 @@ export default function InviteCodesScreen() {
               const sc = statusColors[status];
               return (
                 <Card key={code.id} style={styles.codeCard}>
-                  {/* Top row: code + status badge */}
+                  {/* Top row: code + name + status badge */}
                   <View style={styles.codeTopRow}>
-                    <View
-                      style={[
-                        styles.codeTag,
-                        { backgroundColor: c.surfaceSecondary },
-                      ]}
-                    >
+                    <View style={{ flex: 1, gap: 4 }}>
+                      <View
+                        style={[
+                          styles.codeTag,
+                          {
+                            backgroundColor: c.surfaceSecondary,
+                            alignSelf: "flex-start",
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[styles.codeText, { color: c.text }]}
+                          numberOfLines={1}
+                        >
+                          {code.code}
+                        </Text>
+                      </View>
                       <Text
-                        style={[styles.codeText, { color: c.text }]}
+                        style={{
+                          fontFamily: "DMSans-SemiBold",
+                          fontSize: 13,
+                          color: c.text,
+                        }}
                         numberOfLines={1}
                       >
-                        {code.code}
+                        {code.studentRealName}
                       </Text>
                     </View>
                     <View
@@ -380,7 +415,6 @@ export default function InviteCodesScreen() {
                         : "\u2014"}{" "}
                       {"\u00B7"}{" "}
                       {new Date(code.createdAt).toLocaleDateString()}
-                      {code.usedBy ? ` \u00B7 ${code.usedBy}` : ""}
                     </Text>
                     <View style={styles.actions}>
                       <Pressable
@@ -490,6 +524,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "DMSans-Regular",
     padding: 0,
+  },
+  namesInput: {
+    minHeight: 120,
+    padding: 12,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+  namesText: {
+    fontSize: 14,
+    fontFamily: "DMSans-Regular",
+    padding: 0,
+    minHeight: 100,
   },
   chipsRow: {
     gap: 6,

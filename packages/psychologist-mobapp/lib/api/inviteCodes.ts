@@ -2,7 +2,7 @@ import { apiFetch } from "./client";
 import type { InviteCode, PaginatedResponse } from "@tirek/shared";
 
 export interface GenerateCodesData {
-  count: number;
+  studentNames: string[];
   grade?: number;
   classLetter?: string;
 }

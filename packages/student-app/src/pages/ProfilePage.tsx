@@ -8,6 +8,11 @@ import { useAuthStore } from "../store/auth-store.js";
 import { authApi } from "../api/auth.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import type { Language } from "@tirek/shared";
+import {
+  getDisplayName,
+  setDisplayName,
+  useDisplayName,
+} from "../lib/displayName.js";
 
 const AVATAR_MAP: Record<string, string> = {
   "avatar-1": "\u{1F60A}",
@@ -28,14 +33,17 @@ export function ProfilePage() {
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
 
+  const displayName = useDisplayName(user?.name);
+
   const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(user?.name ?? "");
+  const [editNickname, setEditNickname] = useState(getDisplayName());
   const [editAvatar, setEditAvatar] = useState(user?.avatarId ?? "");
 
   const saveMutation = useMutation({
-    mutationFn: () => authApi.updateProfile({ name: editName, avatarId: editAvatar || null }),
+    mutationFn: () => authApi.updateProfile({ avatarId: editAvatar || null }),
     onSuccess: (data) => {
-      updateUser({ name: data.name, avatarId: data.avatarId });
+      updateUser({ avatarId: data.avatarId });
+      setDisplayName(editNickname);
       setEditing(false);
       toast.success(t.common.saved);
     },
@@ -43,12 +51,13 @@ export function ProfilePage() {
   });
 
   const handleLogout = () => {
+    setDisplayName("");
     logout();
     navigate("/login");
   };
 
   const startEdit = () => {
-    setEditName(user?.name ?? "");
+    setEditNickname(getDisplayName());
     setEditAvatar(user?.avatarId ?? "");
     setEditing(true);
   };
@@ -77,7 +86,7 @@ export function ProfilePage() {
                 <User size={36} className="text-primary-dark" />
               )}
             </div>
-            <h2 className="mt-4 text-lg font-extrabold text-text-main">{user?.name}</h2>
+            <h2 className="mt-4 text-lg font-extrabold text-text-main">{displayName}</h2>
             <p className="mt-0.5 text-sm text-text-light">{user?.email}</p>
             {user?.grade && (
               <p className="mt-1.5 text-xs font-bold text-primary-dark bg-primary/8 px-3 py-1 rounded-full">
@@ -96,13 +105,18 @@ export function ProfilePage() {
           <div className="mt-6 glass-card-elevated rounded-2xl p-6">
             <h3 className="text-sm font-bold text-text-main mb-4">{t.common.edit}</h3>
 
-            <label className="block text-xs font-bold text-text-light mb-1.5">{t.auth.name}</label>
+            <label className="block text-xs font-bold text-text-light mb-1.5">{t.auth.nicknameLabel}</label>
             <input
               type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
+              value={editNickname}
+              onChange={(e) => setEditNickname(e.target.value)}
+              maxLength={32}
+              placeholder={user?.name ?? ""}
               className="w-full rounded-xl border border-border-light bg-surface/60 px-4 py-3 text-sm text-text-main transition-all"
             />
+            <p className="mt-1 text-[11px] text-text-light">
+              {t.auth.nicknameHint}
+            </p>
 
             <label className="block text-xs font-bold text-text-light mt-5 mb-2">{t.auth.selectAvatar}</label>
             <div className="flex flex-wrap gap-2">
@@ -129,7 +143,7 @@ export function ProfilePage() {
               </button>
               <button
                 onClick={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending || !editName.trim()}
+                disabled={saveMutation.isPending}
                 className="btn-press flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-primary-dark py-3 text-sm font-bold text-white transition-all disabled:opacity-50"
               >
                 <Check size={14} />

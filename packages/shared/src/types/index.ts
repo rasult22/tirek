@@ -331,6 +331,7 @@ export interface InviteCode {
   id: string;
   code: string;
   psychologistId: string;
+  studentRealName: string;
   grade: number | null;
   classLetter: string | null;
   usedBy: string | null;

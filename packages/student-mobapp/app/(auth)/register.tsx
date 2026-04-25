@@ -14,6 +14,7 @@ import { Text, Input, Button } from "../../components/ui";
 import { useT } from "../../lib/hooks/useLanguage";
 import { authApi } from "../../lib/api/auth";
 import { useAuthStore } from "../../lib/store/auth-store";
+import { setDisplayName } from "../../lib/displayName";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 
 const AVATARS = [
@@ -33,7 +34,7 @@ export default function RegisterScreen() {
 
   const [step, setStep] = useState(1);
   const [inviteCode, setInviteCode] = useState("");
-  const [name, setName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,8 +42,11 @@ export default function RegisterScreen() {
 
   const registerMutation = useMutation({
     mutationFn: () =>
-      authApi.register({ email, password, name, inviteCode, avatarId }),
-    onSuccess: (data) => {
+      authApi.register({ email, password, inviteCode, avatarId }),
+    onSuccess: async (data) => {
+      if (nickname.trim()) {
+        await setDisplayName(nickname);
+      }
       setAuth(data.token, data.user);
       router.replace("/(auth)/onboarding");
     },
@@ -52,7 +56,6 @@ export default function RegisterScreen() {
     if (step === 1) return inviteCode.trim().length >= 4;
     if (step === 2)
       return (
-        name.trim() &&
         email.trim() &&
         password.length >= 6 &&
         password === confirmPassword
@@ -149,11 +152,18 @@ export default function RegisterScreen() {
           <View style={styles.stepContent}>
             <Input
               icon="person-outline"
-              placeholder={t.auth.name}
-              value={name}
-              onChangeText={setName}
+              placeholder={t.auth.nicknamePlaceholder}
+              value={nickname}
+              onChangeText={setNickname}
+              maxLength={32}
               autoCapitalize="words"
             />
+            <Text
+              variant="caption"
+              style={{ marginTop: 4, color: c.textLight }}
+            >
+              {t.auth.nicknameHint}
+            </Text>
             <Input
               icon="mail-outline"
               placeholder={t.auth.email}

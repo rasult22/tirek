@@ -5,6 +5,7 @@ import { KeyRound, User, Mail, Lock, ArrowLeft, ArrowRight, Check } from "lucide
 import { useT } from "../hooks/useLanguage.js";
 import { authApi } from "../api/auth.js";
 import { useAuthStore } from "../store/auth-store.js";
+import { setDisplayName } from "../lib/displayName.js";
 
 const AVATARS = [
   { id: "avatar-1", emoji: "😊", bg: "bg-primary/30" },
@@ -22,16 +23,18 @@ export function RegisterPage() {
 
   const [step, setStep] = useState(1);
   const [inviteCode, setInviteCode] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [firstName, setFirstName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [avatarId, setAvatarId] = useState("avatar-1");
 
   const registerMutation = useMutation({
-    mutationFn: () => authApi.register({ email, password, name: `${lastName.trim()} ${firstName.trim()}`, inviteCode, avatarId }),
+    mutationFn: () => authApi.register({ email, password, inviteCode, avatarId }),
     onSuccess: (data) => {
+      if (nickname.trim()) {
+        setDisplayName(nickname);
+      }
       setAuth(data.token, data.user);
       navigate("/onboarding");
     },
@@ -39,7 +42,7 @@ export function RegisterPage() {
 
   const canGoNext = () => {
     if (step === 1) return inviteCode.trim().length >= 4;
-    if (step === 2) return lastName.trim() && firstName.trim() && email.trim() && password.length >= 6 && password === confirmPassword;
+    if (step === 2) return email.trim() && password.length >= 6 && password === confirmPassword;
     return true;
   };
 
@@ -110,24 +113,16 @@ export function RegisterPage() {
               <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
               <input
                 type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder={t.auth.lastName}
-                autoComplete="family-name"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder={t.auth.nicknamePlaceholder}
+                maxLength={32}
                 className="w-full rounded-2xl border border-border bg-surface py-3.5 pl-11 pr-4 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
-            <div className="relative">
-              <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder={t.auth.firstName}
-                autoComplete="given-name"
-                className="w-full rounded-2xl border border-border bg-surface py-3.5 pl-11 pr-4 text-sm font-medium text-text-main placeholder-text-light outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
+            <p className="-mt-2 text-[11px] text-text-light px-1">
+              {t.auth.nicknameHint}
+            </p>
             <div className="relative">
               <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
               <input

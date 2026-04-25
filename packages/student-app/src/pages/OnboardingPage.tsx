@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useT } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
+import { useDisplayName } from "../lib/displayName.js";
 import { clsx } from "clsx";
 import {
   SmilePlus,
@@ -101,7 +102,8 @@ export function OnboardingPage() {
     setCurrentStep((s) => Math.max(-1, s - 1));
   }, []);
 
-  const firstName = user?.name?.split(" ").pop() ?? "";
+  const displayName = useDisplayName(user?.name);
+  const firstName = displayName?.split(" ").pop() ?? "";
 
   // Welcome screen
   if (isWelcome) {

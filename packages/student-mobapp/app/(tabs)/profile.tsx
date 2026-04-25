@@ -14,6 +14,11 @@ import { Text, Button, Card } from "../../components/ui";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { authApi } from "../../lib/api/auth";
+import {
+  getDisplayName,
+  setDisplayName,
+  useDisplayName,
+} from "../../lib/displayName";
 import { useThemeColors, useTheme, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import type { Language } from "@tirek/shared";
@@ -46,26 +51,30 @@ export default function ProfileScreen() {
   const logout = useAuthStore((s) => s.logout);
   const updateUser = useAuthStore((s) => s.updateUser);
 
+  const displayName = useDisplayName(user?.name);
+
   const [editing, setEditing] = useState(false);
-  const [editName, setEditName] = useState(user?.name ?? "");
+  const [editNickname, setEditNickname] = useState(getDisplayName());
   const [editAvatar, setEditAvatar] = useState(user?.avatarId ?? "");
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      authApi.updateProfile({ name: editName, avatarId: editAvatar || null }),
-    onSuccess: (data) => {
-      updateUser({ name: data.name, avatarId: data.avatarId });
+      authApi.updateProfile({ avatarId: editAvatar || null }),
+    onSuccess: async (data) => {
+      updateUser({ avatarId: data.avatarId });
+      await setDisplayName(editNickname);
       setEditing(false);
     },
   });
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await setDisplayName("");
     logout();
     replace("/(auth)/login");
   };
 
   const startEdit = () => {
-    setEditName(user?.name ?? "");
+    setEditNickname(getDisplayName());
     setEditAvatar(user?.avatarId ?? "");
     setEditing(true);
   };
@@ -110,7 +119,7 @@ export default function ProfileScreen() {
               )}
             </View>
             <Text variant="h2" style={styles.userName}>
-              {user?.name}
+              {displayName}
             </Text>
             <Text variant="bodyLight">{user?.email}</Text>
             {user?.grade && (
@@ -147,11 +156,13 @@ export default function ProfileScreen() {
             </Text>
 
             <Text variant="caption" style={{ marginBottom: 6 }}>
-              {t.auth.name}
+              {t.auth.nicknameLabel}
             </Text>
             <TextInput
-              value={editName}
-              onChangeText={setEditName}
+              value={editNickname}
+              onChangeText={setEditNickname}
+              maxLength={32}
+              placeholder={user?.name ?? ""}
               style={[
                 styles.editInput,
                 {
@@ -162,6 +173,12 @@ export default function ProfileScreen() {
               ]}
               placeholderTextColor={c.textLight}
             />
+            <Text
+              variant="caption"
+              style={{ marginTop: 4, color: c.textLight }}
+            >
+              {t.auth.nicknameHint}
+            </Text>
 
             <Text
               variant="caption"
@@ -201,13 +218,11 @@ export default function ProfileScreen() {
               </Pressable>
               <Pressable
                 onPress={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending || !editName.trim()}
+                disabled={saveMutation.isPending}
                 style={[
                   styles.saveBtn,
                   { backgroundColor: c.primary },
-                  (saveMutation.isPending || !editName.trim()) && {
-                    opacity: 0.5,
-                  },
+                  saveMutation.isPending && { opacity: 0.5 },
                 ]}
               >
                 <Ionicons name="checkmark" size={14} color="#FFFFFF" />

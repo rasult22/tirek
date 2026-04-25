@@ -4,6 +4,7 @@ import { MessageCircle, ClipboardList, Wind, CalendarDays, Calendar, CheckCircle
 import { useT } from "../hooks/useLanguage.js";
 import { useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
+import { useDisplayName } from "../lib/displayName.js";
 import { moodApi } from "../api/mood.js";
 import { contentApi } from "../api/content.js";
 import { streaksApi } from "../api/streaks.js";
@@ -29,6 +30,7 @@ export function DashboardPage() {
   const t = useT();
   const { language } = useLanguage();
   const user = useAuthStore((s) => s.user);
+  const displayName = useDisplayName(user?.name);
 
   const { data: todayMood, isError, refetch } = useQuery({
     queryKey: ["mood", "today"],
@@ -102,7 +104,7 @@ export function DashboardPage() {
         <div className="flex items-center justify-between animate-fade-in-up">
           <div>
             <h1 className="text-2xl font-extrabold text-text-main tracking-tight">
-              {t.dashboard.greeting}, {user?.name?.split(" ")[0] ?? ""}!
+              {t.dashboard.greeting}, {displayName?.split(" ")[0] ?? ""}!
             </h1>
             <p className="mt-1 text-sm text-text-light">{t.dashboard.howAreYou}</p>
           </div>

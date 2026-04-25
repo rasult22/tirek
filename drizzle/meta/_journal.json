@@ -43,6 +43,13 @@
       "when": 1777680000000,
       "tag": "0005_crisis_signals",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777939200000,
+      "tag": "0006_invite_codes_student_real_name",
+      "breakpoints": true
     }
   ]
 }

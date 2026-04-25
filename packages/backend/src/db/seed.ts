@@ -47,6 +47,7 @@ async function seed() {
       id: uuidv4(),
       code: "TEST-0001",
       psychologistId,
+      studentRealName: "Демо Ученик",
       grade: 9,
       classLetter: "А",
     })

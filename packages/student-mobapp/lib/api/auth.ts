@@ -10,7 +10,6 @@ export const authApi = {
   register: (data: {
     email: string;
     password: string;
-    name: string;
     inviteCode: string;
     avatarId?: string;
   }) =>

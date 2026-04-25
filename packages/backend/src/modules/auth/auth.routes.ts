@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { AppVariables } from "../../middleware/auth.js";
 import { handleError } from "../../shared/errors.js";
-import { authService } from "./auth.service.js";
+import { authService } from "./auth.singleton.js";
 
 const authRouter = new Hono<{ Variables: AppVariables }>();
 

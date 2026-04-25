@@ -13,6 +13,7 @@ import { Text, Card } from "../../components/ui";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useRefresh } from "../../lib/hooks/useRefresh";
 import { useAuthStore } from "../../lib/store/auth-store";
+import { useDisplayName } from "../../lib/displayName";
 import { moodApi } from "../../lib/api/mood";
 import { contentApi } from "../../lib/api/content";
 import { streaksApi } from "../../lib/api/streaks";
@@ -53,6 +54,7 @@ export default function DashboardScreen() {
   const { language } = useLanguage();
   const { push } = useRouter();
   const user = useAuthStore((s) => s.user);
+  const displayName = useDisplayName(user?.name);
   const c = useThemeColors();
   const queryClient = useQueryClient();
 
@@ -152,7 +154,7 @@ export default function DashboardScreen() {
           <View style={styles.greetingText}>
             <Text variant="h1">
               {t.dashboard.greeting},{" "}
-              {user?.name?.split(" ")[0] ?? ""}!
+              {displayName?.split(" ")[0] ?? ""}!
             </Text>
             <Text variant="bodyLight" style={styles.greetingSub}>
               {t.dashboard.howAreYou}
