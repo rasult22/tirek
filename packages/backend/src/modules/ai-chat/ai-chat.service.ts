@@ -9,8 +9,9 @@ import { paginated } from "../../shared/pagination.js";
 import { aiChatRepository } from "./ai-chat.repository.js";
 import { mastra } from "../../core/ai/mastra.js";
 import { db } from "../../db/index.js";
-import { users, moodEntries, diagnosticSessions, diagnosticTests, studentPsychologist } from "../../db/schema.js";
+import { users, moodEntries, diagnosticSessions, diagnosticTests } from "../../db/schema.js";
 import { eq, desc, and, gte } from "drizzle-orm";
+import { buildStudentContextPure } from "./build-student-context.js";
 
 const VALID_MODES = ["general", "talk", "problem", "exam", "discovery"] as const;
 
@@ -41,9 +42,6 @@ async function buildStudentContext(userId: string, mode: string): Promise<{ cont
   const recentTests = await db
     .select({
       testName: diagnosticTests.nameRu,
-      totalScore: diagnosticSessions.totalScore,
-      maxScore: diagnosticSessions.maxScore,
-      severity: diagnosticSessions.severity,
       completedAt: diagnosticSessions.completedAt,
     })
     .from(diagnosticSessions)
@@ -52,31 +50,12 @@ async function buildStudentContext(userId: string, mode: string): Promise<{ cont
     .orderBy(desc(diagnosticSessions.completedAt))
     .limit(5);
 
-  const className = user.grade && user.classLetter ? `${user.grade}${user.classLetter}` : user.grade ? `${user.grade} класс` : "не указан";
-
-  const langLabel = user.language === "kz" ? "казахский" : "русский";
-  let context = `\n═══ КОНТЕКСТ УЧЕНИКА (не озвучивай напрямую, используй для понимания) ═══\nИмя: ${user.name}\nКласс: ${className}\nЯзык интерфейса: ${langLabel}\nРежим сессии: ${mode}\n\n⚠️ ОБЯЗАТЕЛЬНО: Отвечай на ${langLabel} языке — это язык, выбранный учеником в настройках.`;
-
-  if (recentMoods.length > 0) {
-    const avgMood = Math.round((recentMoods.reduce((s, m) => s + m.mood, 0) / recentMoods.length) * 10) / 10;
-    const stressEntries = recentMoods.filter((m) => m.stressLevel != null);
-    const avgStress = stressEntries.length > 0
-      ? Math.round((stressEntries.reduce((s, m) => s + (m.stressLevel ?? 0), 0) / stressEntries.length) * 10) / 10
-      : null;
-
-    context += `\n\nНастроение за 7 дней: среднее ${avgMood}/5 (${recentMoods.length} записей)`;
-    if (avgStress !== null) context += `, стресс ${avgStress}/5`;
-  }
-
-  if (recentTests.length > 0) {
-    const testLines = recentTests
-      .filter((t) => t.completedAt)
-      .map((t) => `  - ${t.testName}: ${t.totalScore}/${t.maxScore} (${t.severity ?? "не определено"})`)
-      .join("\n");
-    if (testLines) context += `\n\nНедавние тесты:\n${testLines}`;
-  }
-
-  return { context, language: user.language };
+  return buildStudentContextPure({
+    user,
+    recentMoods,
+    recentTests,
+    mode,
+  });
 }
 
 export const aiChatService = {
@@ -124,7 +103,7 @@ export const aiChatService = {
     // Build student context for agent awareness
     const { context: studentContext } = await buildStudentContext(userId, session.mode);
 
-    const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisisDetectionTool и notifyPsychologistTool.`;
+    const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisis_signal.`;
 
     const agent = mastra.getAgent("supportAgent");
 
@@ -179,7 +158,7 @@ export const aiChatService = {
     let assistantContent: string;
     try {
       const { context: studentContext, language } = await buildStudentContext(userId, session.mode);
-      const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisisDetectionTool и notifyPsychologistTool.`;
+      const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisis_signal.`;
       const agent = mastra.getAgent("supportAgent");
       const response = await agent.generate(
         [
@@ -230,31 +209,5 @@ export const aiChatService = {
       aiChatRepository.countMessagesBySession(sessionId),
     ]);
     return paginated(messages, total, pagination);
-  },
-
-  async getFlaggedMessages(psychologistId: string, pagination: PaginationParams) {
-    // Get student IDs linked to this psychologist
-    const links = await db
-      .select({ studentId: studentPsychologist.studentId })
-      .from(studentPsychologist)
-      .where(eq(studentPsychologist.psychologistId, psychologistId));
-
-    const studentIds = links.map((l) => l.studentId);
-
-    const { rows, total } = await aiChatRepository.findFlaggedMessages(studentIds, pagination);
-
-    // Truncate content for privacy
-    const data = rows.map((r: any) => ({
-      messageId: r.messageId,
-      content: r.content.length > 200 ? r.content.slice(0, 200) + "..." : r.content,
-      createdAt: r.createdAt,
-      sessionId: r.sessionId,
-      studentName: r.studentName,
-      studentGrade: r.studentGrade,
-      studentClass: r.studentClass,
-      sosEventId: r.sosEventId ?? null,
-    }));
-
-    return paginated(data, total, pagination);
   },
 };

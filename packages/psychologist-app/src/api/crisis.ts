@@ -1,5 +1,5 @@
 import { apiFetch } from "./client.js";
-import type { SOSEvent, FlaggedMessage, PaginatedResponse } from "@tirek/shared";
+import type { SOSEvent, PaginatedResponse } from "@tirek/shared";
 
 export function getActive() {
   return apiFetch<PaginatedResponse<SOSEvent>>("/psychologist/sos/active");
@@ -21,8 +21,4 @@ export function resolve(id: string, data: ResolveData) {
 
 export function getHistory() {
   return apiFetch<PaginatedResponse<SOSEvent>>("/psychologist/sos/history");
-}
-
-export function getFlaggedMessages() {
-  return apiFetch<PaginatedResponse<FlaggedMessage>>("/psychologist/sos/flagged-messages");
 }

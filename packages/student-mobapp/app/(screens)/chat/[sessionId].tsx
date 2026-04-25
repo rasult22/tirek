@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../../components/ui";
 import { useT } from "../../../lib/hooks/useLanguage";
 import { chatApi } from "../../../lib/api/chat";
+import { directChatApi } from "../../../lib/api/direct-chat";
 import type { ChatMessage } from "@tirek/shared";
 import { useThemeColors, radius } from "../../../lib/theme";
 import { shadow } from "../../../lib/theme/shadows";
@@ -23,6 +24,11 @@ import { hapticLight } from "../../../lib/haptics";
 interface ToolCallEvent {
   id: string;
   toolName: string;
+}
+
+interface RedirectCard {
+  id: string;
+  reason: string;
 }
 
 interface StreamingMessage {
@@ -68,7 +74,8 @@ function MessageBubble({ item, c }: { item: ListMessage; c: ReturnType<typeof us
 
 export default function ChatSessionScreen() {
   const t = useT();
-  const { back } = useRouter();
+  const router = useRouter();
+  const { back } = router;
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
   const queryClient = useQueryClient();
   const listRef = useRef<FlashList<ListMessage>>(null);
@@ -78,12 +85,33 @@ export default function ChatSessionScreen() {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
+  const [redirectCards, setRedirectCards] = useState<RedirectCard[]>([]);
+  const [openingRedirect, setOpeningRedirect] = useState(false);
 
   const { data: messages } = useQuery({
     queryKey: ["chat", "messages", sessionId],
     queryFn: () => chatApi.messages(sessionId!),
     enabled: !!sessionId,
   });
+
+  const { data: myPsychologist } = useQuery({
+    queryKey: ["my-psychologist"],
+    queryFn: directChatApi.myPsychologist,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const openPsychologistChat = useCallback(async () => {
+    if (!myPsychologist || openingRedirect) return;
+    setOpeningRedirect(true);
+    try {
+      const conv = await directChatApi.createConversation(myPsychologist.id);
+      router.push(`/(screens)/messages/${conv.id}` as never);
+    } catch {
+      // surface failure silently — kid can still tap again
+    } finally {
+      setOpeningRedirect(false);
+    }
+  }, [myPsychologist, openingRedirect, router]);
 
   const scrollToBottom = () => {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
@@ -112,6 +140,7 @@ export default function ChatSessionScreen() {
       setIsStreaming(true);
       setStreamingText("");
       setToolCalls([]);
+      setRedirectCards([]);
       scrollToBottom();
 
       try {
@@ -144,6 +173,15 @@ export default function ChatSessionScreen() {
                   ...prev,
                   { id: `tc-${Date.now()}`, toolName: payload.toolName },
                 ]);
+                if (
+                  payload.toolName === "psychologist_redirect" &&
+                  payload.result?.hint === "psychologist_redirect"
+                ) {
+                  setRedirectCards((prev) => [
+                    ...prev,
+                    { id: `rc-${Date.now()}`, reason: payload.result.reason ?? "" },
+                  ]);
+                }
               } else if (
                 payload.type === "done" ||
                 payload.type === "error"
@@ -257,6 +295,37 @@ export default function ChatSessionScreen() {
                   <View style={styles.toolCallDot} />
                 </View>
               ) : null}
+              {redirectCards.map((card) => (
+                <View key={card.id} style={[styles.bubbleRow, styles.bubbleRowAssistant]}>
+                  <Pressable
+                    onPress={openPsychologistChat}
+                    disabled={!myPsychologist || openingRedirect}
+                    style={({ pressed }) => [
+                      styles.redirectCard,
+                      {
+                        backgroundColor: `${c.primary}10`,
+                        borderColor: `${c.primary}50`,
+                      },
+                      (!myPsychologist || openingRedirect) && { opacity: 0.5 },
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <View style={styles.redirectHeader}>
+                      <Ionicons name="chatbubble-ellipses" size={16} color={c.primaryDark} />
+                      <Text style={[styles.redirectTitle, { color: c.primaryDark }]}>
+                        {myPsychologist
+                          ? `Написать ${myPsychologist.name}`
+                          : "Написать психологу"}
+                      </Text>
+                    </View>
+                    {card.reason ? (
+                      <Text style={[styles.redirectReason, { color: c.textLight }]}>
+                        {card.reason}
+                      </Text>
+                    ) : null}
+                  </Pressable>
+                </View>
+              ))}
               {isStreaming && !streamingText ? (
                 <View style={[styles.bubbleRow, styles.bubbleRowAssistant]}>
                   <View style={[styles.bubble, styles.bubbleAssistant, { backgroundColor: c.surface }]}>
@@ -380,6 +449,28 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: "rgba(52,211,153,0.6)",
+  },
+
+  redirectCard: {
+    maxWidth: "80%",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: radius.lg,
+    borderTopLeftRadius: radius.sm,
+    borderWidth: 1,
+  },
+  redirectHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  redirectTitle: {
+    fontFamily: "DMSans-Bold",
+    fontSize: 14,
+  },
+  redirectReason: {
+    marginTop: 4,
+    fontSize: 12,
   },
 
   typingDots: { flexDirection: "row", gap: 4, paddingVertical: 4 },

@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { SOSEvent, FlaggedMessage, PaginatedResponse } from "@tirek/shared";
+import type { SOSEvent, PaginatedResponse } from "@tirek/shared";
 
 export interface ResolveData {
   notes: string;
@@ -20,9 +20,4 @@ export const crisisApi = {
 
   getHistory: () =>
     apiFetch<PaginatedResponse<SOSEvent>>("/psychologist/sos/history"),
-
-  getFlaggedMessages: () =>
-    apiFetch<PaginatedResponse<FlaggedMessage>>(
-      "/psychologist/sos/flagged-messages",
-    ),
 };

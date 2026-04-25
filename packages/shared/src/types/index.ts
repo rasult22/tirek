@@ -411,17 +411,6 @@ export interface PlantInfo {
   createdAt: string;
 }
 
-export interface FlaggedMessage {
-  messageId: number;
-  content: string;
-  createdAt: string;
-  studentName: string;
-  studentGrade: number | null;
-  studentClass: string | null;
-  sessionId: string;
-  sosEventId: string | null;
-}
-
 export interface ProgressStats {
   exercisesCompleted: number;
   testsCompleted: number;

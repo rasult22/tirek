@@ -1,6 +1,6 @@
-import { eq, desc, asc, sql, count as dbCount, inArray } from "drizzle-orm";
+import { eq, asc, sql, count as dbCount } from "drizzle-orm";
 import { db } from "../../db/index.js";
-import { chatSessions, chatMessages, users, notifications } from "../../db/schema.js";
+import { chatSessions, chatMessages } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 
 export const aiChatRepository = {
@@ -89,40 +89,4 @@ export const aiChatRepository = {
     return session;
   },
 
-  async findFlaggedMessages(studentIds: string[], pagination: PaginationParams) {
-    if (studentIds.length === 0) return { rows: [], total: 0 };
-
-    const rows = await db.execute(sql`
-      SELECT
-        cm.id AS "messageId",
-        cm.content,
-        cm.created_at AS "createdAt",
-        cs.id AS "sessionId",
-        u.name AS "studentName",
-        u.grade AS "studentGrade",
-        u.class_letter AS "studentClass",
-        (
-          SELECT n.metadata->>'sosEventId'
-          FROM notifications n
-          WHERE n.metadata->>'sessionId' = cs.id
-            AND n.type = 'sos_alert'
-          ORDER BY n.created_at DESC
-          LIMIT 1
-        ) AS "sosEventId"
-      FROM chat_messages cm
-      INNER JOIN chat_sessions cs ON cm.session_id = cs.id
-      INNER JOIN users u ON cs.user_id = u.id
-      WHERE cm.flagged = true
-      ORDER BY cm.created_at DESC
-      LIMIT ${pagination.limit} OFFSET ${pagination.offset}
-    `);
-
-    const [countRow] = await db
-      .select({ value: dbCount() })
-      .from(chatMessages)
-      .innerJoin(chatSessions, eq(chatMessages.sessionId, chatSessions.id))
-      .where(eq(chatMessages.flagged, true));
-
-    return { rows: rows.rows as any[], total: Number(countRow?.value ?? 0) };
-  },
 };

@@ -6,7 +6,6 @@ import {
   getActive,
   getHistory,
   resolve,
-  getFlaggedMessages,
 } from "../api/crisis.js";
 import {
   AlertTriangle,
@@ -17,7 +16,6 @@ import {
   Users,
   FileText,
   Shield,
-  MessageSquareWarning,
   MessageCircle,
   ChevronDown,
   X,
@@ -28,7 +26,7 @@ import {
 import { useNavigate } from "react-router";
 import { clsx } from "clsx";
 import { toast } from "sonner";
-import type { SOSEvent, FlaggedMessage } from "@tirek/shared";
+import type { SOSEvent } from "@tirek/shared";
 import { ErrorState } from "../components/ui/ErrorState.js";
 
 interface ResolveState {
@@ -83,11 +81,6 @@ export function CrisisPage() {
     enabled: historyOpen,
   });
 
-  const { data: flagged, isLoading: flaggedLoading } = useQuery({
-    queryKey: ["crisis", "flagged"],
-    queryFn: getFlaggedMessages,
-  });
-
   const resolveMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ResolveState }) =>
       resolve(id, data),
@@ -127,7 +120,6 @@ export function CrisisPage() {
   }
 
   const activeAlerts = active?.data ?? [];
-  const flaggedMsgs = flagged?.data ?? [];
   const historyEvents = history?.data ?? [];
 
   if (isError) {
@@ -360,68 +352,6 @@ export function CrisisPage() {
             </div>
           )}
         </section>
-
-        {/* ── FLAGGED MESSAGES ── */}
-        {!flaggedLoading && flaggedMsgs.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-warning/10 flex items-center justify-center">
-                <MessageSquareWarning size={14} className="text-warning" />
-              </div>
-              <h2 className="text-sm font-bold text-text-main">
-                {t.psychologist.flaggedMessages}
-              </h2>
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-warning text-white">
-                {flaggedMsgs.length}
-              </span>
-            </div>
-
-            <div className="space-y-2 stagger-children">
-              {flaggedMsgs.map((msg: FlaggedMessage) => (
-                <button
-                  key={msg.messageId}
-                  onClick={() => {
-                    if (msg.sessionId) navigate(`/messages/${msg.sessionId}`);
-                  }}
-                  className="btn-press w-full glass-card rounded-2xl p-4 text-left transition-all active:scale-[0.99]"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center shrink-0 text-lg">
-                      &#9888;&#65039;
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-sm font-bold text-text-main truncate">
-                            {msg.studentName}
-                          </span>
-                          {msg.studentGrade && (
-                            <span className="text-xs text-text-light shrink-0">
-                              {msg.studentGrade}
-                              {msg.studentClass ?? ""}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-text-light shrink-0">
-                          {formatTimeAgo(msg.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-[13px] text-text-main mt-1.5 line-clamp-2 leading-relaxed">
-                        {msg.content}
-                      </p>
-                      {msg.sosEventId && (
-                        <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-danger/8 text-[10px] font-bold text-danger">
-                          <AlertTriangle size={10} />
-                          {t.psychologist.linkedAlert}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* ── RESOLVED HISTORY ── */}
         <section>

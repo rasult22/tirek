@@ -34,7 +34,7 @@ import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { crisisApi, type ResolveData } from "../../lib/api/crisis";
 import { hapticLight, hapticSuccess } from "../../lib/haptics";
-import type { SOSEvent, FlaggedMessage } from "@tirek/shared";
+import type { SOSEvent } from "@tirek/shared";
 
 interface ResolveState {
   notes: string;
@@ -67,11 +67,6 @@ export default function CrisisScreen() {
     queryKey: ["crisis", "active"],
     queryFn: crisisApi.getActive,
     refetchInterval: 15_000,
-  });
-
-  const { data: flagged } = useQuery({
-    queryKey: ["crisis", "flagged"],
-    queryFn: crisisApi.getFlaggedMessages,
   });
 
   const { data: history, isLoading: historyLoading } = useQuery({
@@ -125,7 +120,6 @@ export default function CrisisScreen() {
   }
 
   const activeAlerts = active?.data ?? [];
-  const flaggedMsgs = flagged?.data ?? [];
   const historyEvents = history?.data ?? [];
 
   const resolveAlert = resolveSheetId
@@ -251,102 +245,6 @@ export default function CrisisScreen() {
             </Text>
             <Text variant="bodyLight">{t.psychologist.allStudentsSafe}</Text>
           </View>
-        )}
-
-        {/* ── FLAGGED MESSAGES ── */}
-        {flaggedMsgs.length > 0 && (
-          <>
-            <View style={[styles.sectionHeader, { marginTop: 20 }]}>
-              <View
-                style={[
-                  styles.sectionIcon,
-                  { backgroundColor: `${c.warning}1A` },
-                ]}
-              >
-                <Ionicons name="warning" size={14} color={c.warning} />
-              </View>
-              <Text variant="h3">{t.psychologist.flaggedMessages}</Text>
-              <Badge count={flaggedMsgs.length} variant="primary" />
-            </View>
-            <View style={styles.alertsList}>
-              {flaggedMsgs.map((msg: FlaggedMessage) => (
-                <Pressable
-                  key={msg.messageId}
-                  onPress={() => router.push("/(tabs)/messages")}
-                  style={({ pressed }) => [
-                    styles.flaggedCard,
-                    {
-                      backgroundColor: c.surface,
-                      borderColor: c.borderLight,
-                    },
-                    shadow(1),
-                    pressed && { opacity: 0.9 },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.flaggedIcon,
-                      { backgroundColor: `${c.warning}1A` },
-                    ]}
-                  >
-                    <Text style={{ fontSize: 18 }}>{"\u26A0\uFE0F"}</Text>
-                  </View>
-                  <View style={styles.flaggedContent}>
-                    <View style={styles.flaggedTopRow}>
-                      <View style={styles.flaggedNameRow}>
-                        <Text
-                          variant="body"
-                          style={{ fontFamily: "DMSans-Bold" }}
-                          numberOfLines={1}
-                        >
-                          {msg.studentName}
-                        </Text>
-                        {msg.studentGrade && (
-                          <Text variant="caption">
-                            {msg.studentGrade}
-                            {msg.studentClass ?? ""}
-                          </Text>
-                        )}
-                      </View>
-                      <Text variant="caption">
-                        {formatTimeAgo(msg.createdAt)}
-                      </Text>
-                    </View>
-                    <Text
-                      variant="body"
-                      numberOfLines={2}
-                      style={{ marginTop: 4 }}
-                    >
-                      {msg.content}
-                    </Text>
-                    {msg.sosEventId && (
-                      <View
-                        style={[
-                          styles.linkedBadge,
-                          { backgroundColor: `${c.danger}12` },
-                        ]}
-                      >
-                        <Ionicons
-                          name="alert-circle"
-                          size={10}
-                          color={c.danger}
-                        />
-                        <Text
-                          style={{
-                            fontSize: 10,
-                            fontFamily: "DMSans-Bold",
-                            color: c.danger,
-                          }}
-                        >
-                          {t.psychologist.linkedAlert}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          </>
         )}
 
         {/* ── RESOLVED HISTORY ── */}
@@ -1013,43 +911,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-  },
-  // Flagged
-  flaggedCard: {
-    flexDirection: "row",
-    gap: 12,
-    padding: 14,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-  },
-  flaggedIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  flaggedContent: { flex: 1, minWidth: 0 },
-  flaggedTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  flaggedNameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    flex: 1,
-  },
-  linkedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    marginTop: 6,
   },
   // History
   historyToggle: {

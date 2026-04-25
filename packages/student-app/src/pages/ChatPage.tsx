@@ -1,15 +1,21 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { chatApi } from "../api/chat.js";
+import { directChatApi } from "../api/direct-chat.js";
 import type { ChatMessage } from "@tirek/shared";
 
 interface ToolCallEvent {
   id: string;
   toolName: string;
+}
+
+interface RedirectCard {
+  id: string;
+  reason: string;
 }
 
 export function ChatPage() {
@@ -24,12 +30,33 @@ export function ChatPage() {
   const [streamingText, setStreamingText] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [toolCalls, setToolCalls] = useState<ToolCallEvent[]>([]);
+  const [redirectCards, setRedirectCards] = useState<RedirectCard[]>([]);
+  const [openingRedirect, setOpeningRedirect] = useState(false);
 
   const { data: messages } = useQuery({
     queryKey: ["chat", "messages", activeSessionId],
     queryFn: () => chatApi.messages(activeSessionId!),
     enabled: !!activeSessionId,
   });
+
+  const { data: myPsychologist } = useQuery({
+    queryKey: ["my-psychologist"],
+    queryFn: directChatApi.myPsychologist,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const openPsychologistChat = useCallback(async () => {
+    if (!myPsychologist || openingRedirect) return;
+    setOpeningRedirect(true);
+    try {
+      const conv = await directChatApi.createConversation(myPsychologist.id);
+      navigate(`/messages/${conv.id}`);
+    } catch {
+      toast.error(t.common.actionFailed);
+    } finally {
+      setOpeningRedirect(false);
+    }
+  }, [myPsychologist, navigate, openingRedirect, t]);
 
   // Use a ref to track session ID so we don't depend on stale closures
   // and don't trigger re-renders mid-stream
@@ -66,6 +93,7 @@ export function ChatPage() {
     setIsStreaming(true);
     setStreamingText("");
     setToolCalls([]);
+    setRedirectCards([]);
 
     try {
       const res = await chatApi.streamMessage(sid, content);
@@ -96,6 +124,12 @@ export function ChatPage() {
                 ...prev,
                 { id: `tc-${Date.now()}`, toolName: payload.toolName },
               ]);
+              if (payload.toolName === "psychologist_redirect" && payload.result?.hint === "psychologist_redirect") {
+                setRedirectCards((prev) => [
+                  ...prev,
+                  { id: `rc-${Date.now()}`, reason: payload.result.reason ?? "" },
+                ]);
+              }
             } else if (payload.type === "done" || payload.type === "error") {
               setStreamingText("");
               setIsStreaming(false);
@@ -178,6 +212,28 @@ export function ChatPage() {
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/60" title="debug: tool_call" />
             </div>
           )}
+          {redirectCards.map((card) => (
+            <div key={card.id} className="flex justify-start">
+              <button
+                type="button"
+                onClick={openPsychologistChat}
+                disabled={!myPsychologist || openingRedirect}
+                className="max-w-[80%] rounded-2xl rounded-bl-md border border-primary/30 bg-primary/5 px-4 py-3 text-left text-sm text-text-main shadow-sm transition-all hover:bg-primary/10 disabled:opacity-50"
+              >
+                <div className="flex items-center gap-2">
+                  <MessageCircle size={16} className="text-primary-dark" />
+                  <span className="font-bold text-primary-dark">
+                    {myPsychologist
+                      ? `Написать ${myPsychologist.name}`
+                      : "Написать психологу"}
+                  </span>
+                </div>
+                {card.reason && (
+                  <p className="mt-1 text-xs text-text-light">{card.reason}</p>
+                )}
+              </button>
+            </div>
+          ))}
           {isStreaming && streamingText && (
             <div className="flex justify-start">
               <div className="max-w-[80%] rounded-2xl rounded-bl-md bg-surface px-4 py-3 text-sm leading-relaxed text-text-main shadow-sm">
