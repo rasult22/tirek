@@ -2,16 +2,21 @@ import { eq, and, desc, count as dbCount } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { notifications } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
+import { normalizeNotificationType } from "./notification-type.js";
 
 export const notificationsRepository = {
   async findByUser(userId: string, pagination: PaginationParams) {
-    return db
+    const rows = await db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt))
       .limit(pagination.limit)
       .offset(pagination.offset);
+    return rows.map((row) => ({
+      ...row,
+      type: normalizeNotificationType(row.type),
+    }));
   },
 
   async countByUser(userId: string) {

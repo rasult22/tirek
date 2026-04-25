@@ -225,6 +225,30 @@ export const contentQuotes = pgTable("content_quotes", {
     .notNull(),
 });
 
+// ── 13a. crisis_signals ─────────────────────────────────────────────
+// Унифицированные кризисные сигналы от всех источников (SOS Urgent, AI-Friend, Diagnostics).
+// Маршрутизируются Crisis Signal Router'ом в Red Feed (acute_crisis) или Yellow Feed (concern).
+export const crisisSignals = pgTable("crisis_signals", {
+  id: text("id").primaryKey(),
+  studentId: text("student_id")
+    .notNull()
+    .references(() => users.id),
+  type: text("type").notNull(), // "acute_crisis" | "concern"
+  severity: text("severity").notNull(), // "high" | "medium" | "low"
+  source: text("source").notNull(), // "sos_urgent" | "ai_friend" | "diagnostics"
+  summary: text("summary").notNull(), // Signal Summary на языке Psychologist'а
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  resolvedBy: text("resolved_by").references(() => users.id),
+  resolutionNotes: text("resolution_notes"),
+  contactedStudent: boolean("contacted_student").default(false).notNull(),
+  contactedParent: boolean("contacted_parent").default(false).notNull(),
+  documented: boolean("documented").default(false).notNull(),
+});
+
 // ── 13. sos_events ──────────────────────────────────────────────────
 export const sosEvents = pgTable("sos_events", {
   id: text("id").primaryKey(),
