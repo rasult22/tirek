@@ -3,20 +3,7 @@ import { studentPsychologist, users } from "../../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { ForbiddenError, NotFoundError } from "../../shared/errors.js";
 import { analyticsService } from "../analytics/analytics.service.js";
-
-// CSV helper
-function csvRow(cells: (string | number | null | undefined)[]): string {
-  return cells.map((c) => {
-    const str = c == null ? "" : String(c);
-    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  }).join(",");
-}
-
-// BOM for Excel UTF-8 recognition
-const UTF8_BOM = "\uFEFF";
+import { csvRow, csvFile } from "../../lib/csv-export/csv-formatter.js";
 
 async function verifyAccess(psychologistId: string, studentId: string) {
   const [link] = await db
@@ -50,7 +37,6 @@ export const exportService = {
 
     const lines: string[] = [];
 
-    // Header
     lines.push(csvRow(["Отчёт по ученику"]));
     lines.push(csvRow(["Имя", student.name]));
     lines.push(csvRow(["Класс", student.grade ? `${student.grade}${student.classLetter ?? ""}` : "—"]));
@@ -58,14 +44,12 @@ export const exportService = {
     lines.push(csvRow(["Дата генерации", new Date().toISOString().split("T")[0]]));
     lines.push("");
 
-    // Mood history
     lines.push(csvRow(["Дата", "Настроение (1-5)"]));
     for (const m of report.moodHistory) {
       lines.push(csvRow([m.date, m.mood]));
     }
     lines.push("");
 
-    // Test results
     lines.push(csvRow(["Тест", "Балл", "Макс. балл", "Уровень", "Дата"]));
     for (const t of report.testResults) {
       lines.push(csvRow([
@@ -77,7 +61,7 @@ export const exportService = {
       ]));
     }
 
-    return UTF8_BOM + lines.join("\r\n");
+    return csvFile(lines);
   },
 
   async generateClassCSV(
@@ -91,7 +75,6 @@ export const exportService = {
 
     const lines: string[] = [];
 
-    // Summary
     lines.push(csvRow(["Отчёт по классу"]));
     lines.push(csvRow(["Класс", classLabel]));
     lines.push(csvRow(["Всего учеников", report.totalStudents]));
@@ -101,19 +84,17 @@ export const exportService = {
     lines.push(csvRow(["Дата генерации", new Date().toISOString().split("T")[0]]));
     lines.push("");
 
-    // Mood distribution
     lines.push(csvRow(["Распределение настроений (7 дней)"]));
     lines.push(csvRow(["Хорошее (4-5)", report.moodDistribution.happy]));
     lines.push(csvRow(["Нормальное (3)", report.moodDistribution.neutral]));
     lines.push(csvRow(["Плохое (1-2)", report.moodDistribution.sad]));
     lines.push("");
 
-    // Risk distribution
     lines.push(csvRow(["Распределение рисков"]));
     lines.push(csvRow(["Норма", report.riskDistribution.normal]));
     lines.push(csvRow(["Требует внимания", report.riskDistribution.attention]));
     lines.push(csvRow(["Кризис", report.riskDistribution.crisis]));
 
-    return UTF8_BOM + lines.join("\r\n");
+    return csvFile(lines);
   },
 };

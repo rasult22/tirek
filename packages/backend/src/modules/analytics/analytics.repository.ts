@@ -1,4 +1,4 @@
-import { eq, and, sql, gte, count, avg, isNull } from "drizzle-orm";
+import { eq, and, sql, gte, count, isNull } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import {
   studentPsychologist,
@@ -114,12 +114,11 @@ export const analyticsRepository = {
       .orderBy(diagnosticSessions.completedAt);
   },
 
-  async getClassStats(
+  async getClassRawData(
     psychologistId: string,
     grade?: number,
     classLetter?: string,
   ) {
-    // Build conditions for filtering students
     const conditions = [
       eq(studentPsychologist.psychologistId, psychologistId),
     ];
@@ -130,102 +129,14 @@ export const analyticsRepository = {
       conditions.push(eq(users.classLetter, classLetter) as any);
     }
 
-    // Average mood for filtered students (last 7 days)
-    const [avgMoodRow] = await db
-      .select({ value: avg(moodEntries.mood) })
-      .from(moodEntries)
-      .innerJoin(
-        studentPsychologist,
-        eq(moodEntries.userId, studentPsychologist.studentId),
-      )
-      .innerJoin(users, eq(moodEntries.userId, users.id))
-      .where(
-        and(
-          ...conditions,
-          gte(
-            moodEntries.createdAt,
-            sql`NOW() - INTERVAL '7 days'`,
-          ),
-        ),
-      );
-
-    // Total students in this class
     const [totalRow] = await db
       .select({ value: count() })
       .from(studentPsychologist)
       .innerJoin(users, eq(studentPsychologist.studentId, users.id))
       .where(and(...conditions));
 
-    // Completed test sessions count
-    const [completedTestsRow] = await db
-      .select({ value: count() })
-      .from(diagnosticSessions)
-      .innerJoin(
-        studentPsychologist,
-        eq(diagnosticSessions.userId, studentPsychologist.studentId),
-      )
-      .innerJoin(users, eq(diagnosticSessions.userId, users.id))
-      .where(
-        and(
-          ...conditions,
-          sql`${diagnosticSessions.completedAt} IS NOT NULL`,
-        ),
-      );
-
-    // Risk distribution (severity counts from diagnostic_sessions)
-    const riskDistribution = await db
-      .select({
-        severity: diagnosticSessions.severity,
-        count: count(),
-      })
-      .from(diagnosticSessions)
-      .innerJoin(
-        studentPsychologist,
-        eq(diagnosticSessions.userId, studentPsychologist.studentId),
-      )
-      .innerJoin(users, eq(diagnosticSessions.userId, users.id))
-      .where(
-        and(
-          ...conditions,
-          sql`${diagnosticSessions.completedAt} IS NOT NULL`,
-          sql`${diagnosticSessions.severity} IS NOT NULL`,
-        ),
-      )
-      .groupBy(diagnosticSessions.severity);
-
-    return {
-      totalStudents: totalRow?.value ?? 0,
-      averageMood: avgMoodRow?.value ? parseFloat(String(avgMoodRow.value)) : null,
-      completedTests: completedTestsRow?.value ?? 0,
-      riskDistribution: riskDistribution.reduce(
-        (acc, row) => {
-          if (row.severity) {
-            acc[row.severity] = row.count;
-          }
-          return acc;
-        },
-        {} as Record<string, number>,
-      ),
-    };
-  },
-
-  async getMoodDistribution(
-    psychologistId: string,
-    grade?: number,
-    classLetter?: string,
-  ) {
-    const conditions = [
-      eq(studentPsychologist.psychologistId, psychologistId),
-    ];
-    if (grade !== undefined) {
-      conditions.push(eq(users.grade, grade) as any);
-    }
-    if (classLetter !== undefined) {
-      conditions.push(eq(users.classLetter, classLetter) as any);
-    }
-
-    const rows = await db
-      .select({ mood: moodEntries.mood, count: count() })
+    const moodRows = await db
+      .select({ mood: moodEntries.mood, factors: moodEntries.factors })
       .from(moodEntries)
       .innerJoin(
         studentPsychologist,
@@ -237,18 +148,36 @@ export const analyticsRepository = {
           ...conditions,
           gte(moodEntries.createdAt, sql`NOW() - INTERVAL '7 days'`),
         ),
+      );
+
+    const sessionRows = await db
+      .select({
+        severity: diagnosticSessions.severity,
+        completedAt: diagnosticSessions.completedAt,
+      })
+      .from(diagnosticSessions)
+      .innerJoin(
+        studentPsychologist,
+        eq(diagnosticSessions.userId, studentPsychologist.studentId),
       )
-      .groupBy(moodEntries.mood);
+      .innerJoin(users, eq(diagnosticSessions.userId, users.id))
+      .where(
+        and(
+          ...conditions,
+          sql`${diagnosticSessions.completedAt} IS NOT NULL`,
+        ),
+      );
 
-    let happy = 0;
-    let neutral = 0;
-    let sad = 0;
-    for (const row of rows) {
-      if (row.mood >= 4) happy += row.count;
-      else if (row.mood === 3) neutral += row.count;
-      else sad += row.count;
-    }
-
-    return { happy, neutral, sad };
+    return {
+      totalStudents: totalRow?.value ?? 0,
+      entries: moodRows.map((r) => ({
+        mood: r.mood,
+        factors: (r.factors as string[] | null) ?? null,
+      })),
+      sessions: sessionRows.map((r) => ({
+        severity: r.severity as 'low' | 'moderate' | 'high' | null,
+        completedAt: r.completedAt,
+      })),
+    };
   },
 };

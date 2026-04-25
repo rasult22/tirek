@@ -1,4 +1,5 @@
 import { analyticsRepository } from "./analytics.repository.js";
+import { computeClassStats } from "../../lib/analytics-aggregator/analytics-aggregator.js";
 
 export const analyticsService = {
   async getOverview(psychologistId: string) {
@@ -11,7 +12,6 @@ export const analyticsService = {
       analyticsRepository.getStudentTestResults(studentId),
     ]);
 
-    // Determine status
     let status: "normal" | "attention" | "crisis" = "normal";
     const hasHigh = testResults.some((r) => r.severity === "high");
     const hasModerate = testResults.some((r) => r.severity === "moderate");
@@ -34,39 +34,25 @@ export const analyticsService = {
     grade?: number,
     classLetter?: string,
   ) {
-    const stats = await analyticsRepository.getClassStats(
+    const raw = await analyticsRepository.getClassRawData(
       psychologistId,
       grade,
       classLetter,
     );
 
-    const moodDistribution = await analyticsRepository.getMoodDistribution(
-      psychologistId,
-      grade,
-      classLetter,
-    );
-
-    // Map severity keys: low->normal, moderate->attention, high->crisis
-    const riskDistribution = {
-      normal: stats.riskDistribution["low"] ?? 0,
-      attention: stats.riskDistribution["moderate"] ?? 0,
-      crisis: stats.riskDistribution["high"] ?? 0,
-    };
-
-    const totalStudents = stats.totalStudents;
-    const testCompletionRate = totalStudents > 0
-      ? stats.completedTests / totalStudents
-      : 0;
-
-    const atRiskCount = riskDistribution.attention + riskDistribution.crisis;
+    const stats = computeClassStats({
+      entries: raw.entries,
+      sessions: raw.sessions,
+      totalStudents: raw.totalStudents,
+    });
 
     return {
-      totalStudents,
+      totalStudents: raw.totalStudents,
       averageMood: stats.averageMood,
-      testCompletionRate,
-      atRiskCount,
-      moodDistribution,
-      riskDistribution,
+      testCompletionRate: stats.testCompletionRate,
+      atRiskCount: stats.atRiskCount,
+      moodDistribution: stats.moodDistribution,
+      riskDistribution: stats.riskDistribution,
     };
   },
 };
