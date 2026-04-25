@@ -9,7 +9,7 @@ COPY packages/shared/ packages/shared/
 # Install deps
 COPY packages/psychologist-app/package.json packages/psychologist-app/
 WORKDIR /app/packages/psychologist-app
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source and build (skip tsc, Vite handles transpilation)
 COPY packages/psychologist-app/ /app/packages/psychologist-app/

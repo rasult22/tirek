@@ -9,7 +9,7 @@ COPY packages/shared/ packages/shared/
 # Install frontend deps
 COPY packages/student-app/package.json packages/student-app/
 WORKDIR /app/packages/student-app
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source and build (skip tsc, Vite handles transpilation)
 COPY packages/student-app/ /app/packages/student-app/
