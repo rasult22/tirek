@@ -20,8 +20,8 @@ export const lightColors = {
   streakOrangeBg: "rgba(251,191,36,0.15)",
   achieveGold: "#CA8A04",
   achieveGoldDark: "#A16207",
-  appointmentPurple: "#6D28D9",
-  appointmentPurpleBg: "rgba(139,92,246,0.12)",
+  officeHoursPurple: "#6D28D9",
+  officeHoursPurpleBg: "rgba(139,92,246,0.12)",
   plantGreen: "#10B981",
   plantGreenBg: "rgba(16,185,129,0.12)",
 } as const;
@@ -48,8 +48,8 @@ export const darkColors = {
   streakOrangeBg: "rgba(251,191,36,0.2)",
   achieveGold: "#EAB308",
   achieveGoldDark: "#CA8A04",
-  appointmentPurple: "#A78BFA",
-  appointmentPurpleBg: "rgba(139,92,246,0.2)",
+  officeHoursPurple: "#A78BFA",
+  officeHoursPurpleBg: "rgba(139,92,246,0.2)",
   plantGreen: "#34D399",
   plantGreenBg: "rgba(16,185,129,0.2)",
 } as const;

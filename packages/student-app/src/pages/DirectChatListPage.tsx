@@ -6,6 +6,7 @@ import { useT } from "../hooks/useLanguage.js";
 import { directChatApi } from "../api/direct-chat.js";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
+import { OfficeHoursInfoBlock } from "../components/OfficeHoursInfoBlock.js";
 import type { Conversation } from "@tirek/shared";
 
 function formatTime(dateStr: string) {
@@ -61,6 +62,10 @@ export function DirectChatListPage() {
     <AppLayout>
       <div className="mx-auto max-w-md px-5 pt-6 pb-6">
         <h1 className="text-xl font-bold text-text-main">{t.directChat.title}</h1>
+
+        <div className="mt-4">
+          <OfficeHoursInfoBlock />
+        </div>
 
         {isLoading && (
           <div className="mt-12 flex justify-center">

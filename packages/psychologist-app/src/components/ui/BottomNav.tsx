@@ -47,7 +47,7 @@ export function BottomNav() {
   ];
 
   const moreItems = [
-    { to: "/appointments", icon: Calendar, label: t.psychologist.appointments },
+    { to: "/office-hours", icon: Calendar, label: t.psychologist.officeHours },
     { to: "/diagnostics", icon: ClipboardList, label: t.psychologist.diagnostics },
     { to: "/invite-codes", icon: KeyRound, label: t.psychologist.inviteCodes },
     { to: "/analytics", icon: BarChart3, label: t.psychologist.analytics },

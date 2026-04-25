@@ -24,8 +24,7 @@ import { ProfilePage } from "./pages/ProfilePage.js";
 import { NotificationsPage } from "./pages/NotificationsPage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
 import { DirectChatPage } from "./pages/DirectChatPage.js";
-import { AppointmentsListPage } from "./pages/AppointmentsListPage.js";
-import { SlotsManagementPage } from "./pages/SlotsManagementPage.js";
+import { OfficeHoursPage } from "./pages/OfficeHoursPage.js";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -78,8 +77,7 @@ export function App() {
             <Route path="/diagnostics/assign" element={<ProtectedRoute><AssignTestPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><DirectChatListPage /></ProtectedRoute>} />
             <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
-            <Route path="/appointments" element={<ProtectedRoute><AppointmentsListPage /></ProtectedRoute>} />
-            <Route path="/appointments/slots" element={<ProtectedRoute><SlotsManagementPage /></ProtectedRoute>} />
+            <Route path="/office-hours" element={<ProtectedRoute><OfficeHoursPage /></ProtectedRoute>} />
             <Route path="/crisis" element={<ProtectedRoute><CrisisPage /></ProtectedRoute>} />
             <Route path="/invite-codes" element={<ProtectedRoute><InviteCodesPage /></ProtectedRoute>} />
             <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />

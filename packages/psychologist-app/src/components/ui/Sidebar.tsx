@@ -45,7 +45,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     { to: "/", icon: LayoutDashboard, label: t.psychologist.dashboard },
     { to: "/students", icon: Users, label: t.psychologist.students },
     { to: "/messages", icon: MessageSquare, label: t.psychologist.messages, badge: unreadDirectCount },
-    { to: "/appointments", icon: Calendar, label: t.psychologist.appointments },
+    { to: "/office-hours", icon: Calendar, label: t.psychologist.officeHours },
     { to: "/diagnostics", icon: ClipboardList, label: t.psychologist.diagnostics },
     { to: "/crisis", icon: AlertTriangle, label: t.psychologist.crisis, badge: crisisCount },
     { to: "/invite-codes", icon: KeyRound, label: t.psychologist.inviteCodes },

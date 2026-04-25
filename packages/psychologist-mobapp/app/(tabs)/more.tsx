@@ -19,7 +19,7 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { icon: "clipboard-outline", labelKey: "diagnostics", route: "/(screens)/diagnostics" },
-  { icon: "calendar-outline", labelKey: "appointments", route: "/(screens)/appointments" },
+  { icon: "calendar-outline", labelKey: "officeHours", route: "/(screens)/office-hours" },
   { icon: "key-outline", labelKey: "inviteCodes", route: "/(screens)/invite-codes" },
   { icon: "bar-chart-outline", labelKey: "analytics", route: "/(screens)/analytics" },
   { icon: "person-outline", labelKey: "profile", route: "/(screens)/profile" },
@@ -33,7 +33,7 @@ export default function MoreScreen() {
 
   const labels: Record<string, string> = {
     diagnostics: t.psychologist.diagnostics,
-    appointments: t.psychologist.appointments,
+    officeHours: t.psychologist.officeHours,
     inviteCodes: t.psychologist.inviteCodes,
     analytics: t.psychologist.analytics,
     profile: t.nav.profile,

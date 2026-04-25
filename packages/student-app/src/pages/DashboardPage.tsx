@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, ClipboardList, Wind, CalendarDays, Calendar, CheckCircle2, Sparkles, Flame, BookOpen, Trophy, Mail, Award } from "lucide-react";
+import { MessageCircle, ClipboardList, Wind, CalendarDays, CheckCircle2, Sparkles, Flame, BookOpen, Trophy, Mail, Award } from "lucide-react";
 import { useT } from "../hooks/useLanguage.js";
 import { useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
@@ -10,12 +10,12 @@ import { contentApi } from "../api/content.js";
 import { streaksApi } from "../api/streaks.js";
 import { plantApi } from "../api/plant.js";
 import { exercisesApi } from "../api/exercises.js";
-import { appointmentsApi } from "../api/appointments.js";
 import { achievementsApi } from "../api/achievements.js";
 import { testsApi } from "../api/tests.js";
 import { moodLevels } from "@tirek/shared";
 import { AppLayout } from "../components/ui/AppLayout.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
+import { OfficeHoursInfoBlock } from "../components/OfficeHoursInfoBlock.js";
 
 const AVATAR_MAP: Record<string, string> = {
   "avatar-1": "\u{1F60A}",
@@ -57,11 +57,6 @@ export function DashboardPage() {
     queryFn: exercisesApi.stats,
   });
 
-  const { data: nextAppointment } = useQuery({
-    queryKey: ["appointments", "next"],
-    queryFn: appointmentsApi.next,
-  });
-
   const { data: achievementsSummary } = useQuery({
     queryKey: ["achievements-summary"],
     queryFn: achievementsApi.getSummary,
@@ -83,7 +78,6 @@ export function DashboardPage() {
     { to: "/journal", icon: BookOpen, label: t.nav.journal, iconBg: "bg-amber-100", color: "text-amber-700", badge: 0 },
     { to: "/messages", icon: Mail, label: t.directChat.title, iconBg: "bg-green-100", color: "text-green-700", badge: 0 },
     { to: "/mood/calendar", icon: CalendarDays, label: t.mood.calendar, iconBg: "bg-blue-100", color: "text-blue-700", badge: 0 },
-    { to: "/appointments", icon: Calendar, label: t.nav.appointments, iconBg: "bg-violet-100", color: "text-violet-700", badge: 0 },
     { to: "/achievements", icon: Award, label: t.achievements.title, iconBg: "bg-yellow-100", color: "text-yellow-700", badge: 0 },
   ];
 
@@ -229,26 +223,8 @@ export function DashboardPage() {
             </Link>
           )}
 
-          {/* Next appointment widget */}
-          {nextAppointment && (
-            <Link
-              to="/appointments"
-              className="btn-press glass-card flex items-center gap-4 rounded-2xl p-4 transition-all hover:shadow-md"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-purple-100">
-                <CalendarDays size={26} className="text-violet-500" />
-              </div>
-              <div className="flex-1">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-violet-700">
-                  {t.appointments.nextAppointment}
-                </div>
-                <div className="mt-0.5 text-sm font-bold text-text-main">
-                  {nextAppointment.date} &middot; {nextAppointment.startTime}&ndash;{nextAppointment.endTime}
-                </div>
-                <div className="text-xs text-text-light">{nextAppointment.psychologistName}</div>
-              </div>
-            </Link>
-          )}
+          {/* Office hours info block (psychologist availability) */}
+          <OfficeHoursInfoBlock />
         </div>
 
         {/* Quote of the day */}

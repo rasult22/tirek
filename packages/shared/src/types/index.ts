@@ -456,46 +456,27 @@ export interface DirectMessage {
   createdAt: string;
 }
 
-export type AppointmentStatus = "scheduled" | "confirmed" | "cancelled" | "completed";
+// ── Office Hours (replaces legacy Appointments booking model — issue #7) ──
 
-export interface AppointmentSlot {
+export interface OfficeHoursInterval {
+  start: string; // HH:mm
+  end: string; // HH:mm
+}
+
+export interface OfficeHoursEntry {
   id: string;
   psychologistId: string;
   date: string; // YYYY-MM-DD
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
-  isBooked: boolean;
-  createdAt: string;
-}
-
-export interface Appointment {
-  id: string;
-  slotId: string;
-  studentId: string;
-  psychologistId: string;
-  status: AppointmentStatus;
-  studentNote: string | null;
-  psychologistNote: string | null;
-  createdAt: string;
+  intervals: OfficeHoursInterval[];
+  notes: string | null;
   updatedAt: string;
-  // Joined fields
-  date?: string;
-  startTime?: string;
-  endTime?: string;
-  psychologistName?: string;
-  studentName?: string;
-  studentGrade?: number | null;
-  studentClassLetter?: string | null;
 }
 
-export interface UpcomingAppointment {
-  id: string;
-  status: AppointmentStatus;
-  date: string;
-  startTime: string;
-  endTime: string;
-  psychologistName: string;
-}
+export type OfficeHoursInfoBlock =
+  | { kind: "available_now"; until: string; notes: string | null }
+  | { kind: "available_later_today"; from: string; until: string; notes: string | null }
+  | { kind: "available_tomorrow"; from: string; until: string; notes: string | null }
+  | { kind: "unavailable_today"; nextDate: string | null };
 
 export type AchievementCategory = "first_steps" | "streak" | "mastery" | "growth";
 

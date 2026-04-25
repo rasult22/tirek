@@ -411,43 +411,29 @@ export const directMessages = pgTable("direct_messages", {
     .notNull(),
 });
 
-// ── 21. appointment_slots ─────────────────────────────────────────
-export const appointmentSlots = pgTable("appointment_slots", {
-  id: text("id").primaryKey(),
-  psychologistId: text("psychologist_id")
-    .notNull()
-    .references(() => users.id),
-  date: text("date").notNull(), // YYYY-MM-DD
-  startTime: text("start_time").notNull(), // HH:mm
-  endTime: text("end_time").notNull(), // HH:mm
-  isBooked: boolean("is_booked").default(false).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
-// ── 22. appointments ──────────────────────────────────────────────
-export const appointments = pgTable("appointments", {
-  id: text("id").primaryKey(),
-  slotId: text("slot_id")
-    .notNull()
-    .references(() => appointmentSlots.id),
-  studentId: text("student_id")
-    .notNull()
-    .references(() => users.id),
-  psychologistId: text("psychologist_id")
-    .notNull()
-    .references(() => users.id),
-  status: text("status").notNull().default("scheduled"), // scheduled | confirmed | cancelled | completed
-  studentNote: text("student_note"),
-  psychologistNote: text("psychologist_note"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+// ── 21. office_hours ──────────────────────────────────────────────
+// Per-day availability record for a psychologist (replaces legacy appointments model, issue #7).
+export const officeHours = pgTable(
+  "office_hours",
+  {
+    id: text("id").primaryKey(),
+    psychologistId: text("psychologist_id")
+      .notNull()
+      .references(() => users.id),
+    date: text("date").notNull(), // YYYY-MM-DD in Asia/Almaty
+    intervals: jsonb("intervals").notNull(), // Array<{ start: "HH:mm", end: "HH:mm" }>
+    notes: text("notes"),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    uniquePsychologistDate: unique("office_hours_psychologist_id_date_unique").on(
+      t.psychologistId,
+      t.date,
+    ),
+  }),
+);
 
 // ── 25. cbt_entries ────────────────────────────────────────────────
 export const cbtEntries = pgTable("cbt_entries", {

@@ -18,8 +18,8 @@ import { moodApi } from "../../lib/api/mood";
 import { contentApi } from "../../lib/api/content";
 import { streaksApi } from "../../lib/api/streaks";
 import { plantApi } from "../../lib/api/plant";
-import { appointmentsApi } from "../../lib/api/appointments";
 import { achievementsApi } from "../../lib/api/achievements";
+import { OfficeHoursInfoBlock } from "../../components/OfficeHoursInfoBlock";
 import { moodLevels } from "@tirek/shared";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
@@ -64,7 +64,7 @@ export default function DashboardScreen() {
       queryClient.invalidateQueries({ queryKey: ["quote"] }),
       queryClient.invalidateQueries({ queryKey: ["streak"] }),
       queryClient.invalidateQueries({ queryKey: ["plant"] }),
-      queryClient.invalidateQueries({ queryKey: ["appointments", "next"] }),
+      queryClient.invalidateQueries({ queryKey: ["office-hours", "info-block"] }),
       queryClient.invalidateQueries({ queryKey: ["achievements-summary"] }),
       queryClient.invalidateQueries({ queryKey: ["tests", "assigned"] }),
     ]);
@@ -90,11 +90,6 @@ export default function DashboardScreen() {
     queryFn: plantApi.get,
   });
 
-  const { data: nextAppointment } = useQuery({
-    queryKey: ["appointments", "next"],
-    queryFn: appointmentsApi.next,
-  });
-
   const { data: achievementsSummary } = useQuery({
     queryKey: ["achievements-summary"],
     queryFn: achievementsApi.getSummary,
@@ -104,7 +99,6 @@ export default function DashboardScreen() {
     { route: "/(tabs)/exercises", icon: "leaf", labelKey: "exercises", iconBg: "rgba(14,165,233,0.1)", iconColor: "#0369A1" },
     { route: "/(screens)/journal", icon: "book", labelKey: "journal", iconBg: "rgba(245,158,11,0.1)", iconColor: "#92400E" },
     { route: "/(screens)/mood-calendar", icon: "calendar", labelKey: "moodCalendar", iconBg: "rgba(59,130,246,0.1)", iconColor: "#1D4ED8" },
-    { route: "/(screens)/appointments", icon: "time", labelKey: "appointments", iconBg: "rgba(139,92,246,0.1)", iconColor: "#6D28D9" },
     { route: "/(screens)/achievements", icon: "trophy", labelKey: "achievements", iconBg: "rgba(234,179,8,0.1)", iconColor: "#92400E" },
     { route: "/(screens)/inspiration", icon: "sparkles", labelKey: "inspiration", iconBg: "rgba(168,85,247,0.1)", iconColor: "#7C3AED" },
   ];
@@ -113,7 +107,6 @@ export default function DashboardScreen() {
     exercises: t.nav.exercises,
     journal: t.nav.journal,
     moodCalendar: t.mood.calendar,
-    appointments: t.nav.appointments,
     achievements: t.achievements.title,
     inspiration: t.inspiration.title,
   };
@@ -318,31 +311,8 @@ export default function DashboardScreen() {
           </Pressable>
         )}
 
-        {/* Next appointment widget */}
-        {nextAppointment && (
-          <Pressable
-            onPress={() => push("/(screens)/appointments")}
-            style={({ pressed }) => pressed && { opacity: 0.9 }}
-          >
-            <Card style={styles.widgetCard}>
-              <View style={styles.apptIcon}>
-                <Ionicons name="calendar" size={26} color="#8B5CF6" />
-              </View>
-              <View style={styles.widgetBody}>
-                <Text style={styles.apptCaption}>
-                  {t.appointments.nextAppointment}
-                </Text>
-                <Text variant="body" style={styles.boldText}>
-                  {nextAppointment.date} · {nextAppointment.startTime}–
-                  {nextAppointment.endTime}
-                </Text>
-                <Text variant="small">
-                  {nextAppointment.psychologistName}
-                </Text>
-              </View>
-            </Card>
-          </Pressable>
-        )}
+        {/* Office hours info block (psychologist availability) */}
+        <OfficeHoursInfoBlock />
 
         {/* Quote of the day */}
         {quote && (
@@ -515,15 +485,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  apptIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    backgroundColor: "rgba(139,92,246,0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
   // Streak
   streakRow: {
     flexDirection: "row",
@@ -564,15 +525,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#CA8A04",
-  },
-
-  // Appointment
-  apptCaption: {
-    fontSize: 11,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    color: "#6D28D9",
   },
 
   // Plant progress

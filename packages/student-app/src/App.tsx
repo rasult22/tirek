@@ -27,7 +27,6 @@ import { JournalPage } from "./pages/JournalPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
 import { DirectChatPage } from "./pages/DirectChatPage.js";
-import { AppointmentsPage } from "./pages/AppointmentsPage.js";
 import { VirtualPlantPage } from "./pages/VirtualPlantPage.js";
 import { AchievementsPage } from "./pages/AchievementsPage.js";
 
@@ -84,7 +83,6 @@ export function App() {
             <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><DirectChatListPage /></ProtectedRoute>} />
             <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
-            <Route path="/appointments" element={<ProtectedRoute><AppointmentsPage /></ProtectedRoute>} />
             <Route path="/plant" element={<ProtectedRoute><VirtualPlantPage /></ProtectedRoute>} />
             <Route path="/achievements" element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
             <Route path="/sos" element={<SOSPage />} />

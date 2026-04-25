@@ -81,7 +81,6 @@ async function registerTokenOnServer(pushToken: string) {
 
 type NotificationType =
   | "direct_message"
-  | "appointment_reminder"
   | "test_assigned"
   | "test_result"
   | "crisis_alert";
@@ -89,7 +88,6 @@ type NotificationType =
 interface NotificationData {
   type?: NotificationType;
   conversationId?: string;
-  appointmentId?: string;
   testSessionId?: string;
 }
 
@@ -121,10 +119,6 @@ function invalidateCacheForNotification(
       break;
     case "test_result":
       queryClient.invalidateQueries({ queryKey: ["tests", "assigned"] });
-      break;
-    case "appointment_reminder":
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["appointments", "next"] });
       break;
   }
 }
@@ -169,9 +163,6 @@ export function useNotifications() {
             } else {
               push("/(screens)/messages");
             }
-            break;
-          case "appointment_reminder":
-            push("/(screens)/appointments");
             break;
           case "test_result":
             if (data.testSessionId) {

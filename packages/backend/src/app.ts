@@ -27,9 +27,9 @@ import {
   directChatPsychologistRouter,
 } from "./modules/direct-chat/direct-chat.routes.js";
 import {
-  appointmentsStudentRouter,
-  appointmentsPsychologistRouter,
-} from "./modules/appointments/appointments.routes.js";
+  officeHoursRouter,
+  officeHoursPsychologistRouter,
+} from "./modules/office-hours/office-hours.routes.js";
 import {
   achievementsStudentRouter,
   achievementsPsychologistRouter,
@@ -74,7 +74,6 @@ app.route("/student/journal", journalRouter);
 app.route("/student/streaks", streaksRouter);
 app.route("/student/plant", virtualPlantRouter);
 app.route("/student/direct-chat", directChatStudentRouter);
-app.route("/student/appointments", appointmentsStudentRouter);
 app.route("/student/achievements", achievementsStudentRouter);
 app.route("/student/cbt", cbtStudentRouter);
 app.route("/student", contentRouter);
@@ -87,13 +86,14 @@ app.route("/psychologist/analytics", analyticsRouter);
 app.route("/psychologist", usersRouter);
 app.route("/psychologist", notesRouter);
 app.route("/psychologist/direct-chat", directChatPsychologistRouter);
-app.route("/psychologist/appointments", appointmentsPsychologistRouter);
+app.route("/psychologist/office-hours", officeHoursPsychologistRouter);
 app.route("/psychologist/achievements", achievementsPsychologistRouter);
 app.route("/psychologist/cbt", cbtPsychologistRouter);
 app.route("/psychologist/export", exportRouter);
 
 // Shared routes
 app.route("/notifications", notificationsRouter);
+app.route("/office-hours", officeHoursRouter);
 
 // ── Global error handler ─────────────────────────────────────────────
 app.onError((err, c) => handleError(c, err));
