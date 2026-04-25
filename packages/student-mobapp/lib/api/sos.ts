@@ -1,10 +1,10 @@
 import { apiFetch } from "./client";
-import type { SOSEvent } from "@tirek/shared";
+import type { SOSAction, SOSEvent } from "@tirek/shared";
 
 export const sosApi = {
-  trigger: (level: 1 | 2 | 3) =>
+  trigger: (action: SOSAction) =>
     apiFetch<SOSEvent>("/student/sos", {
       method: "POST",
-      body: JSON.stringify({ level }),
+      body: JSON.stringify({ action }),
     }),
 };

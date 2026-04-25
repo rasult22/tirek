@@ -1,4 +1,4 @@
-import { eq, and, desc, isNull, sql, count as dbCount } from "drizzle-orm";
+import { eq, and, desc, isNull, or, sql, count as dbCount } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../db/index.js";
 import { sosEvents, studentPsychologist, users } from "../../db/schema.js";
@@ -9,6 +9,7 @@ const resolverUser = alias(users, "resolver");
 const sosWithStudent = {
   id: sosEvents.id,
   userId: sosEvents.userId,
+  type: sosEvents.type,
   level: sosEvents.level,
   createdAt: sosEvents.createdAt,
   resolvedAt: sosEvents.resolvedAt,
@@ -23,8 +24,21 @@ const sosWithStudent = {
 };
 
 export const sosRepository = {
-  async create(data: { id: string; userId: string; level: number }) {
-    const [event] = await db.insert(sosEvents).values(data).returning();
+  async create(data: {
+    id: string;
+    userId: string;
+    type: "breathing" | "hotline" | "chat" | "urgent";
+    createdAt: Date;
+  }) {
+    const [event] = await db
+      .insert(sosEvents)
+      .values({
+        id: data.id,
+        userId: data.userId,
+        type: data.type,
+        createdAt: data.createdAt,
+      })
+      .returning();
     return event;
   },
 
@@ -41,9 +55,24 @@ export const sosRepository = {
         and(
           eq(studentPsychologist.psychologistId, psychologistId),
           isNull(sosEvents.resolvedAt),
+          // Only urgent (or legacy rows with NULL type) belong in the active
+          // crisis feed — breathing/hotline/chat are silent history (issue #11).
+          or(eq(sosEvents.type, "urgent"), isNull(sosEvents.type)),
         ),
       )
-      .orderBy(desc(sosEvents.level), desc(sosEvents.createdAt))
+      .orderBy(
+        // Priority: derive from `type` (issue #11), fall back to legacy `level`.
+        sql`COALESCE(
+          CASE ${sosEvents.type}
+            WHEN 'urgent' THEN 3
+            WHEN 'chat' THEN 2
+            WHEN 'hotline' THEN 1
+            WHEN 'breathing' THEN 0
+          END,
+          ${sosEvents.level}
+        ) DESC NULLS LAST`,
+        desc(sosEvents.createdAt),
+      )
       .limit(pagination.limit)
       .offset(pagination.offset);
   },
@@ -60,6 +89,7 @@ export const sosRepository = {
         and(
           eq(studentPsychologist.psychologistId, psychologistId),
           isNull(sosEvents.resolvedAt),
+          or(eq(sosEvents.type, "urgent"), isNull(sosEvents.type)),
         ),
       );
     return Number(row?.value ?? 0);

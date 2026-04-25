@@ -1,57 +1,34 @@
-import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { db } from "../../db/index.js";
-import {
-  studentPsychologist,
-  users,
-  notifications,
-} from "../../db/schema.js";
 import { NotFoundError, ValidationError } from "../../shared/errors.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
+import { crisisSignalsService } from "../crisis-signals/crisis-signals.service.js";
 import { sosRepository } from "./sos.repository.js";
+import { createSosTriggerService, type SosAction } from "./sos-trigger.js";
+
+const triggerService = createSosTriggerService({
+  saveEvent: async (event) => {
+    const row = await sosRepository.create({
+      id: event.id,
+      userId: event.userId,
+      type: event.type,
+      createdAt: event.createdAt,
+    });
+    return {
+      id: row.id,
+      userId: row.userId,
+      type: event.type,
+      createdAt: row.createdAt,
+    };
+  },
+  routeCrisisSignal: (input) => crisisSignalsService.route(input),
+  now: () => new Date(),
+  newId: () => uuidv4(),
+});
 
 export const sosService = {
-  async trigger(userId: string, body: { level: number }) {
-    if (![1, 2, 3].includes(body.level)) {
-      throw new ValidationError("Level must be 1, 2 or 3");
-    }
-
-    const event = await sosRepository.create({
-      id: uuidv4(),
-      userId,
-      level: body.level,
-    });
-
-    // Find psychologists linked to this student
-    const links = await db
-      .select({
-        psychologistId: studentPsychologist.psychologistId,
-      })
-      .from(studentPsychologist)
-      .where(eq(studentPsychologist.studentId, userId));
-
-    // Get student name for notification body
-    const [student] = await db
-      .select({ name: users.name })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-
-    const studentName = student?.name ?? "Ученик";
-
-    // Create crisis notification for each linked psychologist
-    for (const link of links) {
-      await db.insert(notifications).values({
-        id: uuidv4(),
-        userId: link.psychologistId,
-        type: "crisis",
-        title: "Сигнал SOS",
-        body: `${studentName} отправил сигнал SOS (уровень ${body.level})`,
-      });
-    }
-
-    return event;
+  trigger(userId: string, body: { action: SosAction }) {
+    return triggerService.trigger(userId, body);
   },
 
   async getActive(psychologistId: string, pagination: PaginationParams) {

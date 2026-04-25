@@ -10,212 +10,280 @@ import { Stack, useRouter } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../components/ui";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { sosApi } from "../../lib/api/sos";
-import { hotlines } from "@tirek/shared";
+import { hotlines, type SOSAction } from "@tirek/shared";
 import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
+
+type Step = "menu" | "urgent-sent";
 
 export default function SOSScreen() {
   const t = useT();
   const c = useThemeColors();
   const { language } = useLanguage();
-  const { push } = useRouter();
-  const [selectedLevel, setSelectedLevel] = useState<1 | 2 | 3 | null>(null);
+  const { push, back } = useRouter();
+  const [step, setStep] = useState<Step>("menu");
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const sosMutation = useMutation({
-    mutationFn: (level: 1 | 2 | 3) => sosApi.trigger(level),
+    mutationFn: (action: SOSAction) => sosApi.trigger(action),
   });
 
-  const LEVELS = [
-    {
-      level: 1 as const,
-      borderActive: "#FACC15",
-      bgActive: "#FEFCE8",
-      iconBg: "rgba(250,204,21,0.2)",
-      iconColor: "#CA8A04",
-      badgeBg: "#FACC15",
-    },
-    {
-      level: 2 as const,
-      borderActive: c.warning,
-      bgActive: "#FFF7ED",
-      iconBg: "rgba(140,99,8,0.2)",
-      iconColor: c.warning,
-      badgeBg: c.warning,
-    },
-    {
-      level: 3 as const,
-      borderActive: c.danger,
-      bgActive: "#FEF2F2",
-      iconBg: "rgba(179,59,59,0.2)",
-      iconColor: c.danger,
-      badgeBg: c.danger,
-    },
-  ];
+  function pickAction(action: SOSAction) {
+    if (action === "breathing") {
+      push("/(screens)/exercises/breathing");
+      return;
+    }
+    if (action === "chat") {
+      sosMutation.mutate("chat");
+      push("/(screens)/messages");
+      return;
+    }
+    if (action === "hotline") {
+      sosMutation.mutate("hotline");
+      return;
+    }
+    setConfirmOpen(true);
+  }
 
-  const levelLabels: Record<1 | 2 | 3, { name: string; desc: string }> = {
-    1: { name: t.sos.level1, desc: t.sos.level1Desc },
-    2: { name: t.sos.level2, desc: t.sos.level2Desc },
-    3: { name: t.sos.level3, desc: t.sos.level3Desc },
-  };
+  async function confirmUrgent() {
+    setConfirmOpen(false);
+    try {
+      await sosMutation.mutateAsync("urgent");
+      setStep("urgent-sent");
+    } catch {
+      // network errors surface via mutation state on retry; UI stays on menu.
+    }
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: c.bg }]}>
       <Stack.Screen
-        options={{
-          title: t.sos.title,
-          headerTintColor: c.danger,
-        }}
+        options={{ title: t.sos.title, headerTintColor: c.danger }}
       />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Calming message */}
-        <View style={styles.calmCard}>
-          <View style={styles.heartWrap}>
-            <Ionicons name="heart" size={32} color={c.danger} />
-          </View>
-          <Text style={[styles.calmText, { color: c.text }]}>{t.sos.message}</Text>
-        </View>
+        {step === "menu" ? (
+          <>
+            <View style={styles.calmCard}>
+              <View style={styles.heartWrap}>
+                <Ionicons name="heart" size={32} color={c.danger} />
+              </View>
+              <Text style={[styles.calmText, { color: c.text }]}>
+                {t.sos.message}
+              </Text>
+            </View>
 
-        {/* Breathing shortcut */}
-        <Pressable
-          onPress={() => push("/(screens)/exercises/breathing")}
-          style={({ pressed }) => [
-            styles.breatheCard,
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <View style={styles.breatheIcon}>
-            <Ionicons name="leaf" size={24} color={c.secondary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.breatheTitle, { color: c.text }]}>{t.sos.breathe}</Text>
-            <Text style={[styles.breatheDesc, { color: c.textLight }]}>
-              {t.exercises.squareBreathingDesc}
+            <Text style={[styles.sectionTitle, { color: c.text }]}>
+              {t.sos.selectLevel}
             </Text>
-          </View>
-        </Pressable>
 
-        {/* Level selection */}
-        <Text style={[styles.sectionTitle, { color: c.text }]}>{t.sos.selectLevel}</Text>
-        <View style={styles.levelList}>
-          {LEVELS.map((l) => {
-            const info = levelLabels[l.level];
-            const selected = selectedLevel === l.level;
-            return (
-              <Pressable
-                key={l.level}
-                onPress={() => setSelectedLevel(l.level)}
-                style={[
-                  styles.levelCard,
-                  {
-                    borderColor: c.borderLight,
-                    backgroundColor: c.surface,
-                  },
-                  selected && {
-                    borderColor: l.borderActive,
-                    backgroundColor: l.bgActive,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.levelIcon,
-                    selected
-                      ? { backgroundColor: l.iconBg }
-                      : { backgroundColor: c.surfaceSecondary },
-                  ]}
-                >
-                  <Ionicons
-                    name="alert-circle"
-                    size={20}
-                    color={selected ? l.iconColor : c.textLight}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <View style={styles.levelHeader}>
-                    <View
-                      style={[styles.levelBadge, { backgroundColor: l.badgeBg }]}
-                    >
-                      <Text style={styles.levelBadgeText}>{l.level}</Text>
-                    </View>
-                    <Text style={[styles.levelName, { color: c.text }]}>{info.name}</Text>
-                  </View>
-                  <Text style={[styles.levelDesc, { color: c.textLight }]}>{info.desc}</Text>
-                </View>
-                {selected && (
-                  <Ionicons name="checkmark" size={20} color={c.text} />
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
+            <View style={styles.actionList}>
+              <ActionCard
+                iconName="leaf"
+                iconBg="rgba(45,109,140,0.3)"
+                iconColor={c.secondary}
+                title={t.sos.actions.breathing}
+                desc={t.sos.actions.breathingDesc}
+                surface={c.surface}
+                textColor={c.text}
+                descColor={c.textLight}
+                borderColor={c.borderLight}
+                onPress={() => pickAction("breathing")}
+              />
+              <ActionCard
+                iconName="call"
+                iconBg="rgba(34,197,94,0.2)"
+                iconColor={c.success}
+                title={t.sos.actions.hotline}
+                desc={t.sos.actions.hotlineDesc}
+                surface={c.surface}
+                textColor={c.text}
+                descColor={c.textLight}
+                borderColor={c.borderLight}
+                onPress={() => pickAction("hotline")}
+              />
+              <ActionCard
+                iconName="chatbubble-ellipses"
+                iconBg="rgba(45,109,140,0.2)"
+                iconColor={c.primary}
+                title={t.sos.actions.chat}
+                desc={t.sos.actions.chatDesc}
+                surface={c.surface}
+                textColor={c.text}
+                descColor={c.textLight}
+                borderColor={c.borderLight}
+                onPress={() => pickAction("chat")}
+              />
+              <ActionCard
+                iconName="alert-circle"
+                iconBg="rgba(179,59,59,0.2)"
+                iconColor={c.danger}
+                title={t.sos.actions.urgent}
+                desc={t.sos.actions.urgentDesc}
+                surface="#FEF2F2"
+                textColor={c.danger}
+                descColor={c.danger}
+                borderColor={c.danger}
+                onPress={() => pickAction("urgent")}
+                emphasis
+              />
+            </View>
 
-        {/* Level 3 warning */}
-        {selectedLevel === 3 && (
-          <View style={styles.warningBox}>
-            <Text style={[styles.warningText, { color: c.danger }]}>
-              {t.sos.confidentialityNote}
-            </Text>
-          </View>
-        )}
+            <HotlinesBlock language={language} title={t.sos.hotlines} c={c} />
 
-        {/* Send SOS button */}
-        <Pressable
-          onPress={() => selectedLevel && sosMutation.mutate(selectedLevel)}
-          disabled={!selectedLevel || sosMutation.isPending}
-          style={({ pressed }) => [
-            styles.sosBtn,
-            { backgroundColor: c.danger },
-            (!selectedLevel || sosMutation.isPending) && { opacity: 0.5 },
-            pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
-          ]}
-        >
-          <Ionicons name="chatbubble" size={20} color="#FFFFFF" />
-          <Text style={styles.sosBtnText}>
-            {sosMutation.isSuccess ? t.sos.sent : t.sos.callPsychologist}
-          </Text>
-        </Pressable>
-
-        {/* Hotlines */}
-        <View style={styles.hotlinesSection}>
-          <View style={styles.hotlinesHeader}>
-            <Ionicons name="shield" size={16} color={c.danger} />
-            <Text style={[styles.hotlinesTitle, { color: c.text }]}>{t.sos.hotlines}</Text>
-          </View>
-          {hotlines.map((h) => (
-            <Pressable
-              key={h.number}
-              onPress={() => Linking.openURL(`tel:${h.number}`)}
-              style={({ pressed }) => [
-                styles.hotlineCard,
-                { backgroundColor: c.surface },
-                pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+            <View
+              style={[
+                styles.confidentialityNote,
+                { backgroundColor: c.surfaceSecondary },
               ]}
             >
-              <View style={styles.hotlineIcon}>
-                <Ionicons name="call" size={20} color={c.danger} />
+              <Text style={[styles.confidentialityText, { color: c.textLight }]}>
+                {t.sos.confidentialityNote}
+              </Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={[styles.sentCard, { borderColor: c.success }]}>
+              <View
+                style={[
+                  styles.heartWrap,
+                  { backgroundColor: "rgba(34,197,94,0.15)" },
+                ]}
+              >
+                <Ionicons name="checkmark-circle" size={32} color={c.success} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.hotlineNumber, { color: c.danger }]}>{h.number}</Text>
-                <Text style={[styles.hotlineLabel, { color: c.textLight }]}>
-                  {language === "kz" ? h.labelKz : h.labelRu}
-                </Text>
-              </View>
-            </Pressable>
-          ))}
-        </View>
+              <Text style={[styles.sentTitle, { color: c.text }]}>
+                {t.sos.urgentSentTitle}
+              </Text>
+              <Text style={[styles.sentBody, { color: c.textLight }]}>
+                {t.sos.urgentSentBody}
+              </Text>
+            </View>
 
-        {/* Confidentiality note */}
-        <View style={[styles.confidentialityNote, { backgroundColor: c.surfaceSecondary }]}>
-          <Text style={[styles.confidentialityText, { color: c.textLight }]}>
-            {t.sos.confidentialityNote}
-          </Text>
-        </View>
+            <HotlinesBlock language={language} title={t.sos.hotlines} c={c} />
+
+            <Pressable
+              onPress={() => back()}
+              style={({ pressed }) => [
+                styles.doneBtn,
+                { backgroundColor: c.surface },
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <Text style={[styles.doneText, { color: c.text }]}>
+                {t.common.done}
+              </Text>
+            </Pressable>
+          </>
+        )}
       </ScrollView>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onConfirm={confirmUrgent}
+        onCancel={() => setConfirmOpen(false)}
+        title={t.sos.urgentConfirmTitle}
+        description={t.sos.urgentConfirmBody}
+        confirmLabel={t.sos.urgentConfirmCta}
+        variant="danger"
+      />
+    </View>
+  );
+}
+
+function ActionCard({
+  iconName,
+  iconBg,
+  iconColor,
+  title,
+  desc,
+  surface,
+  textColor,
+  descColor,
+  borderColor,
+  onPress,
+  emphasis = false,
+}: {
+  iconName: keyof typeof Ionicons.glyphMap;
+  iconBg: string;
+  iconColor: string;
+  title: string;
+  desc: string;
+  surface: string;
+  textColor: string;
+  descColor: string;
+  borderColor: string;
+  onPress: () => void;
+  emphasis?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.actionCard,
+        {
+          backgroundColor: surface,
+          borderColor,
+          borderWidth: emphasis ? 2 : 1,
+        },
+        pressed && { opacity: 0.9, transform: [{ scale: 0.99 }] },
+      ]}
+    >
+      <View style={[styles.actionIcon, { backgroundColor: iconBg }]}>
+        <Ionicons name={iconName} size={24} color={iconColor} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.actionTitle, { color: textColor }]}>{title}</Text>
+        <Text style={[styles.actionDesc, { color: descColor }]}>{desc}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function HotlinesBlock({
+  language,
+  title,
+  c,
+}: {
+  language: "ru" | "kz";
+  title: string;
+  c: ReturnType<typeof useThemeColors>;
+}) {
+  return (
+    <View style={styles.hotlinesSection}>
+      <View style={styles.hotlinesHeader}>
+        <Ionicons name="shield" size={16} color={c.danger} />
+        <Text style={[styles.hotlinesTitle, { color: c.text }]}>{title}</Text>
+      </View>
+      {hotlines.map((h) => (
+        <Pressable
+          key={h.number}
+          onPress={() => Linking.openURL(`tel:${h.number}`)}
+          style={({ pressed }) => [
+            styles.hotlineCard,
+            { backgroundColor: c.surface },
+            pressed && { opacity: 0.85, transform: [{ scale: 0.98 }] },
+          ]}
+        >
+          <View style={styles.hotlineIcon}>
+            <Ionicons name="call" size={20} color={c.danger} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.hotlineNumber, { color: c.danger }]}>
+              {h.number}
+            </Text>
+            <Text style={[styles.hotlineLabel, { color: c.textLight }]}>
+              {language === "kz" ? h.labelKz : h.labelRu}
+            </Text>
+          </View>
+        </Pressable>
+      ))}
     </View>
   );
 }
@@ -249,29 +317,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  breatheCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    marginTop: 20,
-    backgroundColor: "rgba(45,109,140,0.15)",
-    borderRadius: radius.lg,
-    padding: 20,
-  },
-  breatheIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.md,
-    backgroundColor: "rgba(45,109,140,0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  breatheTitle: { fontSize: 14, fontWeight: "700" },
-  breatheDesc: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-
   sectionTitle: {
     fontSize: 14,
     fontWeight: "700",
@@ -279,66 +324,47 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  levelList: { gap: 12 },
-  levelCard: {
+  actionList: { gap: 12 },
+  actionCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
-    borderWidth: 2,
     borderRadius: radius.lg,
-    padding: 16,
+    padding: 18,
   },
-  levelIcon: {
-    width: 44,
-    height: 44,
+  actionIcon: {
+    width: 48,
+    height: 48,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
   },
-  levelHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  levelBadge: {
-    borderRadius: radius.full,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  levelBadgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  levelName: { fontSize: 14, fontWeight: "700" },
-  levelDesc: { fontSize: 12, marginTop: 2 },
+  actionTitle: { fontSize: 15, fontWeight: "700" },
+  actionDesc: { fontSize: 12, marginTop: 2 },
 
-  warningBox: {
-    marginTop: 12,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: "rgba(179,59,59,0.3)",
-    backgroundColor: "#FEF2F2",
-    padding: 12,
+  sentCard: {
+    marginTop: 24,
+    borderRadius: radius.lg,
+    borderWidth: 2,
+    backgroundColor: "#F0FDF4",
+    padding: 24,
+    alignItems: "center",
   },
-  warningText: {
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: "500",
+  sentTitle: { fontSize: 18, fontWeight: "700", marginTop: 4 },
+  sentBody: {
+    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 20,
     textAlign: "center",
   },
-
-  sosBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    marginTop: 20,
+  doneBtn: {
+    marginTop: 24,
     borderRadius: radius.lg,
-    paddingVertical: 16,
-    ...shadow(2),
+    paddingVertical: 14,
+    alignItems: "center",
+    ...shadow(1),
   },
-  sosBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
+  doneText: { fontSize: 14, fontWeight: "700" },
 
   hotlinesSection: { marginTop: 24 },
   hotlinesHeader: {
@@ -365,10 +391,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  hotlineNumber: {
-    fontSize: 18,
-    fontWeight: "800",
-  },
+  hotlineNumber: { fontSize: 18, fontWeight: "800" },
   hotlineLabel: { fontSize: 12, marginTop: 2 },
 
   confidentialityNote: {

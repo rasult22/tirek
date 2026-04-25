@@ -255,7 +255,11 @@ export const sosEvents = pgTable("sos_events", {
   userId: text("user_id")
     .notNull()
     .references(() => users.id),
-  level: integer("level").notNull(), // severity level
+  // SOS Action: 'breathing' | 'hotline' | 'chat' | 'urgent' (issue #11).
+  // Nullable for legacy rows written under the old level-only schema.
+  type: text("type"),
+  // Legacy 1/2/3 severity. Nullable now: new code only writes `type`.
+  level: integer("level"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

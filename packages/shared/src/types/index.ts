@@ -292,10 +292,15 @@ export interface ContentQuote {
   author: string | null;
 }
 
+export type SOSAction = "breathing" | "hotline" | "chat" | "urgent";
+
 export interface SOSEvent {
   id: string;
   userId: string;
-  level: 1 | 2 | 3;
+  // SOS Action (issue #11). Null for legacy rows that only have `level`.
+  type: SOSAction | null;
+  // Legacy 1/2/3 severity. Null for events written under the new schema.
+  level: 1 | 2 | 3 | null;
   createdAt: string;
   resolvedAt: string | null;
   resolvedBy: string | null;

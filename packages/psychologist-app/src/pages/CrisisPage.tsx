@@ -29,6 +29,16 @@ import { toast } from "sonner";
 import type { SOSEvent } from "@tirek/shared";
 import { ErrorState } from "../components/ui/ErrorState.js";
 
+// Derive a 1|2|3 severity for display from either the new `type` column
+// (issue #11) or the legacy `level`. New `urgent` is treated as L3; legacy
+// rows fall back to whatever `level` they have, defaulting to 1.
+function alertSeverity(event: SOSEvent): 1 | 2 | 3 {
+  if (event.type === "urgent") return 3;
+  if (event.type === "chat") return 2;
+  if (event.type === "hotline" || event.type === "breathing") return 1;
+  return (event.level ?? 1) as 1 | 2 | 3;
+}
+
 interface ResolveState {
   notes: string;
   contactedStudent: boolean;
@@ -246,11 +256,11 @@ export function CrisisPage() {
                   key={alert.id}
                   className={clsx(
                     "glass-card rounded-2xl overflow-hidden",
-                    alert.level >= 3 && "animate-pulse-border !border-danger",
+                    alertSeverity(alert) >= 3 && "animate-pulse-border !border-danger",
                   )}
                 >
                   {/* Top: red accent bar for L3 */}
-                  {alert.level >= 3 && (
+                  {alertSeverity(alert) >= 3 && (
                     <div className="h-1 bg-gradient-to-r from-danger via-danger/70 to-danger" />
                   )}
 
@@ -281,12 +291,12 @@ export function CrisisPage() {
                       <span
                         className={clsx(
                           "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-xs font-extrabold",
-                          alert.level >= 3 && "bg-danger text-white",
-                          alert.level === 2 && "bg-warning text-white",
-                          alert.level <= 1 && "bg-yellow-400 text-white",
+                          alertSeverity(alert) >= 3 && "bg-danger text-white",
+                          alertSeverity(alert) === 2 && "bg-warning text-white",
+                          alertSeverity(alert) <= 1 && "bg-yellow-400 text-white",
                         )}
                       >
-                        {alert.level}
+                        {alertSeverity(alert)}
                       </span>
                     </div>
 
@@ -425,12 +435,12 @@ export function CrisisPage() {
                             <span
                               className={clsx(
                                 "px-1.5 py-0.5 text-[10px] font-bold rounded-md",
-                                event.level >= 3 && "bg-danger/10 text-danger",
-                                event.level === 2 && "bg-warning/10 text-warning",
-                                event.level <= 1 && "bg-yellow-400/10 text-yellow-600",
+                                alertSeverity(event) >= 3 && "bg-danger/10 text-danger",
+                                alertSeverity(event) === 2 && "bg-warning/10 text-warning",
+                                alertSeverity(event) <= 1 && "bg-yellow-400/10 text-yellow-600",
                               )}
                             >
-                              L{event.level}
+                              L{alertSeverity(event)}
                             </span>
                             <ChevronDown
                               size={14}
