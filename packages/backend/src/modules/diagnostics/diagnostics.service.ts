@@ -7,61 +7,19 @@ import {
 import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { diagnosticsRepository } from "./diagnostics.repository.js";
-import { productiveActionService } from "../productive-action/index.js";
 import { aiReportService } from "./ai-report.singleton.js";
-import { computeScore, type Severity } from "./test-scoring-engine.js";
-import { crisisSignalsModule } from "../crisis-signals/module.js";
-
-interface ScoringRule {
-  min: number;
-  max: number;
-  severity: Severity;
-  label?: string;
-  labelRu?: string;
-  labelKz?: string;
-  message?: string;
-  descriptionRu?: string;
-  descriptionKz?: string;
-}
-
-interface FlaggedRule {
-  questionIndex: number;
-  minAnswer: number;
-  reason: string;
-}
+import { testCompletionHandler } from "./test-completion.singleton.js";
+import {
+  NORMAL_ACTIONS,
+  SOFT_ESCALATION_ACTIONS,
+  type StudentCompletionResponse,
+} from "./test-completion.js";
 
 interface ScoringRules {
-  thresholds: ScoringRule[];
-  maxScore?: number;
   reverseItems?: number[];
   maxOptionValue?: number;
   minOptionValue?: number;
-  flaggedRules?: FlaggedRule[];
 }
-
-export interface StudentSuggestedAction {
-  type: "exercise" | "journal" | "chat" | "hotline";
-  textKey: string;
-  deeplink: string;
-}
-
-export interface StudentCompletionResponse {
-  completed: true;
-  sessionId: string;
-  requiresSupport: boolean;
-  suggestedActions: StudentSuggestedAction[];
-}
-
-const NORMAL_ACTIONS: StudentSuggestedAction[] = [
-  { type: "exercise", textKey: "completion.action.breathing", deeplink: "/exercises" },
-  { type: "journal", textKey: "completion.action.journal", deeplink: "/journal/new" },
-];
-
-const SOFT_ESCALATION_ACTIONS: StudentSuggestedAction[] = [
-  { type: "chat", textKey: "completion.action.chatPsychologist", deeplink: "/chat" },
-  { type: "hotline", textKey: "completion.action.hotline", deeplink: "tel:150" },
-  { type: "exercise", textKey: "completion.action.breathing", deeplink: "/exercises" },
-];
 
 export const diagnosticsService = {
   async getAvailableTests(userId: string) {
@@ -223,86 +181,7 @@ export const diagnosticsService = {
     userId: string,
     sessionId: string,
   ): Promise<StudentCompletionResponse> {
-    const session = await diagnosticsRepository.findSessionById(sessionId);
-    if (!session) {
-      throw new NotFoundError("Session not found");
-    }
-    if (session.userId !== userId) {
-      throw new ForbiddenError("Session does not belong to this user");
-    }
-    if (session.completedAt) {
-      throw new ValidationError("Session is already completed");
-    }
-
-    const test = await diagnosticsRepository.findTestById(session.testId);
-    if (!test) {
-      throw new NotFoundError("Test not found");
-    }
-
-    const answers = await diagnosticsRepository.findAnswersBySession(sessionId);
-    const scoringRules = test.scoringRules as ScoringRules | null;
-
-    const fallbackMaxOption = 4;
-    const computed = computeScore({
-      answers: answers.map((a) => ({
-        questionIndex: a.questionIndex,
-        answer: a.answer,
-      })),
-      scoringRules: {
-        thresholds: scoringRules?.thresholds ?? [],
-        reverseItems: scoringRules?.reverseItems ?? [],
-        maxScore: scoringRules?.maxScore ?? test.questionCount * fallbackMaxOption,
-        maxOptionValue: scoringRules?.maxOptionValue ?? fallbackMaxOption,
-        minOptionValue: scoringRules?.minOptionValue ?? 0,
-      },
-      questions: ((test.questions as Array<{ index?: number }>) ?? []).map(
-        (q, i) => ({ index: q.index ?? i }),
-      ),
-      flaggedRules: scoringRules?.flaggedRules ?? [],
-    });
-
-    const completed = await diagnosticsRepository.completeSession(sessionId, {
-      totalScore: computed.totalScore,
-      maxScore: computed.maxScore,
-      severity: computed.severity,
-      completedAt: new Date(),
-    });
-
-    const requiresSupport =
-      computed.severity === "severe" || computed.flaggedItems.length > 0;
-
-    if (requiresSupport) {
-      crisisSignalsModule
-        .report({
-          source: "test_session",
-          userId,
-          testSessionId: sessionId,
-          testSlug: test.slug,
-          testSeverity: "severe",
-          flaggedItems: computed.flaggedItems,
-        })
-        .catch((e) => {
-          console.error("[diagnostics] crisis routing failed", e);
-        });
-    }
-
-    productiveActionService
-      .recordProductiveAction(userId, "test")
-      .catch(() => {});
-
-    aiReportService.ensurePending(sessionId).catch((e) => {
-      console.error("[diagnostics] failed to ensure AI report row", e);
-    });
-    void aiReportService.generateReport(sessionId).catch((e) => {
-      console.error("[diagnostics] AI report generation failed", e);
-    });
-
-    return {
-      completed: true,
-      sessionId: completed!.id,
-      requiresSupport,
-      suggestedActions: requiresSupport ? SOFT_ESCALATION_ACTIONS : NORMAL_ACTIONS,
-    };
+    return testCompletionHandler.handle({ userId, sessionId });
   },
 
   async getSessionResult(userId: string, sessionId: string) {
