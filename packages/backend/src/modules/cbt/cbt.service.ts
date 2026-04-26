@@ -7,9 +7,7 @@ import {
 import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { cbtRepository } from "./cbt.repository.js";
-import { streaksService } from "../streaks/streaks.service.js";
-import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
-import { achievementsService } from "../achievements/achievements.service.js";
+import { productiveActionService } from "../productive-action/index.js";
 
 const VALID_TYPES = ["thought_diary", "joy_jar", "body_emotion_map"];
 
@@ -55,11 +53,8 @@ export const cbtService = {
       data: body.data,
     });
 
-    // Fire-and-forget gamification
-    streaksService.recordActivity(userId).catch(() => {});
-    virtualPlantService.addPoints(userId, 15).catch(() => {});
-    achievementsService
-      .checkAndAward(userId, { trigger: "exercise", exerciseType: "cbt" })
+    productiveActionService
+      .recordProductiveAction(userId, "cbt")
       .catch(() => {});
 
     return entry;

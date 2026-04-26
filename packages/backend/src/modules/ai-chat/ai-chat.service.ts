@@ -12,7 +12,7 @@ import { db } from "../../db/index.js";
 import { users, moodEntries, diagnosticSessions, diagnosticTests } from "../../db/schema.js";
 import { eq, desc, and, gte } from "drizzle-orm";
 import { buildStudentContextPure } from "./build-student-context.js";
-import { streaksService } from "../streaks/streaks.service.js";
+import { productiveActionService } from "../productive-action/index.js";
 
 const FALLBACK_RESPONSES: Record<string, string> = {
   ru: "Извини, у меня возникла техническая проблема. Пожалуйста, попробуй ещё раз через несколько секунд. Если тебе нужна срочная помощь — позвони на телефон доверия: 150.",
@@ -90,8 +90,10 @@ export const aiChatService = {
       content: body.content,
     });
 
-    // AI-Friend message — Productive Action; идемпотентен по Almaty Day внутри streaksService.
-    streaksService.recordActivity(userId).catch(() => {});
+    // AI-Friend message — Productive Action; идемпотентен по Almaty Day внутри координатора.
+    productiveActionService
+      .recordProductiveAction(userId, "ai_chat")
+      .catch(() => {});
 
     // Build student context for agent awareness
     const { context: studentContext } = await buildStudentContext(userId);
@@ -148,7 +150,9 @@ export const aiChatService = {
       content: body.content,
     });
 
-    streaksService.recordActivity(userId).catch(() => {});
+    productiveActionService
+      .recordProductiveAction(userId, "ai_chat")
+      .catch(() => {});
 
     let assistantContent: string;
     try {

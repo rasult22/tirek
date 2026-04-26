@@ -2,9 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ValidationError } from "../../shared/errors.js";
 import { moodRepository } from "./mood.repository.js";
 import { latestPerSlot, groupByAlmatyDay } from "./mood-slots.js";
-import { streaksService } from "../streaks/streaks.service.js";
-import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
-import { achievementsService } from "../achievements/achievements.service.js";
+import { productiveActionService } from "../productive-action/index.js";
 import { startOfDay, endOfDay } from "../../lib/almaty-day/almaty-day.js";
 import {
   computeInsights,
@@ -32,9 +30,6 @@ export const moodService = {
       throw new ValidationError("Mood must be an integer between 1 and 5");
     }
 
-    const existingToday = await moodRepository.findInAlmatyDay(userId);
-    const isFirstProductiveActionForToday = existingToday.length === 0;
-
     const entry = await moodRepository.create({
       id: uuidv4(),
       userId,
@@ -46,11 +41,9 @@ export const moodService = {
       factors: factors ?? null,
     });
 
-    if (isFirstProductiveActionForToday) {
-      streaksService.recordActivity(userId).catch(() => {});
-      virtualPlantService.addPoints(userId, 10).catch(() => {});
-      achievementsService.checkAndAward(userId, { trigger: "mood" }).catch(() => {});
-    }
+    productiveActionService
+      .recordProductiveAction(userId, "mood")
+      .catch(() => {});
 
     return entry;
   },

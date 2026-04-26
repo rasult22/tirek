@@ -4,9 +4,7 @@ import { NotFoundError } from "../../shared/errors.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { exercisesRepository } from "./exercises.repository.js";
-import { streaksService } from "../streaks/streaks.service.js";
-import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
-import { achievementsService } from "../achievements/achievements.service.js";
+import { productiveActionService } from "../productive-action/index.js";
 import { db } from "../../db/index.js";
 import { exerciseCompletions, diagnosticSessions, journalEntries } from "../../db/schema.js";
 
@@ -36,10 +34,9 @@ export const exercisesService = {
       durationSeconds: body.durationSeconds ?? null,
     });
 
-    // Record streak activity (fire-and-forget)
-    streaksService.recordActivity(userId).catch(() => {});
-    virtualPlantService.addPoints(userId, 15).catch(() => {});
-    achievementsService.checkAndAward(userId, { trigger: "exercise", exerciseType: exercise.type }).catch(() => {});
+    productiveActionService
+      .recordProductiveAction(userId, "exercise")
+      .catch(() => {});
 
     return completion;
   },

@@ -1,6 +1,5 @@
 import { virtualPlantRepository } from "./virtual-plant.repository.js";
-import { achievementsService } from "../achievements/achievements.service.js";
-import { computeStage, isSleeping, pointsToNextStage } from "../../lib/plant-growth/plant-growth.js";
+import { isSleeping, pointsToNextStage } from "../../lib/plant-growth/plant-growth.js";
 
 export const virtualPlantService = {
   async getPlant(userId: string) {
@@ -30,20 +29,6 @@ export const virtualPlantService = {
       nextStageThreshold: nextThreshold,
       createdAt: plant.createdAt.toISOString(),
     };
-  },
-
-  async addPoints(userId: string, points: number) {
-    const existing = await virtualPlantRepository.getByUserId(userId);
-    const currentPoints = existing?.growthPoints ?? 0;
-    const newPoints = currentPoints + points;
-    const newStage = computeStage(newPoints);
-
-    await virtualPlantRepository.upsert(userId, {
-      growthPoints: newPoints,
-      stage: newStage,
-      lastWateredAt: new Date(),
-    });
-    achievementsService.checkAndAward(userId, { trigger: "plant", plantStage: newStage }).catch(() => {});
   },
 
   async renamePlant(userId: string, name: string) {

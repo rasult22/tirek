@@ -29,7 +29,7 @@
 | **Day Slot** | Mood Check-in, сделанный **до 18:00 Asia/Almaty** | morning checkin, pre-evening |
 | **Evening Slot** | Mood Check-in, сделанный **после 18:00 Asia/Almaty** | night checkin, post-evening |
 | **Evening Prompt** | Пуш-уведомление в 20:00 Asia/Almaty, если в Evening Slot ещё нет записи | evening reminder, night push |
-| **Productive Action** | Любое действие Student'а, засчитывающееся в Streak: Mood Check-in, Exercise, Journal Entry, CBT Entry, Test Session, AI-Friend сообщение | activity, engagement |
+| **Productive Action** | Любое действие Student'а, засчитывающееся в Streak: Mood Check-in, Exercise, Journal Entry, CBT Entry, Test Session, AI-Friend сообщение. Все вызывающие сервисы делегируют последствия (streak/plant/achievements) единому **Productive Action Coordinator** (`packages/backend/src/modules/productive-action/`), который атомарно применяет их в одной транзакции и идемпотентен по Almaty Day | activity, engagement |
 | **Exercise** | Техника самопомощи (дыхание, заземление, ПМР, body scan, safe place, КПТ-практика) | activity, task, practice |
 | **Journal Entry** | Свободная текстовая запись Student'а в дневник по промпту или без | diary entry, note |
 | **CBT Entry** | Запись в одном из 4 когнитивно-поведенческих инструментов (Thought Diary, Circle of Control, STOP, Behavioral Experiment) | therapy record, КПТ-запись |
