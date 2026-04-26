@@ -8,53 +8,13 @@ import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { aiChatRepository } from "./ai-chat.repository.js";
 import { mastra } from "../../core/ai/mastra.js";
-import { db } from "../../db/index.js";
-import { users, moodEntries, diagnosticSessions, diagnosticTests } from "../../db/schema.js";
-import { eq, desc, and, gte } from "drizzle-orm";
-import { buildStudentContextPure } from "./build-student-context.js";
+import { studentContext } from "./student-context.index.js";
 import { productiveActionService } from "../productive-action/index.js";
 
 const FALLBACK_RESPONSES: Record<string, string> = {
   ru: "Извини, у меня возникла техническая проблема. Пожалуйста, попробуй ещё раз через несколько секунд. Если тебе нужна срочная помощь — позвони на телефон доверия: 150.",
   kz: "Кешір, техникалық ақау пайда болды. Бірнеше секундтан кейін қайталап көрші. Шұғыл көмек қажет болса — сенім телефонына хабарлас: 150.",
 };
-
-async function buildStudentContext(userId: string): Promise<{ context: string; language: string }> {
-  const [user] = await db
-    .select({ name: users.name, grade: users.grade, classLetter: users.classLetter, language: users.language })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  if (!user) return { context: "", language: "ru" };
-
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  const recentMoods = await db
-    .select({ mood: moodEntries.mood, stressLevel: moodEntries.stressLevel, sleepQuality: moodEntries.sleepQuality, createdAt: moodEntries.createdAt })
-    .from(moodEntries)
-    .where(and(eq(moodEntries.userId, userId), gte(moodEntries.createdAt, sevenDaysAgo)))
-    .orderBy(desc(moodEntries.createdAt))
-    .limit(7);
-
-  const recentTests = await db
-    .select({
-      testName: diagnosticTests.nameRu,
-      completedAt: diagnosticSessions.completedAt,
-    })
-    .from(diagnosticSessions)
-    .innerJoin(diagnosticTests, eq(diagnosticSessions.testId, diagnosticTests.id))
-    .where(and(eq(diagnosticSessions.userId, userId), gte(diagnosticSessions.startedAt, sevenDaysAgo)))
-    .orderBy(desc(diagnosticSessions.completedAt))
-    .limit(5);
-
-  return buildStudentContextPure({
-    user,
-    recentMoods,
-    recentTests,
-  });
-}
 
 export const aiChatService = {
   async createSession(userId: string) {
@@ -95,8 +55,8 @@ export const aiChatService = {
       .recordProductiveAction(userId, "ai_chat")
       .catch(() => {});
 
-    // Build student context for agent awareness
-    const { context: studentContext } = await buildStudentContext(userId);
+    // Build student context for agent awareness (cached per session).
+    const snapshot = await studentContext.getOrBuild(userId, sessionId);
 
     const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisis_signal.`;
 
@@ -105,7 +65,7 @@ export const aiChatService = {
     // Stream response via Mastra support agent — use fullStream to capture tool calls
     const streamResult = await agent.stream(
       [
-        { role: "system" as const, content: (studentContext || "") + toolContext },
+        { role: "system" as const, content: snapshot.prompt + toolContext },
         { role: "user" as const, content: body.content },
       ],
       {
@@ -155,13 +115,15 @@ export const aiChatService = {
       .catch(() => {});
 
     let assistantContent: string;
+    let snapshotLanguage = "ru";
     try {
-      const { context: studentContext, language } = await buildStudentContext(userId);
+      const snapshot = await studentContext.getOrBuild(userId, sessionId);
+      snapshotLanguage = snapshot.language;
       const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisis_signal.`;
       const agent = mastra.getAgent("supportAgent");
       const response = await agent.generate(
         [
-          { role: "system" as const, content: (studentContext || "") + toolContext },
+          { role: "system" as const, content: snapshot.prompt + toolContext },
           { role: "user" as const, content: body.content },
         ],
         {
@@ -171,8 +133,8 @@ export const aiChatService = {
       assistantContent = response.text;
     } catch (error) {
       console.error("Mastra agent error:", error);
-      const [userData] = await db.select({ language: users.language }).from(users).where(eq(users.id, userId)).limit(1);
-      assistantContent = FALLBACK_RESPONSES[userData?.language ?? "ru"] ?? FALLBACK_RESPONSES.ru;
+      assistantContent =
+        FALLBACK_RESPONSES[snapshotLanguage] ?? FALLBACK_RESPONSES.ru;
     }
 
     const assistantMessage = await aiChatRepository.createMessage({

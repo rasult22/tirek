@@ -20,6 +20,7 @@ import type {
   ProductiveActionDeps,
   Tx,
 } from "./productive-action.service.js";
+import { studentContext } from "../ai-chat/student-context.index.js";
 
 // Drizzle's tx handle exposes the same query API as `db`.
 type DrizzleTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -189,4 +190,8 @@ export const productiveActionDeps: ProductiveActionDeps = {
   },
 
   currentDay: () => currentDay(),
+
+  onAfterAction: (userId) => {
+    studentContext.invalidate(userId);
+  },
 };

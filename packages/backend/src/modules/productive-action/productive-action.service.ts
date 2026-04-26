@@ -70,6 +70,9 @@ export interface ProductiveActionDeps {
   awardAchievement: (tx: Tx, userId: string, slug: string) => Promise<boolean>;
   withTransaction: <T>(fn: (tx: Tx) => Promise<T>) => Promise<T>;
   currentDay: () => string;
+  // Called after a successful productive action so dependent caches (e.g. AI-Friend
+  // student-context) can refresh on the next message. Optional — tests omit it.
+  onAfterAction?: (userId: string, source: ProductiveActionSource) => void;
 }
 
 const POINTS_BY_SOURCE: Record<ProductiveActionSource, number> = {
@@ -106,6 +109,7 @@ export function createProductiveActionService(deps: ProductiveActionDeps) {
       const isFirstToday = existingStreak?.lastActiveDate !== today;
 
       if (!isFirstToday) {
+        deps.onAfterAction?.(userId, source);
         return {
           isFirstToday: false,
           streakUpdated: false,
@@ -176,6 +180,9 @@ export function createProductiveActionService(deps: ProductiveActionDeps) {
           plantPointsAdded: points,
           achievementsAwarded: awarded,
         };
+      }).then((result) => {
+        deps.onAfterAction?.(userId, source);
+        return result;
       });
     },
   };
