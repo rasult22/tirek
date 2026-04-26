@@ -33,8 +33,7 @@ export default function TestScreen() {
 
   const startMutation = useMutation({
     mutationFn: () => testsApi.start(testId!),
-    onSuccess: (session) =>
-      setSessionId((session as any).sessionId ?? session.id),
+    onSuccess: (session) => setSessionId(session.sessionId),
   });
 
   const answerMutation = useMutation({

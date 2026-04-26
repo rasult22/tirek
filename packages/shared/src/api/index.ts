@@ -40,6 +40,7 @@ import type {
   SOSEvent,
   StreakInfo,
   StudentOverview,
+  TestQuestion,
   User,
   UserAchievementItem,
 } from "../types/index.js";
@@ -98,6 +99,15 @@ export interface CompletionResult {
   sessionId: string;
   requiresSupport: boolean;
   suggestedActions: SuggestedAction[];
+}
+
+export interface TestSessionStart {
+  sessionId: string;
+  testId: string;
+  nameRu: string;
+  nameKz: string;
+  questions: TestQuestion[];
+  questionCount: number;
 }
 
 export interface SessionResult {
@@ -332,7 +342,7 @@ export interface TirekClient {
   tests: {
     list(): Promise<DiagnosticTest[]>;
     assigned(): Promise<AssignedTest[]>;
-    start(testId: string): Promise<DiagnosticSession>;
+    start(testId: string): Promise<TestSessionStart>;
     answer(
       sessionId: string,
       input: { questionIndex: number; answer: number },
