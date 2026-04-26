@@ -98,7 +98,7 @@ export default function DashboardScreen() {
   const quickLinks: QuickLink[] = [
     { route: "/(tabs)/exercises", icon: "leaf", labelKey: "exercises", iconBg: "rgba(14,165,233,0.1)", iconColor: "#0369A1" },
     { route: "/(screens)/journal", icon: "book", labelKey: "journal", iconBg: "rgba(245,158,11,0.1)", iconColor: "#92400E" },
-    { route: "/(screens)/mood-calendar", icon: "calendar", labelKey: "moodCalendar", iconBg: "rgba(59,130,246,0.1)", iconColor: "#1D4ED8" },
+    { route: "/(screens)/mood-history", icon: "calendar", labelKey: "moodHistory", iconBg: "rgba(59,130,246,0.1)", iconColor: "#1D4ED8" },
     { route: "/(screens)/achievements", icon: "trophy", labelKey: "achievements", iconBg: "rgba(234,179,8,0.1)", iconColor: "#92400E" },
     { route: "/(screens)/inspiration", icon: "sparkles", labelKey: "inspiration", iconBg: "rgba(168,85,247,0.1)", iconColor: "#7C3AED" },
   ];
@@ -106,7 +106,7 @@ export default function DashboardScreen() {
   const quickLinkLabels: Record<string, string> = {
     exercises: t.nav.exercises,
     journal: t.nav.journal,
-    moodCalendar: t.mood.calendar,
+    moodHistory: t.mood.lastSevenDays,
     achievements: t.achievements.title,
     inspiration: t.inspiration.title,
   };

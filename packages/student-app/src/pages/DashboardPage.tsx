@@ -77,7 +77,7 @@ export function DashboardPage() {
     { to: "/exercises", icon: Wind, label: t.nav.exercises, iconBg: "bg-sky-100", color: "text-sky-700", badge: 0 },
     { to: "/journal", icon: BookOpen, label: t.nav.journal, iconBg: "bg-amber-100", color: "text-amber-700", badge: 0 },
     { to: "/messages", icon: Mail, label: t.directChat.title, iconBg: "bg-green-100", color: "text-green-700", badge: 0 },
-    { to: "/mood/calendar", icon: CalendarDays, label: t.mood.calendar, iconBg: "bg-blue-100", color: "text-blue-700", badge: 0 },
+    { to: "/mood/history", icon: CalendarDays, label: t.mood.lastSevenDays, iconBg: "bg-blue-100", color: "text-blue-700", badge: 0 },
     { to: "/achievements", icon: Award, label: t.achievements.title, iconBg: "bg-yellow-100", color: "text-yellow-700", badge: 0 },
   ];
 

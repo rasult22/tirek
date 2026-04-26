@@ -13,7 +13,7 @@ import { RegisterPage } from "./pages/RegisterPage.js";
 import { OnboardingPage } from "./pages/OnboardingPage.js";
 import { DashboardPage } from "./pages/DashboardPage.js";
 import { MoodCheckInPage } from "./pages/MoodCheckInPage.js";
-import { MoodCalendarPage } from "./pages/MoodCalendarPage.js";
+import { MoodHistoryPage } from "./pages/MoodHistoryPage.js";
 import { ChatListPage } from "./pages/ChatListPage.js";
 import { ChatPage } from "./pages/ChatPage.js";
 import { TestsListPage } from "./pages/TestsListPage.js";
@@ -71,7 +71,7 @@ export function App() {
               }
             />
             <Route path="/mood" element={<ProtectedRoute><MoodCheckInPage /></ProtectedRoute>} />
-            <Route path="/mood/calendar" element={<ProtectedRoute><MoodCalendarPage /></ProtectedRoute>} />
+            <Route path="/mood/history" element={<ProtectedRoute><MoodHistoryPage /></ProtectedRoute>} />
             <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
             <Route path="/chat/history" element={<ProtectedRoute><ChatListPage /></ProtectedRoute>} />
             <Route path="/chat/:sessionId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />

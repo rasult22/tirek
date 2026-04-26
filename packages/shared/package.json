@@ -12,6 +12,7 @@
     "./language-sync": "./src/language-sync/index.ts",
     "./validators": "./src/validators/index.ts",
     "./evening-prompt": "./src/evening-prompt/index.ts",
-    "./api": "./src/api/index.ts"
+    "./api": "./src/api/index.ts",
+    "./mood-last-7-days": "./src/mood-last-7-days/index.ts"
   }
 }

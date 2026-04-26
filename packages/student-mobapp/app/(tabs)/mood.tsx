@@ -152,7 +152,7 @@ export default function MoodScreen() {
         <View style={styles.header}>
           <Text variant="h1">{t.mood.checkin}</Text>
           <Pressable
-            onPress={() => push("/(screens)/mood-calendar")}
+            onPress={() => push("/(screens)/mood-history")}
             style={({ pressed }) => [
               styles.calendarBtn,
               { backgroundColor: c.surface },

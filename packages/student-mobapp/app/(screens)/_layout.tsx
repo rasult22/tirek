@@ -18,7 +18,7 @@ export default function ScreensLayout() {
       <Stack.Screen name="journal" options={{ title: t.journal.title }} />
       <Stack.Screen name="plant" options={{ title: t.plant.title }} />
       <Stack.Screen name="achievements" options={{ title: t.achievements.title }} />
-      <Stack.Screen name="mood-calendar" options={{ title: t.mood.calendar }} />
+      <Stack.Screen name="mood-history" options={{ title: t.mood.lastSevenDays }} />
       <Stack.Screen name="chat-history" options={{ title: t.chat.history }} />
       <Stack.Screen name="chat/[sessionId]" options={{ headerShown: false }} />
       <Stack.Screen name="sos" options={{ title: "SOS" }} />
