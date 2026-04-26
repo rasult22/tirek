@@ -7,6 +7,9 @@ import {
   computeInsights,
   DEFAULT_TREND_THRESHOLD,
 } from "../../lib/mood-aggregator/mood-aggregator.js";
+import { insightsToToolOutput } from "../../lib/mood-aggregator/insights-to-tool-output.js";
+
+const LOOKBACK_DAYS = 14;
 
 export const moodAnalysisTool = createTool({
   id: "mood-analysis",
@@ -25,7 +28,7 @@ export const moodAnalysisTool = createTool({
     const { userId } = params;
 
     const now = new Date();
-    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const cutoff = new Date(now.getTime() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
 
     const entries = await db
       .select()
@@ -33,108 +36,36 @@ export const moodAnalysisTool = createTool({
       .where(
         and(
           eq(moodEntries.userId, userId),
-          gte(moodEntries.createdAt, fourteenDaysAgo),
+          gte(moodEntries.createdAt, cutoff),
         ),
       )
       .orderBy(desc(moodEntries.createdAt));
 
-    if (entries.length === 0) {
-      return {
-        averageMood: 0,
-        trend: "stable" as const,
-        recentEntries: 0,
-        insights: [
-          "За последние 14 дней нет записей настроения. Попробуй отмечать своё настроение каждый день — это поможет лучше понять себя.",
-        ],
-      };
-    }
-
-    const aggregated = computeInsights({
+    const insights = computeInsights({
       entries: entries.map((e) => ({
         mood: e.mood,
         factors: e.factors as string[] | null,
         createdAt: e.createdAt,
       })),
-      lookbackDays: 14,
+      lookbackDays: LOOKBACK_DAYS,
       trendThreshold: DEFAULT_TREND_THRESHOLD,
       now,
     });
 
-    // Среднее по всем 14 дням (а не только за последнюю неделю), как было до #18.
-    const totalMood = entries.reduce((sum, e) => sum + e.mood, 0);
-    const averageMood = Math.round((totalMood / entries.length) * 10) / 10;
-
-    // Tool отдаёт только три вида тренда; neutral не возникает (есть entries).
-    const trend: "improving" | "stable" | "declining" =
-      aggregated.trend === "neutral" ? "stable" : aggregated.trend;
-
-    const insights: string[] = [];
-
-    if (averageMood >= 4) {
-      insights.push(
-        "Твоё настроение за последние две недели в целом хорошее. Отлично! Продолжай делать то, что приносит тебе радость.",
-      );
-    } else if (averageMood >= 3) {
-      insights.push(
-        "Твоё настроение за последние две недели — среднее. Это нормально, но обрати внимание на то, что помогает тебе чувствовать себя лучше.",
-      );
-    } else if (averageMood >= 2) {
-      insights.push(
-        "Твоё настроение за последние две недели было пониженным. Подумай, что могло на это повлиять, и попробуй поговорить с кем-то, кому доверяешь.",
-      );
-    } else {
-      insights.push(
-        "Твоё настроение за последние две недели было низким. Пожалуйста, поговори с школьным психологом — он(а) может помочь.",
-      );
-    }
-
-    if (trend === "improving") {
-      insights.push(
-        "Хорошая новость — за последнюю неделю твоё настроение улучшилось по сравнению с предыдущей.",
-      );
-    } else if (trend === "declining") {
-      insights.push(
-        "За последнюю неделю твоё настроение немного снизилось. Это может быть временным, но стоит обратить внимание.",
-      );
-    }
-
-    // Analyze stress levels if available
     const stressEntries = entries.filter((e) => e.stressLevel != null);
-    if (stressEntries.length > 0) {
-      const avgStress =
-        stressEntries.reduce((sum, e) => sum + (e.stressLevel ?? 0), 0) /
-        stressEntries.length;
-      if (avgStress >= 4) {
-        insights.push(
-          "Уровень стресса довольно высокий. Попробуй дыхательные упражнения или поговори с кем-то о том, что тебя беспокоит.",
-        );
-      }
-    }
+    const avgStress =
+      stressEntries.length > 0
+        ? stressEntries.reduce((sum, e) => sum + (e.stressLevel ?? 0), 0) /
+          stressEntries.length
+        : null;
 
-    // Analyze sleep quality if available
     const sleepEntries = entries.filter((e) => e.sleepQuality != null);
-    if (sleepEntries.length > 0) {
-      const avgSleep =
-        sleepEntries.reduce((sum, e) => sum + (e.sleepQuality ?? 0), 0) /
-        sleepEntries.length;
-      if (avgSleep <= 2) {
-        insights.push(
-          "Качество сна было не очень хорошим. Сон сильно влияет на настроение — попробуй ложиться в одно время и убрать телефон за час до сна.",
-        );
-      }
-    }
+    const avgSleep =
+      sleepEntries.length > 0
+        ? sleepEntries.reduce((sum, e) => sum + (e.sleepQuality ?? 0), 0) /
+          sleepEntries.length
+        : null;
 
-    if (entries.length < 7) {
-      insights.push(
-        `За 14 дней ты сделал(а) ${entries.length} записей. Старайся отмечать настроение каждый день — так картина будет точнее.`,
-      );
-    }
-
-    return {
-      averageMood,
-      trend,
-      recentEntries: entries.length,
-      insights,
-    };
+    return insightsToToolOutput({ insights, avgStress, avgSleep });
   },
 });

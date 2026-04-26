@@ -19,8 +19,11 @@ export type MoodTrend = 'improving' | 'declining' | 'stable' | 'neutral';
 
 export type MoodInsights = {
   weeklyAverage: number | null;
+  previousWeekAverage: number | null;
+  overallAverage: number | null;
   trend: MoodTrend;
   topFactors: { factor: string; count: number }[];
+  entryCount: number;
 };
 
 export type ComputeInsightsInput = {
@@ -42,7 +45,14 @@ export function computeInsights(input: ComputeInsightsInput): MoodInsights {
   const { entries, lookbackDays, trendThreshold, now } = input;
 
   if (entries.length === 0) {
-    return { weeklyAverage: null, trend: 'neutral', topFactors: [] };
+    return {
+      weeklyAverage: null,
+      previousWeekAverage: null,
+      overallAverage: null,
+      trend: 'neutral',
+      topFactors: [],
+      entryCount: 0,
+    };
   }
 
   // Окно сравнения: последняя половина lookbackDays vs предыдущая половина.
@@ -57,6 +67,8 @@ export function computeInsights(input: ComputeInsightsInput): MoodInsights {
   );
 
   const weeklyAverage = recent.length > 0 ? round2(average(recent)) : null;
+  const previousWeekAverage =
+    previous.length > 0 ? round2(average(previous)) : null;
 
   let trend: MoodTrend = 'stable';
   if (recent.length > 0 && previous.length > 0) {
@@ -78,5 +90,14 @@ export function computeInsights(input: ComputeInsightsInput): MoodInsights {
     .slice(0, 5)
     .map(([factor, count]) => ({ factor, count }));
 
-  return { weeklyAverage, trend, topFactors };
+  const overallAverage = round2(average(entries));
+
+  return {
+    weeklyAverage,
+    previousWeekAverage,
+    overallAverage,
+    trend,
+    topFactors,
+    entryCount: entries.length,
+  };
 }

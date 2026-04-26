@@ -14,8 +14,11 @@ test('should_return_neutral_trend_and_null_average_for_empty_entries', () => {
   });
   assert.deepEqual(result, {
     weeklyAverage: null,
+    previousWeekAverage: null,
+    overallAverage: null,
     trend: 'neutral',
     topFactors: [],
+    entryCount: 0,
   });
 });
 
@@ -118,6 +121,97 @@ test('should_aggregate_top_factors_sorted_by_count_desc_and_limit_to_five', () =
   assert.equal(result.topFactors[0]?.factor, 'school');
   assert.equal(result.topFactors[0]?.count, 3);
   assert.equal(result.topFactors.length, 5);
+});
+
+test('should_return_previous_week_average_when_previous_week_has_data', () => {
+  const result = computeInsights({
+    entries: [
+      // Свежая неделя
+      { mood: 4, createdAt: daysAgo(0) },
+      { mood: 5, createdAt: daysAgo(2) },
+      // Прошлая неделя: avg = 3
+      { mood: 3, createdAt: daysAgo(8) },
+      { mood: 3, createdAt: daysAgo(10) },
+    ],
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now: NOW,
+  });
+  assert.equal(result.previousWeekAverage, 3);
+});
+
+test('should_return_null_previous_week_average_when_only_recent_week_has_data', () => {
+  const result = computeInsights({
+    entries: [
+      { mood: 4, createdAt: daysAgo(0) },
+      { mood: 5, createdAt: daysAgo(2) },
+    ],
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now: NOW,
+  });
+  assert.equal(result.previousWeekAverage, null);
+});
+
+test('should_return_null_previous_week_average_for_empty_entries', () => {
+  const result = computeInsights({
+    entries: [],
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now: NOW,
+  });
+  assert.equal(result.previousWeekAverage, null);
+});
+
+test('should_count_entries_within_lookback_window', () => {
+  const result = computeInsights({
+    entries: [
+      { mood: 4, createdAt: daysAgo(0) },
+      { mood: 5, createdAt: daysAgo(2) },
+      { mood: 3, createdAt: daysAgo(8) },
+      { mood: 3, createdAt: daysAgo(13) },
+    ],
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now: NOW,
+  });
+  assert.equal(result.entryCount, 4);
+});
+
+test('should_return_zero_entry_count_for_empty_entries', () => {
+  const result = computeInsights({
+    entries: [],
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now: NOW,
+  });
+  assert.equal(result.entryCount, 0);
+});
+
+test('should_compute_overall_average_across_full_lookback_window', () => {
+  // Среднее = (4+5+3+0)/4 = 3 → tool ожидает round1 = 3.0, но MoodInsights считаем round2.
+  const result = computeInsights({
+    entries: [
+      { mood: 4, createdAt: daysAgo(0) },
+      { mood: 5, createdAt: daysAgo(2) },
+      { mood: 3, createdAt: daysAgo(8) },
+      { mood: 0, createdAt: daysAgo(13) },
+    ],
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now: NOW,
+  });
+  assert.equal(result.overallAverage, 3);
+});
+
+test('should_return_null_overall_average_for_empty_entries', () => {
+  const result = computeInsights({
+    entries: [],
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now: NOW,
+  });
+  assert.equal(result.overallAverage, null);
 });
 
 test('should_ignore_null_or_missing_factors_field', () => {
