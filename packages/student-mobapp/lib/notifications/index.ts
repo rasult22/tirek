@@ -8,6 +8,8 @@ import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth-store";
 import { apiFetch } from "../api/client";
+import { useT } from "../hooks/useLanguage";
+import { scheduleEveningPrompt } from "./evening-prompt";
 
 // Configure how notifications are handled when app is in foreground
 Notifications.setNotificationHandler({
@@ -83,7 +85,8 @@ type NotificationType =
   | "direct_message"
   | "test_assigned"
   | "test_result"
-  | "crisis_alert";
+  | "crisis_alert"
+  | "evening_prompt";
 
 interface NotificationData {
   type?: NotificationType;
@@ -127,18 +130,25 @@ export function useNotifications() {
   const { push } = useRouter();
   const token = useAuthStore((s) => s.token);
   const queryClient = useQueryClient();
+  const t = useT();
   const receivedListener = useRef<EventSubscription>(null);
   const responseListener = useRef<EventSubscription>(null);
 
   useEffect(() => {
     if (!token) return;
 
-    // Register push token
+    // Register push token (для серверных пушей: чаты, тесты, кризис)
     registerForPushNotifications().then((pushToken) => {
       if (pushToken) {
         registerTokenOnServer(pushToken);
       }
     });
+
+    // Schedule local evening mood prompt (не зависит от push token)
+    scheduleEveningPrompt({
+      title: t.mood.eveningPromptTitle,
+      body: t.mood.eveningPromptBody,
+    }).catch(() => {});
 
     // Handle notification received (foreground) — refresh data
     receivedListener.current =
@@ -176,6 +186,9 @@ export function useNotifications() {
             break;
           case "crisis_alert":
             push("/(screens)/sos");
+            break;
+          case "evening_prompt":
+            push("/(tabs)/mood");
             break;
         }
       });

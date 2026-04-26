@@ -134,6 +134,8 @@ export const ru = {
     trendStable: "Стабильно",
     trendDown: "Снижается",
     saved: "Настроение сохранено!",
+    eveningPromptTitle: "Как ты сегодня?",
+    eveningPromptBody: "Сделай короткий чек-ин настроения перед сном",
     topFactors: "Частые факторы",
     weekdays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
     monthNames: [

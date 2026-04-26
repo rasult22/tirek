@@ -18,6 +18,7 @@ import { moodLevels } from "@tirek/shared";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { hapticSelection, hapticSuccess } from "../../lib/haptics";
+import { rescheduleEveningPromptAfterCheckIn } from "../../lib/notifications/evening-prompt";
 
 const FACTORS = [
   { key: "school", emoji: "\u{1F4DA}" },
@@ -114,9 +115,13 @@ export default function MoodScreen() {
         factors: factors.length > 0 ? factors : null,
         note: note.trim() || null,
       }),
-    onSuccess: () => {
+    onSuccess: (entry) => {
       hapticSuccess();
       setSaved(true);
+      rescheduleEveningPromptAfterCheckIn({
+        entryCreatedAt: new Date(entry.createdAt),
+        copy: { title: t.mood.eveningPromptTitle, body: t.mood.eveningPromptBody },
+      }).catch(() => {});
       setTimeout(() => navigate("/"), 1500);
     },
   });

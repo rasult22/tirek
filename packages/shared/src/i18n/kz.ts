@@ -136,6 +136,8 @@ export const kz: TranslationKeys = {
     trendStable: "Тұрақты",
     trendDown: "Төмендеуде",
     saved: "Көңіл-күй сақталды!",
+    eveningPromptTitle: "Бүгін қалайсың?",
+    eveningPromptBody: "Ұйықтар алдында көңіл-күйіңді белгіле",
     topFactors: "Жиі факторлар",
     weekdays: ["Дс", "Сс", "Ср", "Бс", "Жм", "Сб", "Жс"],
     monthNames: [
