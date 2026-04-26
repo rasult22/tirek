@@ -9,11 +9,13 @@ import { paginated } from "../../shared/pagination.js";
 import { diagnosticsRepository } from "./diagnostics.repository.js";
 import { achievementsService } from "../achievements/achievements.service.js";
 import { aiReportService } from "./ai-report.singleton.js";
+import { computeScore, type Severity } from "./test-scoring-engine.js";
+import { crisisSignalsService } from "../crisis-signals/crisis-signals.service.js";
 
 interface ScoringRule {
   min: number;
   max: number;
-  severity: string;
+  severity: Severity;
   label?: string;
   labelRu?: string;
   labelKz?: string;
@@ -22,13 +24,44 @@ interface ScoringRule {
   descriptionKz?: string;
 }
 
+interface FlaggedRule {
+  questionIndex: number;
+  minAnswer: number;
+  reason: string;
+}
+
 interface ScoringRules {
   thresholds: ScoringRule[];
   maxScore?: number;
   reverseItems?: number[];
   maxOptionValue?: number;
   minOptionValue?: number;
+  flaggedRules?: FlaggedRule[];
 }
+
+export interface StudentSuggestedAction {
+  type: "exercise" | "journal" | "chat" | "hotline";
+  textKey: string;
+  deeplink: string;
+}
+
+export interface StudentCompletionResponse {
+  completed: true;
+  sessionId: string;
+  requiresSupport: boolean;
+  suggestedActions: StudentSuggestedAction[];
+}
+
+const NORMAL_ACTIONS: StudentSuggestedAction[] = [
+  { type: "exercise", textKey: "completion.action.breathing", deeplink: "/exercises" },
+  { type: "journal", textKey: "completion.action.journal", deeplink: "/journal/new" },
+];
+
+const SOFT_ESCALATION_ACTIONS: StudentSuggestedAction[] = [
+  { type: "chat", textKey: "completion.action.chatPsychologist", deeplink: "/chat" },
+  { type: "hotline", textKey: "completion.action.hotline", deeplink: "tel:150" },
+  { type: "exercise", textKey: "completion.action.breathing", deeplink: "/exercises" },
+];
 
 export const diagnosticsService = {
   async getAvailableTests(userId: string) {
@@ -186,7 +219,10 @@ export const diagnosticsService = {
     return saved;
   },
 
-  async completeSession(userId: string, sessionId: string) {
+  async completeSession(
+    userId: string,
+    sessionId: string,
+  ): Promise<StudentCompletionResponse> {
     const session = await diagnosticsRepository.findSessionById(sessionId);
     if (!session) {
       throw new NotFoundError("Session not found");
@@ -204,37 +240,63 @@ export const diagnosticsService = {
     }
 
     const answers = await diagnosticsRepository.findAnswersBySession(sessionId);
-    const totalScore = answers.reduce((sum, a) => sum + (a.score ?? 0), 0);
-
     const scoringRules = test.scoringRules as ScoringRules | null;
-    const maxScore =
-      scoringRules?.maxScore ?? test.questionCount * 4; // fallback
 
-    // Determine severity from thresholds
-    let severity = "minimal";
-    let resultMessage: string | undefined;
-    if (scoringRules?.thresholds) {
-      for (const threshold of scoringRules.thresholds) {
-        if (totalScore >= threshold.min && totalScore <= threshold.max) {
-          severity = threshold.severity;
-          resultMessage = threshold.descriptionRu ?? threshold.message ?? threshold.labelRu ?? threshold.label;
-          break;
-        }
-      }
-    }
+    const fallbackMaxOption = 4;
+    const computed = computeScore({
+      answers: answers.map((a) => ({
+        questionIndex: a.questionIndex,
+        answer: a.answer,
+      })),
+      scoringRules: {
+        thresholds: scoringRules?.thresholds ?? [],
+        reverseItems: scoringRules?.reverseItems ?? [],
+        maxScore: scoringRules?.maxScore ?? test.questionCount * fallbackMaxOption,
+        maxOptionValue: scoringRules?.maxOptionValue ?? fallbackMaxOption,
+        minOptionValue: scoringRules?.minOptionValue ?? 0,
+      },
+      questions: ((test.questions as Array<{ index?: number }>) ?? []).map(
+        (q, i) => ({ index: q.index ?? i }),
+      ),
+      flaggedRules: scoringRules?.flaggedRules ?? [],
+    });
 
     const completed = await diagnosticsRepository.completeSession(sessionId, {
-      totalScore,
-      maxScore,
-      severity,
+      totalScore: computed.totalScore,
+      maxScore: computed.maxScore,
+      severity: computed.severity,
       completedAt: new Date(),
     });
 
+    const requiresSupport =
+      computed.severity === "severe" || computed.flaggedItems.length > 0;
+
+    if (requiresSupport) {
+      const flaggedReasons = computed.flaggedItems.map((f) => f.reason).join(", ");
+      const summary = flaggedReasons
+        ? `Test "${test.nameRu}": severity=${computed.severity}, flagged: ${flaggedReasons}`
+        : `Test "${test.nameRu}": severity=${computed.severity}`;
+      crisisSignalsService
+        .route({
+          type: "acute_crisis",
+          severity: "medium",
+          source: "diagnostics",
+          studentId: userId,
+          summary,
+          metadata: {
+            sessionId,
+            testSlug: test.slug,
+            severity: computed.severity,
+            flaggedItems: computed.flaggedItems,
+          },
+        })
+        .catch((e) => {
+          console.error("[diagnostics] crisis routing failed", e);
+        });
+    }
+
     achievementsService.checkAndAward(userId, { trigger: "test" }).catch(() => {});
 
-    // Fire-and-forget: generate the AI report in the background.
-    // Creating the pending row synchronously lets the psychologist UI poll
-    // right away even before the LLM response comes back.
     aiReportService.ensurePending(sessionId).catch((e) => {
       console.error("[diagnostics] failed to ensure AI report row", e);
     });
@@ -243,11 +305,10 @@ export const diagnosticsService = {
     });
 
     return {
+      completed: true,
       sessionId: completed!.id,
-      totalScore,
-      maxScore,
-      severity,
-      message: resultMessage ?? null,
+      requiresSupport,
+      suggestedActions: requiresSupport ? SOFT_ESCALATION_ACTIONS : NORMAL_ACTIONS,
     };
   },
 
@@ -261,30 +322,15 @@ export const diagnosticsService = {
     }
 
     const test = await diagnosticsRepository.findTestById(session.testId);
-    const scoringRules = test?.scoringRules as ScoringRules | null;
-
-    let resultMessage: string | undefined;
-    if (session.totalScore !== null && scoringRules?.thresholds) {
-      for (const threshold of scoringRules.thresholds) {
-        if (
-          session.totalScore >= threshold.min &&
-          session.totalScore <= threshold.max
-        ) {
-          resultMessage = threshold.descriptionRu ?? threshold.message ?? threshold.labelRu ?? threshold.label;
-          break;
-        }
-      }
-    }
+    const requiresSupport = session.severity === "severe";
 
     return {
       sessionId: session.id,
       testId: session.testId,
       testName: test?.nameRu ?? null,
-      totalScore: session.totalScore,
-      maxScore: session.maxScore,
-      severity: session.severity,
-      message: resultMessage ?? null,
       completedAt: session.completedAt,
+      requiresSupport,
+      suggestedActions: requiresSupport ? SOFT_ESCALATION_ACTIONS : NORMAL_ACTIONS,
     };
   },
 

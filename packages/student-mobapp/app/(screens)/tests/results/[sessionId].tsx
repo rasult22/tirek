@@ -1,4 +1,4 @@
-import { View, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Pressable, StyleSheet, ActivityIndicator, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
@@ -7,15 +7,29 @@ import { Text } from "../../../../components/ui";
 import { ErrorState } from "../../../../components/ErrorState";
 import { useT } from "../../../../lib/hooks/useLanguage";
 import { testsApi } from "../../../../lib/api/tests";
-import type { SessionResult } from "../../../../lib/api/tests";
+import type { SessionResult, SuggestedAction } from "../../../../lib/api/tests";
 import { useThemeColors, radius } from "../../../../lib/theme";
 import { shadow } from "../../../../lib/theme/shadows";
 
-export default function TestResultScreen() {
+const ACTION_ICON: Record<SuggestedAction["type"], keyof typeof Ionicons.glyphMap> = {
+  exercise: "leaf",
+  journal: "book",
+  chat: "chatbubble",
+  hotline: "call",
+};
+
+function deeplinkToRoute(deeplink: string): string {
+  if (deeplink.startsWith("/exercises")) return "/(tabs)/exercises";
+  if (deeplink.startsWith("/journal")) return "/(tabs)/journal";
+  if (deeplink.startsWith("/chat")) return "/(tabs)/chat";
+  return "/";
+}
+
+export default function CompletionScreen() {
   const t = useT();
   const c = useThemeColors();
   const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
-  const { replace } = useRouter();
+  const { replace, push } = useRouter();
 
   const {
     data: result,
@@ -23,7 +37,7 @@ export default function TestResultScreen() {
     isError,
     refetch,
   } = useQuery<SessionResult>({
-    queryKey: ["test", "result", sessionId],
+    queryKey: ["test", "completion", sessionId],
     queryFn: () => testsApi.session(sessionId!),
     enabled: !!sessionId,
   });
@@ -46,48 +60,90 @@ export default function TestResultScreen() {
     );
   }
 
+  const isSoft = result.requiresSupport;
+  const title = isSoft ? t.completion.titleSoft : t.completion.titleNormal;
+  const subtitle = isSoft ? t.completion.subtitleSoft : t.completion.subtitleNormal;
+  const cardBg = isSoft ? "#FFF7ED" : "#F0FDF4";
+  const cardBorder = isSoft ? "#FED7AA" : "#BBF7D0";
+  const emoji = isSoft ? "\u{1F917}" : "\u{1F331}";
+
+  const actionLabel = (type: SuggestedAction["type"]) => {
+    switch (type) {
+      case "exercise":
+        return t.completion.actionBreathing;
+      case "journal":
+        return t.completion.actionJournal;
+      case "chat":
+        return t.completion.actionChatPsychologist;
+      case "hotline":
+        return t.completion.actionHotline;
+    }
+  };
+
+  const onAction = (action: SuggestedAction) => {
+    if (action.deeplink.startsWith("tel:")) {
+      Linking.openURL(action.deeplink).catch(() => {});
+      return;
+    }
+    push(deeplinkToRoute(action.deeplink) as never);
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["bottom"]}>
       <View style={styles.content}>
-        <View style={[styles.resultCard, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }]}>
-          <Text style={styles.emoji}>{"\u2705"}</Text>
-          <Text variant="h1" style={styles.resultTitle}>
-            {t.tests.result}
+        <View style={[styles.resultCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+          <Text style={styles.emoji}>{emoji}</Text>
+          <Text variant="h1" style={[styles.resultTitle, { color: c.text }]}>
+            {title}
           </Text>
-          <Text style={[styles.thankYou, { color: c.text }]}>
-            {t.tests.resultThanks}
-          </Text>
-          <Text style={[styles.resultMessage, { color: c.textLight }]}>
-            {t.tests.resultSent}
-          </Text>
-          <Text style={[styles.resultTip, { color: c.primary }]}>
-            {t.tests.resultTip}
-          </Text>
+          <Text style={[styles.subtitle, { color: c.textLight }]}>{subtitle}</Text>
         </View>
 
         <View style={styles.actions}>
-          <Pressable
-            onPress={() => replace("/(tabs)/chat")}
-            style={({ pressed }) => [
-              styles.chatBtn,
-              { backgroundColor: c.primary },
-              pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
-            ]}
-          >
-            <Ionicons name="chatbubble" size={18} color="#FFFFFF" />
-            <Text style={styles.chatBtnText}>{t.chat.title}</Text>
-          </Pressable>
+          {result.suggestedActions.map((action) => {
+            const icon = ACTION_ICON[action.type];
+            const isPrimary = isSoft && (action.type === "chat" || action.type === "hotline");
+            return (
+              <Pressable
+                key={`${action.type}-${action.deeplink}`}
+                onPress={() => onAction(action)}
+                style={({ pressed }) => [
+                  styles.actionBtn,
+                  isPrimary
+                    ? { backgroundColor: c.primary }
+                    : { backgroundColor: c.surface },
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+                ]}
+              >
+                <Ionicons
+                  name={icon}
+                  size={18}
+                  color={isPrimary ? "#FFFFFF" : c.text}
+                />
+                <Text
+                  style={[
+                    styles.actionText,
+                    { color: isPrimary ? "#FFFFFF" : c.text },
+                  ]}
+                >
+                  {actionLabel(action.type)}
+                </Text>
+              </Pressable>
+            );
+          })}
 
           <Pressable
             onPress={() => replace("/")}
             style={({ pressed }) => [
-              styles.homeBtn,
+              styles.actionBtn,
               { backgroundColor: c.surface },
               pressed && { opacity: 0.85 },
             ]}
           >
             <Ionicons name="home" size={18} color={c.text} />
-            <Text style={[styles.homeBtnText, { color: c.text }]}>{t.nav.home}</Text>
+            <Text style={[styles.actionText, { color: c.text }]}>
+              {t.completion.backHome}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -117,37 +173,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emoji: { fontSize: 56 },
-  resultTitle: { marginTop: 12 },
-  thankYou: {
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  resultMessage: {
+  resultTitle: { marginTop: 12, textAlign: "center" },
+  subtitle: {
     marginTop: 12,
     fontSize: 14,
     lineHeight: 22,
     textAlign: "center",
   },
-  resultTip: {
-    marginTop: 16,
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-  },
   actions: { width: "100%", maxWidth: 360, marginTop: 24, gap: 12 },
-  chatBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    borderRadius: radius.lg,
-    paddingVertical: 14,
-    ...shadow(2),
-  },
-  chatBtnText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
-  homeBtn: {
+  actionBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -156,5 +190,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     ...shadow(1),
   },
-  homeBtnText: { fontSize: 14, fontWeight: "700" },
+  actionText: { fontSize: 14, fontWeight: "700" },
 });

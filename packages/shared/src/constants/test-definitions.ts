@@ -8,6 +8,12 @@ export interface ScoringRule {
   descriptionKz: string;
 }
 
+export interface FlaggedItemRule {
+  questionIndex: number;
+  minAnswer: number;
+  reason: string;
+}
+
 export const testDefinitions = {
   "phq-a": {
     slug: "phq-a",
@@ -76,6 +82,9 @@ export const testDefinitions = {
     ],
     reverseItems: [],
     maxScore: 27,
+    flaggedRules: [
+      { questionIndex: 8, minAnswer: 1, reason: "suicidal_ideation" },
+    ] as FlaggedItemRule[],
   },
   "gad-7": {
     slug: "gad-7",
@@ -272,6 +281,10 @@ export const testDefinitions = {
     ],
     reverseItems: [],
     maxScore: 82,
+    flaggedRules: [
+      { questionIndex: 29, minAnswer: 2, reason: "panic_attack" },
+      { questionIndex: 32, minAnswer: 2, reason: "panic_attack_school" },
+    ] as FlaggedItemRule[],
   },
 
   // ── STAI — Спилбергер-Ханин (State-Trait Anxiety Inventory) ────────
@@ -754,6 +767,9 @@ export const testDefinitions = {
     ],
     reverseItems: [],
     maxScore: 63,
+    flaggedRules: [
+      { questionIndex: 8, minAnswer: 1, reason: "suicidal_ideation" },
+    ] as FlaggedItemRule[],
   },
 
   // ── Тревожность Б. Филлипса (школьная тревожность) ─────────────────

@@ -37,7 +37,7 @@ export function TestPage() {
 
   const completeMutation = useMutation({
     mutationFn: () => testsApi.complete(sessionId!),
-    onSuccess: (session) => navigate(`/tests/results/${(session as any).sessionId ?? session.id}`, { replace: true }),
+    onSuccess: (result) => navigate(`/tests/results/${result.sessionId}`, { replace: true }),
     onError: () => toast.error(t.common.actionFailed),
   });
 

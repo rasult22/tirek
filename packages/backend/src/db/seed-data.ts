@@ -19,6 +19,7 @@ export async function seedDiagnosticTests() {
       maxScore: def.maxScore,
       maxOptionValue: Math.max(...optionValues),
       minOptionValue: Math.min(...optionValues),
+      flaggedRules: ("flaggedRules" in def ? def.flaggedRules : []) ?? [],
     };
     await db
       .insert(diagnosticTests)

@@ -44,11 +44,11 @@ export default function TestScreen() {
 
   const completeMutation = useMutation({
     mutationFn: () => testsApi.complete(sessionId!),
-    onSuccess: (session) =>
+    onSuccess: (result) =>
       replace({
         pathname: "/(screens)/tests/results/[sessionId]",
         params: {
-          sessionId: (session as any).sessionId ?? session.id,
+          sessionId: result.sessionId,
         },
       }),
   });

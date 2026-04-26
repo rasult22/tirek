@@ -18,7 +18,7 @@ import { ChatListPage } from "./pages/ChatListPage.js";
 import { ChatPage } from "./pages/ChatPage.js";
 import { TestsListPage } from "./pages/TestsListPage.js";
 import { TestPage } from "./pages/TestPage.js";
-import { TestResultPage } from "./pages/TestResultPage.js";
+import { CompletionScreen } from "./pages/CompletionScreen.js";
 import { ExercisesListPage } from "./pages/ExercisesListPage.js";
 import { BreathingPage } from "./pages/BreathingPage.js";
 import { ExerciseRouterPage } from "./pages/ExerciseRouterPage.js";
@@ -77,7 +77,7 @@ export function App() {
             <Route path="/chat/:sessionId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
             <Route path="/tests" element={<ProtectedRoute><TestsListPage /></ProtectedRoute>} />
             <Route path="/tests/:testId" element={<ProtectedRoute><TestPage /></ProtectedRoute>} />
-            <Route path="/tests/results/:sessionId" element={<ProtectedRoute><TestResultPage /></ProtectedRoute>} />
+            <Route path="/tests/results/:sessionId" element={<ProtectedRoute><CompletionScreen /></ProtectedRoute>} />
             <Route path="/exercises" element={<ProtectedRoute><ExercisesListPage /></ProtectedRoute>} />
             <Route path="/exercises/:id" element={<ProtectedRoute><ExerciseRouterPage /></ProtectedRoute>} />
             <Route path="/journal" element={<ProtectedRoute><JournalPage /></ProtectedRoute>} />

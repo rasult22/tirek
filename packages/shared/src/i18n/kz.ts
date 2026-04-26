@@ -200,6 +200,17 @@ export const kz: TranslationKeys = {
     sociometryName: "Социометрия (өзін-өзі бағалау)",
     sociometryDesc: "Ұжымдағы әлеуметтік байланыстар мен қабылдауды бағалау",
   },
+  completion: {
+    titleNormal: "Тестті аяқтағаныңа рахмет!",
+    subtitleNormal: "Нәтиже психологыңа жіберілді. Қаласаң — өзіңе қамқорлық жасауды жалғастыр.",
+    titleSoft: "Рахмет. Қазір қиын болса — біз жанындамыз",
+    subtitleSoft: "Нәтиже психологыңа жіберілді. Ал қазір — нені таңдайтыныңды шеш.",
+    actionBreathing: "Тыныс алу",
+    actionJournal: "Күнделікке жазу",
+    actionChatPsychologist: "Психологқа жазу",
+    actionHotline: "150-ге қоңырау",
+    backHome: "Басты бетке",
+  },
   exercises: {
     title: "Жаттығулар",
     squareBreathing: "Шаршы тыныс алу",

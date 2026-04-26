@@ -2,20 +2,30 @@ import { apiFetch } from "./client";
 import type {
   DiagnosticTest,
   DiagnosticSession,
-  Severity,
   PaginatedResponse,
   AssignedTest,
 } from "@tirek/shared";
+
+export interface SuggestedAction {
+  type: "exercise" | "journal" | "chat" | "hotline";
+  textKey: string;
+  deeplink: string;
+}
+
+export interface CompletionResult {
+  completed: true;
+  sessionId: string;
+  requiresSupport: boolean;
+  suggestedActions: SuggestedAction[];
+}
 
 export interface SessionResult {
   sessionId: string;
   testId: string;
   testName: string | null;
-  totalScore: number | null;
-  maxScore: number | null;
-  severity: Severity | null;
-  message: string | null;
   completedAt: string | null;
+  requiresSupport: boolean;
+  suggestedActions: SuggestedAction[];
 }
 
 export const testsApi = {
@@ -41,7 +51,7 @@ export const testsApi = {
     ),
 
   complete: (sessionId: string) =>
-    apiFetch<DiagnosticSession>(
+    apiFetch<CompletionResult>(
       `/student/tests/sessions/${sessionId}/complete`,
       { method: "POST" },
     ),

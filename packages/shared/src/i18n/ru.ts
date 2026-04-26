@@ -198,6 +198,17 @@ export const ru = {
     sociometryName: "Социометрия (самооценка)",
     sociometryDesc: "Оценка социальных связей и принятия в коллективе",
   },
+  completion: {
+    titleNormal: "Спасибо, что прошёл тест!",
+    subtitleNormal: "Результат отправлен твоему психологу. Если захочешь — продолжи заботиться о себе.",
+    titleSoft: "Спасибо. Если сейчас тяжело — мы рядом",
+    subtitleSoft: "Результат отправлен твоему психологу. А пока — выбери, что поможет прямо сейчас.",
+    actionBreathing: "Подышать",
+    actionJournal: "Записать в дневник",
+    actionChatPsychologist: "Написать психологу",
+    actionHotline: "Позвонить 150",
+    backHome: "На главную",
+  },
   exercises: {
     title: "Упражнения",
     squareBreathing: "Квадратное дыхание",
