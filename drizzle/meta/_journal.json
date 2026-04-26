@@ -64,6 +64,20 @@
       "when": 1778457600000,
       "tag": "0008_sos_events_type",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778716800000,
+      "tag": "0009_chat_sessions_mode_nullable",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778976000000,
+      "tag": "0010_crisis_signals_source_rename",
+      "breakpoints": true
     }
   ]
 }
