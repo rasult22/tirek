@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { crisisSignalsService } from "../crisis-signals/crisis-signals.service.js";
+import { crisisSignalsModule } from "../crisis-signals/module.js";
 import { sosRepository } from "./sos.repository.js";
 import { createSosTriggerService, type SosAction } from "./sos-trigger.js";
 
@@ -18,7 +18,13 @@ const triggerService = createSosTriggerService({
       createdAt: row.createdAt,
     };
   },
-  routeCrisisSignal: (input) => crisisSignalsService.route(input),
+  reportUrgentHelp: async (userId, sosEventId) => {
+    await crisisSignalsModule.report({
+      source: "urgent_help",
+      userId,
+      metadata: { sosEventId },
+    });
+  },
   now: () => new Date(),
   newId: () => uuidv4(),
 });

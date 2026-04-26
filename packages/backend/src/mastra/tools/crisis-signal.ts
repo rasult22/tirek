@@ -1,10 +1,6 @@
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
-import {
-  executeCrisisSignal,
-  type CrisisSignalToolInput,
-} from "./crisis-signal.execute.js";
-import { crisisSignalsService } from "../../modules/crisis-signals/crisis-signals.service.js";
+import { crisisSignalsModule } from "../../modules/crisis-signals/module.js";
 
 const crisisCategoryEnum = z.enum([
   "bullying",
@@ -50,15 +46,44 @@ type='concern' — ситуации, где психологу нужно зна
     feed: z.enum(["red", "yellow"]).optional(),
   }),
   execute: async (params) => {
-    const result = await executeCrisisSignal({
-      router: crisisSignalsService,
-      logger: {
-        error: (msg, ctx) => console.error(`[crisis_signal] ${msg}`, ctx ?? {}),
-      },
-      input: params as CrisisSignalToolInput,
-    });
-    return result.recorded
-      ? { recorded: true, signalId: result.signalId, feed: result.feed }
-      : { recorded: false };
+    const input = params as {
+      userId: string;
+      sessionId: string;
+      type: "acute_crisis" | "concern";
+      severity: "high" | "medium" | "low";
+      category?:
+        | "bullying"
+        | "family"
+        | "self_esteem"
+        | "academic"
+        | "social_isolation"
+        | "anxiety"
+        | "violence"
+        | "other";
+      markers: string[];
+      summary: string;
+    };
+    try {
+      const signal = await crisisSignalsModule.report({
+        source: "ai_friend",
+        userId: input.userId,
+        conversationId: input.sessionId,
+        type: input.type,
+        severity: input.severity,
+        summary: input.summary,
+        ...(input.category !== undefined ? { category: input.category } : {}),
+        markers: input.markers,
+      });
+      const feed: "red" | "yellow" =
+        signal.type === "acute_crisis" ? "red" : "yellow";
+      return { recorded: true, signalId: signal.id, feed };
+    } catch (error) {
+      console.error("[crisis_signal] route failed", {
+        studentId: input.userId,
+        sessionId: input.sessionId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return { recorded: false };
+    }
   },
 });

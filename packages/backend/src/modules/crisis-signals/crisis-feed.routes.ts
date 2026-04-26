@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { AppVariables } from "../../middleware/auth.js";
 import { handleError, ValidationError } from "../../shared/errors.js";
 import { parsePagination } from "../../shared/pagination.js";
-import { crisisFeedModule } from "./crisis-feed.module.js";
+import { crisisSignalsModule } from "./module.js";
 
 const crisisFeedPsychologistRouter = new Hono<{ Variables: AppVariables }>();
 
@@ -13,11 +13,7 @@ crisisFeedPsychologistRouter.get("/", async (c) => {
     if (feed !== "red" && feed !== "yellow") {
       throw new ValidationError("Query parameter 'feed' must be 'red' or 'yellow'");
     }
-    const psychologistId = c.var.user.userId;
-    const items =
-      feed === "red"
-        ? await crisisFeedModule.getRedFeed(psychologistId)
-        : await crisisFeedModule.getYellowFeed(psychologistId);
+    const items = await crisisSignalsModule.feedFor(c.var.user.userId, { feed });
     return c.json({ data: items });
   } catch (err) {
     return handleError(c, err);
@@ -28,7 +24,10 @@ crisisFeedPsychologistRouter.get("/", async (c) => {
 crisisFeedPsychologistRouter.get("/history", async (c) => {
   try {
     const pagination = parsePagination(c);
-    const result = await crisisFeedModule.getHistory(c.var.user.userId, pagination);
+    const result = await crisisSignalsModule.historyPaginated(
+      c.var.user.userId,
+      pagination,
+    );
     return c.json(result);
   } catch (err) {
     return handleError(c, err);
@@ -40,8 +39,8 @@ crisisFeedPsychologistRouter.get("/counts", async (c) => {
   try {
     const psychologistId = c.var.user.userId;
     const [red, yellow] = await Promise.all([
-      crisisFeedModule.countActiveRed(psychologistId),
-      crisisFeedModule.countActiveYellow(psychologistId),
+      crisisSignalsModule.countActiveRed(psychologistId),
+      crisisSignalsModule.countActiveYellow(psychologistId),
     ]);
     return c.json({ red, yellow });
   } catch (err) {
@@ -53,7 +52,7 @@ crisisFeedPsychologistRouter.get("/counts", async (c) => {
 crisisFeedPsychologistRouter.patch("/:id/resolve", async (c) => {
   try {
     const body = await c.req.json();
-    const result = await crisisFeedModule.resolve(
+    const result = await crisisSignalsModule.resolve(
       c.var.user.userId,
       c.req.param("id"),
       {

@@ -226,8 +226,9 @@ export const contentQuotes = pgTable("content_quotes", {
 });
 
 // ── 13a. crisis_signals ─────────────────────────────────────────────
-// Унифицированные кризисные сигналы от всех источников (SOS Urgent, AI-Friend, Diagnostics).
-// Маршрутизируются Crisis Signal Router'ом в Red Feed (acute_crisis) или Yellow Feed (concern).
+// Унифицированные кризисные сигналы от всех источников (Urgent Help, AI-Friend, Test Session).
+// Записываются и читаются через единый deep-модуль `modules/crisis-signals/index.ts`
+// (`report()` и `feedFor()`); распределяются на Red Feed (acute_crisis) и Yellow Feed (concern).
 export const crisisSignals = pgTable("crisis_signals", {
   id: text("id").primaryKey(),
   studentId: text("student_id")
@@ -235,7 +236,7 @@ export const crisisSignals = pgTable("crisis_signals", {
     .references(() => users.id),
   type: text("type").notNull(), // "acute_crisis" | "concern"
   severity: text("severity").notNull(), // "high" | "medium" | "low"
-  source: text("source").notNull(), // "sos_urgent" | "ai_friend" | "diagnostics"
+  source: text("source").notNull(), // "urgent_help" | "ai_friend" | "test_session"
   summary: text("summary").notNull(), // Signal Summary на языке Psychologist'а
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true })

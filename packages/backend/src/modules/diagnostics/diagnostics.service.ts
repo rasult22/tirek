@@ -10,7 +10,7 @@ import { diagnosticsRepository } from "./diagnostics.repository.js";
 import { productiveActionService } from "../productive-action/index.js";
 import { aiReportService } from "./ai-report.singleton.js";
 import { computeScore, type Severity } from "./test-scoring-engine.js";
-import { crisisSignalsService } from "../crisis-signals/crisis-signals.service.js";
+import { crisisSignalsModule } from "../crisis-signals/module.js";
 
 interface ScoringRule {
   min: number;
@@ -272,23 +272,14 @@ export const diagnosticsService = {
       computed.severity === "severe" || computed.flaggedItems.length > 0;
 
     if (requiresSupport) {
-      const flaggedReasons = computed.flaggedItems.map((f) => f.reason).join(", ");
-      const summary = flaggedReasons
-        ? `Test "${test.nameRu}": severity=${computed.severity}, flagged: ${flaggedReasons}`
-        : `Test "${test.nameRu}": severity=${computed.severity}`;
-      crisisSignalsService
-        .route({
-          type: "acute_crisis",
-          severity: "medium",
-          source: "diagnostics",
-          studentId: userId,
-          summary,
-          metadata: {
-            sessionId,
-            testSlug: test.slug,
-            severity: computed.severity,
-            flaggedItems: computed.flaggedItems,
-          },
+      crisisSignalsModule
+        .report({
+          source: "test_session",
+          userId,
+          testSessionId: sessionId,
+          testSlug: test.slug,
+          testSeverity: "severe",
+          flaggedItems: computed.flaggedItems,
         })
         .catch((e) => {
           console.error("[diagnostics] crisis routing failed", e);

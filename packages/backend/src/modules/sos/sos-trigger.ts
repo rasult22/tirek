@@ -1,8 +1,4 @@
 import { ValidationError } from '../../shared/errors.js';
-import type {
-  CrisisSignalRouterInput,
-  CrisisSignalRouterResult,
-} from '../crisis-signals/crisis-signal-router.js';
 
 export type SosAction = 'breathing' | 'hotline' | 'chat' | 'urgent';
 
@@ -17,7 +13,7 @@ export type PersistedSosEvent = {
 
 export type SosTriggerDeps = {
   saveEvent: (event: PersistedSosEvent) => Promise<PersistedSosEvent>;
-  routeCrisisSignal: (input: CrisisSignalRouterInput) => Promise<CrisisSignalRouterResult>;
+  reportUrgentHelp: (userId: string, sosEventId: string) => Promise<void>;
   now: () => Date;
   newId: () => string;
 };
@@ -37,13 +33,7 @@ export function createSosTriggerService(deps: SosTriggerDeps) {
         createdAt: deps.now(),
       });
       if (body.action === 'urgent') {
-        await deps.routeCrisisSignal({
-          type: 'acute_crisis',
-          severity: 'high',
-          source: 'sos_urgent',
-          studentId: userId,
-          summary: 'Ученик нажал «Мне срочно плохо»',
-        });
+        await deps.reportUrgentHelp(userId, event.id);
       }
       return event;
     },
