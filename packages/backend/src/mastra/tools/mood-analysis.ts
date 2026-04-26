@@ -3,6 +3,10 @@ import { z } from "zod";
 import { db } from "../../db/index.js";
 import { moodEntries } from "../../db/schema.js";
 import { eq, desc, gte, and } from "drizzle-orm";
+import {
+  computeInsights,
+  DEFAULT_TREND_THRESHOLD,
+} from "../../lib/mood-aggregator/mood-aggregator.js";
 
 export const moodAnalysisTool = createTool({
   id: "mood-analysis",
@@ -20,8 +24,8 @@ export const moodAnalysisTool = createTool({
   execute: async (params) => {
     const { userId } = params;
 
-    const fourteenDaysAgo = new Date();
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const now = new Date();
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
     const entries = await db
       .select()
@@ -45,38 +49,25 @@ export const moodAnalysisTool = createTool({
       };
     }
 
-    // Calculate overall average mood
+    const aggregated = computeInsights({
+      entries: entries.map((e) => ({
+        mood: e.mood,
+        factors: e.factors as string[] | null,
+        createdAt: e.createdAt,
+      })),
+      lookbackDays: 14,
+      trendThreshold: DEFAULT_TREND_THRESHOLD,
+      now,
+    });
+
+    // Среднее по всем 14 дням (а не только за последнюю неделю), как было до #18.
     const totalMood = entries.reduce((sum, e) => sum + e.mood, 0);
     const averageMood = Math.round((totalMood / entries.length) * 10) / 10;
 
-    // Split into last 7 days and previous 7 days for trend
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // Tool отдаёт только три вида тренда; neutral не возникает (есть entries).
+    const trend: "improving" | "stable" | "declining" =
+      aggregated.trend === "neutral" ? "stable" : aggregated.trend;
 
-    const recentWeek = entries.filter(
-      (e) => new Date(e.createdAt) >= sevenDaysAgo,
-    );
-    const previousWeek = entries.filter(
-      (e) => new Date(e.createdAt) < sevenDaysAgo,
-    );
-
-    let trend: "improving" | "stable" | "declining" = "stable";
-
-    if (recentWeek.length > 0 && previousWeek.length > 0) {
-      const recentAvg =
-        recentWeek.reduce((sum, e) => sum + e.mood, 0) / recentWeek.length;
-      const previousAvg =
-        previousWeek.reduce((sum, e) => sum + e.mood, 0) / previousWeek.length;
-      const diff = recentAvg - previousAvg;
-
-      if (diff >= 0.5) {
-        trend = "improving";
-      } else if (diff <= -0.5) {
-        trend = "declining";
-      }
-    }
-
-    // Generate insights
     const insights: string[] = [];
 
     if (averageMood >= 4) {

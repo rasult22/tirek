@@ -1,49 +1,31 @@
 import { virtualPlantRepository } from "./virtual-plant.repository.js";
 import { achievementsService } from "../achievements/achievements.service.js";
-
-const STAGE_THRESHOLDS = [0, 50, 150, 300] as const;
-
-function computeStage(points: number): 1 | 2 | 3 | 4 {
-  if (points >= 300) return 4;
-  if (points >= 150) return 3;
-  if (points >= 50) return 2;
-  return 1;
-}
-
-function isSleeping(lastWateredAt: Date | null): boolean {
-  if (!lastWateredAt) return false;
-  const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-  return Date.now() - lastWateredAt.getTime() > twoDaysMs;
-}
-
-function getNextStageThreshold(stage: 1 | 2 | 3 | 4): number {
-  if (stage >= 4) return STAGE_THRESHOLDS[3];
-  return STAGE_THRESHOLDS[stage as 1 | 2 | 3];
-}
+import { computeStage, isSleeping, pointsToNextStage } from "../../lib/plant-growth/plant-growth.js";
 
 export const virtualPlantService = {
   async getPlant(userId: string) {
     const plant = await virtualPlantRepository.getByUserId(userId);
     if (!plant) {
+      const initialNextThreshold = pointsToNextStage(0);
       return {
         growthPoints: 0,
         stage: 1 as const,
         name: null,
         lastWateredAt: null,
         isSleeping: false,
-        pointsToNextStage: STAGE_THRESHOLDS[1],
-        nextStageThreshold: STAGE_THRESHOLDS[1],
+        pointsToNextStage: initialNextThreshold,
+        nextStageThreshold: initialNextThreshold,
         createdAt: new Date().toISOString(),
       };
     }
     const stage = plant.stage as 1 | 2 | 3 | 4;
-    const nextThreshold = getNextStageThreshold(stage);
+    const nextThreshold = pointsToNextStage(plant.growthPoints);
     return {
       growthPoints: plant.growthPoints,
       stage,
       name: plant.name,
       lastWateredAt: plant.lastWateredAt?.toISOString() ?? null,
-      isSleeping: isSleeping(plant.lastWateredAt),
+      isSleeping: isSleeping({ lastWateredAt: plant.lastWateredAt, now: new Date() }),
       pointsToNextStage: stage >= 4 ? 0 : nextThreshold - plant.growthPoints,
       nextStageThreshold: nextThreshold,
       createdAt: plant.createdAt.toISOString(),

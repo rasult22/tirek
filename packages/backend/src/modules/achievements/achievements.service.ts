@@ -8,150 +8,88 @@ import {
   journalEntries,
   diagnosticSessions,
   diagnosticTests,
-  achievements,
 } from "../../db/schema.js";
 import { achievementsRepository } from "./achievements.repository.js";
 import { notificationsRepository } from "../notifications/notifications.repository.js";
+import {
+  getCandidateSlugs,
+  isConditionMet,
+  type AchievementContext,
+  type AchievementTrigger,
+} from "../../lib/achievement-checker/achievement-checker.js";
 
-// ── Achievement context type ────────────────────────────────────────
-export interface AchievementContext {
-  trigger: "mood" | "exercise" | "journal" | "test" | "streak" | "plant";
+export interface AchievementCheckInput {
+  trigger: AchievementTrigger;
   exerciseType?: string;
   currentStreak?: number;
   plantStage?: number;
 }
 
-// ── Trigger → slugs mapping ──────��──────────────────────────────────
-const TRIGGER_SLUGS: Record<string, string[]> = {
-  mood: ["first-mood", "mood-expert"],
-  exercise: ["first-exercise", "breathing-master", "exercise-master"],
-  journal: ["first-journal", "journal-keeper"],
-  test: ["first-test", "test-explorer", "all-tests"],
-  streak: ["streak-3", "streak-7", "streak-30"],
-  plant: ["plant-sprout", "plant-tree", "plant-bloom"],
-};
-
-// ── Condition checkers ──────────────────────────────────────────────
-async function checkCondition(
+// Собирает counts из БД для всех slugs данного trigger.
+// Делает только нужные запросы — каждый slug редко требует все счётчики.
+async function buildContext(
   userId: string,
-  slug: string,
-  ctx: AchievementContext,
-): Promise<boolean> {
-  switch (slug) {
-    case "first-mood": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(moodEntries)
-        .where(eq(moodEntries.userId, userId));
-      return Number(r?.value ?? 0) >= 1;
-    }
-    case "first-exercise": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(exerciseCompletions)
-        .where(eq(exerciseCompletions.userId, userId));
-      return Number(r?.value ?? 0) >= 1;
-    }
-    case "first-journal": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(journalEntries)
-        .where(eq(journalEntries.userId, userId));
-      return Number(r?.value ?? 0) >= 1;
-    }
-    case "first-test": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(diagnosticSessions)
-        .where(
-          and(
-            eq(diagnosticSessions.userId, userId),
-            isNotNull(diagnosticSessions.completedAt),
-          ),
-        );
-      return Number(r?.value ?? 0) >= 1;
-    }
-    case "streak-3":
-      return (ctx.currentStreak ?? 0) >= 3;
-    case "streak-7":
-      return (ctx.currentStreak ?? 0) >= 7;
-    case "streak-30":
-      return (ctx.currentStreak ?? 0) >= 30;
-    case "breathing-master": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(exerciseCompletions)
-        .innerJoin(exercises, eq(exercises.id, exerciseCompletions.exerciseId))
-        .where(
-          and(
-            eq(exerciseCompletions.userId, userId),
-            eq(exercises.type, "breathing"),
-          ),
-        );
-      return Number(r?.value ?? 0) >= 10;
-    }
-    case "exercise-master": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(exerciseCompletions)
-        .where(eq(exerciseCompletions.userId, userId));
-      return Number(r?.value ?? 0) >= 25;
-    }
-    case "mood-expert": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(moodEntries)
-        .where(eq(moodEntries.userId, userId));
-      return Number(r?.value ?? 0) >= 30;
-    }
-    case "journal-keeper": {
-      const [r] = await db
-        .select({ value: dbCount() })
-        .from(journalEntries)
-        .where(eq(journalEntries.userId, userId));
-      return Number(r?.value ?? 0) >= 15;
-    }
-    case "test-explorer": {
-      const [r] = await db
-        .select({ value: sql<number>`count(distinct ${diagnosticSessions.testId})` })
-        .from(diagnosticSessions)
-        .where(
-          and(
-            eq(diagnosticSessions.userId, userId),
-            isNotNull(diagnosticSessions.completedAt),
-          ),
-        );
-      return Number(r?.value ?? 0) >= 3;
-    }
-    case "all-tests": {
-      const [totalTests] = await db
-        .select({ value: dbCount() })
-        .from(diagnosticTests);
-      const total = Number(totalTests?.value ?? 0);
-      if (total === 0) return false;
-      const [completed] = await db
-        .select({ value: sql<number>`count(distinct ${diagnosticSessions.testId})` })
-        .from(diagnosticSessions)
-        .where(
-          and(
-            eq(diagnosticSessions.userId, userId),
-            isNotNull(diagnosticSessions.completedAt),
-          ),
-        );
-      return Number(completed?.value ?? 0) >= total;
-    }
-    case "plant-sprout":
-      return (ctx.plantStage ?? 0) >= 2;
-    case "plant-tree":
-      return (ctx.plantStage ?? 0) >= 3;
-    case "plant-bloom":
-      return (ctx.plantStage ?? 0) >= 4;
-    default:
-      return false;
-  }
+  input: AchievementCheckInput,
+): Promise<AchievementContext> {
+  const [
+    moodRow,
+    exerciseRow,
+    breathingRow,
+    journalRow,
+    completedSessionsRow,
+    distinctTestsRow,
+    totalTestsRow,
+  ] = await Promise.all([
+    db.select({ value: dbCount() }).from(moodEntries).where(eq(moodEntries.userId, userId)),
+    db
+      .select({ value: dbCount() })
+      .from(exerciseCompletions)
+      .where(eq(exerciseCompletions.userId, userId)),
+    db
+      .select({ value: dbCount() })
+      .from(exerciseCompletions)
+      .innerJoin(exercises, eq(exercises.id, exerciseCompletions.exerciseId))
+      .where(
+        and(eq(exerciseCompletions.userId, userId), eq(exercises.type, "breathing")),
+      ),
+    db
+      .select({ value: dbCount() })
+      .from(journalEntries)
+      .where(eq(journalEntries.userId, userId)),
+    db
+      .select({ value: dbCount() })
+      .from(diagnosticSessions)
+      .where(
+        and(
+          eq(diagnosticSessions.userId, userId),
+          isNotNull(diagnosticSessions.completedAt),
+        ),
+      ),
+    db
+      .select({ value: sql<number>`count(distinct ${diagnosticSessions.testId})` })
+      .from(diagnosticSessions)
+      .where(
+        and(
+          eq(diagnosticSessions.userId, userId),
+          isNotNull(diagnosticSessions.completedAt),
+        ),
+      ),
+    db.select({ value: dbCount() }).from(diagnosticTests),
+  ]);
+
+  return {
+    moodCount: Number(moodRow[0]?.value ?? 0),
+    exerciseCount: Number(exerciseRow[0]?.value ?? 0),
+    breathingExerciseCount: Number(breathingRow[0]?.value ?? 0),
+    journalCount: Number(journalRow[0]?.value ?? 0),
+    completedTestSessionsCount: Number(completedSessionsRow[0]?.value ?? 0),
+    distinctCompletedTestsCount: Number(distinctTestsRow[0]?.value ?? 0),
+    totalTestsCount: Number(totalTestsRow[0]?.value ?? 0),
+    currentStreak: input.currentStreak ?? 0,
+    plantStage: ((input.plantStage ?? 1) as 1 | 2 | 3 | 4),
+  };
 }
 
-// ── Service ───────────��─────────────────────��───────────────────────
 export const achievementsService = {
   async getUserAchievements(userId: string) {
     const rows = await achievementsRepository.findUserAchievements(userId);
@@ -210,8 +148,11 @@ export const achievementsService = {
     };
   },
 
-  async checkAndAward(userId: string, ctx: AchievementContext) {
-    const slugsToCheck = TRIGGER_SLUGS[ctx.trigger] ?? [];
+  async checkAndAward(userId: string, input: AchievementCheckInput) {
+    const slugsToCheck = getCandidateSlugs(input.trigger);
+    if (slugsToCheck.length === 0) return;
+
+    const ctx = await buildContext(userId, input);
 
     for (const slug of slugsToCheck) {
       const achievement = await achievementsRepository.findBySlug(slug);
@@ -223,8 +164,7 @@ export const achievementsService = {
       );
       if (already) continue;
 
-      const met = await checkCondition(userId, slug, ctx);
-      if (!met) continue;
+      if (!isConditionMet(slug, ctx)) continue;
 
       const rows = await achievementsRepository.award(
         uuidv4(),
