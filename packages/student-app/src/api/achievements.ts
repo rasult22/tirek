@@ -1,14 +1,3 @@
-import { apiFetch } from "./client.js";
-import type { UserAchievementItem, AchievementsSummary } from "@tirek/shared";
+import { tirekClient } from "./client.js";
 
-export const achievementsApi = {
-  getAll: () =>
-    apiFetch<{
-      achievements: UserAchievementItem[];
-      earnedCount: number;
-      totalCount: number;
-    }>("/student/achievements"),
-
-  getSummary: () =>
-    apiFetch<AchievementsSummary>("/student/achievements/summary"),
-};
+export const achievementsApi = tirekClient.achievements;

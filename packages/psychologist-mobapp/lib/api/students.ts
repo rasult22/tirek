@@ -1,48 +1,14 @@
-import { apiFetch } from "./client";
+import { tirekClient } from "./client";
 import type {
-  StudentOverview,
-  User,
-  MoodEntry,
-  DiagnosticSession,
-  PaginatedResponse,
-} from "@tirek/shared";
+  StudentsListFilters as StudentsFilters,
+  StudentDetail,
+} from "@tirek/shared/api";
 
-export interface StudentsFilters {
-  search?: string;
-  grade?: number;
-  classLetter?: string;
-  status?: string;
-}
-
-export interface StudentDetail {
-  student: User;
-  status: "normal" | "attention" | "crisis";
-  moodHistory: MoodEntry[];
-  testResults: (DiagnosticSession & {
-    testSlug?: string;
-    testName?: string;
-  })[];
-}
+export type { StudentsFilters, StudentDetail };
 
 export const studentsApi = {
-  getAll: (filters?: StudentsFilters) => {
-    const params = new URLSearchParams();
-    if (filters?.search) params.set("search", filters.search);
-    if (filters?.grade) params.set("grade", String(filters.grade));
-    if (filters?.classLetter) params.set("classLetter", filters.classLetter);
-    if (filters?.status) params.set("status", filters.status);
-    params.set("limit", "100");
-    const qs = params.toString();
-    return apiFetch<PaginatedResponse<StudentOverview>>(
-      `/psychologist/students${qs ? `?${qs}` : ""}`,
-    );
-  },
-
-  getOne: (id: string) =>
-    apiFetch<StudentDetail>(`/psychologist/students/${id}`),
-
-  detach: (id: string) =>
-    apiFetch<{ success: boolean }>(`/psychologist/students/${id}`, {
-      method: "DELETE",
-    }),
+  getAll: (filters?: StudentsFilters) =>
+    tirekClient.psychologist.students.list(filters),
+  getOne: (id: string) => tirekClient.psychologist.students.get(id),
+  detach: (id: string) => tirekClient.psychologist.students.detach(id),
 };

@@ -1,16 +1,7 @@
-import { apiFetch } from "./client.js";
-import type { Notification, PaginatedResponse } from "@tirek/shared";
+import { tirekClient } from "./client.js";
 
-export function getNotifications() {
-  return apiFetch<PaginatedResponse<Notification>>("/notifications");
-}
+export const getNotifications = () => tirekClient.notifications.list();
 
-export function getUnreadCount() {
-  return apiFetch<{ count: number }>("/notifications/count");
-}
+export const getUnreadCount = () => tirekClient.notifications.unreadCount();
 
-export function markRead(id: string) {
-  return apiFetch<Notification>(`/notifications/${id}/read`, {
-    method: "PATCH",
-  });
-}
+export const markRead = (id: string) => tirekClient.notifications.markRead(id);

@@ -1,10 +1,3 @@
-import { apiFetch } from "./client";
-import type { SOSAction, SOSEvent } from "@tirek/shared";
+import { tirekClient } from "./client";
 
-export const sosApi = {
-  trigger: (action: SOSAction) =>
-    apiFetch<SOSEvent>("/student/sos", {
-      method: "POST",
-      body: JSON.stringify({ action }),
-    }),
-};
+export const sosApi = tirekClient.sos;

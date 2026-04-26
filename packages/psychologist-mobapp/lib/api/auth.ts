@@ -1,28 +1,14 @@
-import { apiFetch } from "./client";
-import type { AuthResponse, User } from "@tirek/shared";
+import { tirekClient } from "./client";
 
 export const authApi = {
   login: (data: { email: string; password: string }) =>
-    apiFetch<AuthResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
+    tirekClient.auth.login(data),
   registerPsychologist: (data: {
     email: string;
     password: string;
     name: string;
-  }) =>
-    apiFetch<AuthResponse>("/auth/register-psychologist", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  me: () => apiFetch<User>("/auth/me"),
-
+  }) => tirekClient.auth.registerPsychologist(data),
+  me: () => tirekClient.auth.me(),
   updateProfile: (data: Record<string, unknown>) =>
-    apiFetch<User>("/auth/profile", {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    }),
+    tirekClient.auth.updateProfile(data),
 };

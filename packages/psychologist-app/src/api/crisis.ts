@@ -1,40 +1,15 @@
-import { apiFetch } from "./client.js";
-import type {
-  CrisisFeed,
-  CrisisFeedCounts,
-  CrisisSignal,
-  PaginatedResponse,
-} from "@tirek/shared";
+import { tirekClient } from "./client.js";
+import type { CrisisFeed } from "@tirek/shared";
+import type { CrisisResolveData as ResolveData } from "@tirek/shared/api";
 
-export function getFeed(feed: CrisisFeed) {
-  return apiFetch<{ data: CrisisSignal[] }>(
-    `/psychologist/crisis-signals?feed=${feed}`,
-  );
-}
+export type { ResolveData };
 
-export function getCounts() {
-  return apiFetch<CrisisFeedCounts>("/psychologist/crisis-signals/counts");
-}
+export const getFeed = (feed: CrisisFeed) =>
+  tirekClient.psychologist.crisis.getFeed(feed);
 
-export interface ResolveData {
-  notes?: string;
-  contactedStudent?: boolean;
-  contactedParent?: boolean;
-  documented?: boolean;
-}
+export const getCounts = () => tirekClient.psychologist.crisis.getCounts();
 
-export function resolve(id: string, data: ResolveData) {
-  return apiFetch<CrisisSignal>(
-    `/psychologist/crisis-signals/${id}/resolve`,
-    {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    },
-  );
-}
+export const resolve = (id: string, data: ResolveData) =>
+  tirekClient.psychologist.crisis.resolve(id, data);
 
-export function getHistory() {
-  return apiFetch<PaginatedResponse<CrisisSignal>>(
-    "/psychologist/crisis-signals/history",
-  );
-}
+export const getHistory = () => tirekClient.psychologist.crisis.getHistory();

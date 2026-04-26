@@ -1,11 +1,6 @@
-import { apiFetch } from "./client";
-import type { InactiveStudent } from "@tirek/shared";
+import { tirekClient } from "./client";
 
 export const inactivityApi = {
-  list: (threshold?: number) => {
-    const qs = threshold !== undefined ? `?threshold=${threshold}` : "";
-    return apiFetch<{ data: InactiveStudent[] }>(
-      `/psychologist/inactive-students${qs}`,
-    );
-  },
+  list: (threshold?: number) =>
+    tirekClient.psychologist.inactivity.list(threshold),
 };

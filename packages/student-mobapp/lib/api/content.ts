@@ -1,11 +1,3 @@
-import { apiFetch } from "./client";
-import type { ContentQuote, PaginatedResponse } from "@tirek/shared";
+import { tirekClient } from "./client";
 
-export const contentApi = {
-  quoteOfTheDay: () => apiFetch<ContentQuote>("/student/quote-of-the-day"),
-
-  quotes: (category?: string) =>
-    apiFetch<PaginatedResponse<ContentQuote>>(
-      `/student/quotes${category ? `?category=${category}&limit=50` : "?limit=50"}`,
-    ),
-};
+export const contentApi = tirekClient.content;

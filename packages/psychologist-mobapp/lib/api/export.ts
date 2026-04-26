@@ -3,9 +3,7 @@ import * as Sharing from "expo-sharing";
 import * as Linking from "expo-linking";
 import { Platform } from "react-native";
 import { useAuthStore } from "../store/auth-store";
-
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || "http://localhost:3001";
+import { tirekClient } from "./client";
 
 async function downloadAndShare(url: string, filename: string) {
   if (Platform.OS === "web") {
@@ -28,22 +26,25 @@ async function downloadAndShare(url: string, filename: string) {
   });
 }
 
+function withTokenQuery(url: string): string {
+  const token = useAuthStore.getState().token;
+  if (!token) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}token=${token}`;
+}
+
 export const exportApi = {
   studentCSV: (studentId: string) => {
-    const token = useAuthStore.getState().token;
-    const url = `${BASE_URL}/psychologist/export/students/${studentId}/csv?token=${token}`;
-    const filename = `student-${studentId}-${Date.now()}.csv`;
-    return downloadAndShare(url, filename);
+    const url = withTokenQuery(
+      tirekClient.psychologist.export.studentCsvUrl(studentId),
+    );
+    return downloadAndShare(url, `student-${studentId}-${Date.now()}.csv`);
   },
 
   classCSV: (grade?: number, classLetter?: string) => {
-    const token = useAuthStore.getState().token;
-    const params = new URLSearchParams();
-    if (token) params.set("token", token);
-    if (grade) params.set("grade", String(grade));
-    if (classLetter) params.set("classLetter", classLetter);
-    const url = `${BASE_URL}/psychologist/export/class/csv?${params}`;
-    const filename = `class-report-${Date.now()}.csv`;
-    return downloadAndShare(url, filename);
+    const url = withTokenQuery(
+      tirekClient.psychologist.export.classCsvUrl({ grade, classLetter }),
+    );
+    return downloadAndShare(url, `class-report-${Date.now()}.csv`);
   },
 };

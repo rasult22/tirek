@@ -1,23 +1,11 @@
-import { apiFetch } from "./client.js";
-import type {
-  OfficeHoursEntry,
-  OfficeHoursInterval,
-} from "@tirek/shared";
+import { tirekClient } from "./client.js";
+import type { OfficeHoursInterval } from "@tirek/shared";
 
 export const officeHoursApi = {
   getByDate: (psychologistId: string, date: string) =>
-    apiFetch<OfficeHoursEntry | null>(
-      `/office-hours/${psychologistId}?date=${date}`,
-    ),
-
+    tirekClient.officeHoursPublic.getByDate(psychologistId, date),
   getRange: (psychologistId: string, from: string, to: string) =>
-    apiFetch<OfficeHoursEntry[]>(
-      `/office-hours/${psychologistId}?from=${from}&to=${to}`,
-    ),
-
+    tirekClient.officeHoursPublic.getRange(psychologistId, from, to),
   upsert: (date: string, intervals: OfficeHoursInterval[], notes: string | null) =>
-    apiFetch<OfficeHoursEntry>("/psychologist/office-hours", {
-      method: "PUT",
-      body: JSON.stringify({ date, intervals, notes }),
-    }),
+    tirekClient.psychologist.officeHours.upsert(date, intervals, notes),
 };

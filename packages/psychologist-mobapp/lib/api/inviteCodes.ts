@@ -1,26 +1,11 @@
-import { apiFetch } from "./client";
-import type { InviteCode, PaginatedResponse } from "@tirek/shared";
+import { tirekClient } from "./client";
+import type { GenerateInviteCodesData as GenerateCodesData } from "@tirek/shared/api";
 
-export interface GenerateCodesData {
-  studentNames: string[];
-  grade?: number;
-  classLetter?: string;
-}
+export type { GenerateCodesData };
 
 export const inviteCodesApi = {
   generate: (data: GenerateCodesData) =>
-    apiFetch<InviteCode[]>("/psychologist/invite-codes", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  list: () =>
-    apiFetch<PaginatedResponse<InviteCode>>(
-      "/psychologist/invite-codes?limit=100",
-    ),
-
-  revoke: (id: string) =>
-    apiFetch<{ success: boolean }>(`/psychologist/invite-codes/${id}`, {
-      method: "DELETE",
-    }),
+    tirekClient.psychologist.inviteCodes.generate(data),
+  list: () => tirekClient.psychologist.inviteCodes.list(),
+  revoke: (id: string) => tirekClient.psychologist.inviteCodes.revoke(id),
 };

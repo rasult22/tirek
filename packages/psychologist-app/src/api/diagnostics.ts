@@ -1,83 +1,23 @@
-import { apiFetch } from "./client.js";
+import { tirekClient } from "./client.js";
 import type {
-  DiagnosticAiReport,
-  PaginatedResponse,
-  SessionAnswersResponse,
-  Severity,
-} from "@tirek/shared";
+  DiagnosticsFilters,
+  DiagnosticResultRow,
+  AssignTestData,
+} from "@tirek/shared/api";
 
-export interface DiagnosticsFilters {
-  testSlug?: string;
-  severity?: string;
-  grade?: number;
-  classLetter?: string;
-  from?: string;
-  to?: string;
-}
+export type { DiagnosticsFilters, DiagnosticResultRow, AssignTestData };
 
-export interface DiagnosticResultRow {
-  sessionId: string;
-  studentId: string;
-  testId: string;
-  testName: string | null;
-  completedAt: string | null;
-  totalScore: number | null;
-  maxScore: number | null;
-  severity: Severity | null;
-  studentName?: string;
-  studentGrade?: number;
-  studentClass?: string;
-  testSlug?: string;
-}
+export const getResults = (filters?: DiagnosticsFilters) =>
+  tirekClient.psychologist.diagnostics.getResults(filters);
 
-export function getResults(filters?: DiagnosticsFilters) {
-  const params = new URLSearchParams();
-  if (filters?.testSlug) params.set("testSlug", filters.testSlug);
-  if (filters?.severity) params.set("severity", filters.severity);
-  if (filters?.grade) params.set("grade", String(filters.grade));
-  if (filters?.classLetter) params.set("classLetter", filters.classLetter);
-  if (filters?.from) params.set("from", filters.from);
-  if (filters?.to) params.set("to", filters.to);
-  params.set("limit", "100");
-  const qs = params.toString();
-  return apiFetch<PaginatedResponse<DiagnosticResultRow>>(`/psychologist/diagnostics/results${qs ? `?${qs}` : ""}`);
-}
+export const assignTest = (data: AssignTestData) =>
+  tirekClient.psychologist.diagnostics.assignTest(data);
 
-export interface AssignTestData {
-  testSlug: string;
-  target: "student" | "class";
-  studentId?: string;
-  grade?: number;
-  classLetter?: string;
-  dueDate?: string;
-}
+export const getReport = (sessionId: string) =>
+  tirekClient.psychologist.diagnostics.getReport(sessionId);
 
-export function assignTest(data: AssignTestData) {
-  return apiFetch<{ success: boolean }>("/psychologist/diagnostics/assign", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
+export const regenerateReport = (sessionId: string) =>
+  tirekClient.psychologist.diagnostics.regenerateReport(sessionId);
 
-/**
- * Server returns the full report when ready, or a minimal { status: "pending" }
- * stub (with HTTP 202) while the LLM is still generating.
- */
-export function getReport(sessionId: string) {
-  return apiFetch<DiagnosticAiReport | { status: "pending" }>(
-    `/psychologist/diagnostics/sessions/${sessionId}/report`,
-  );
-}
-
-export function regenerateReport(sessionId: string) {
-  return apiFetch<{ status: "pending" }>(
-    `/psychologist/diagnostics/sessions/${sessionId}/report/regenerate`,
-    { method: "POST" },
-  );
-}
-
-export function getSessionAnswers(sessionId: string) {
-  return apiFetch<SessionAnswersResponse>(
-    `/psychologist/diagnostics/sessions/${sessionId}/answers`,
-  );
-}
+export const getSessionAnswers = (sessionId: string) =>
+  tirekClient.psychologist.diagnostics.getSessionAnswers(sessionId);

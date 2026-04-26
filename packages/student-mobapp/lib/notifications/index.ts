@@ -7,7 +7,7 @@ import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../store/auth-store";
-import { apiFetch } from "../api/client";
+import { tirekClient } from "../api/client";
 import { useT } from "../hooks/useLanguage";
 import { scheduleEveningPrompt } from "./evening-prompt";
 
@@ -69,12 +69,9 @@ export async function registerForPushNotifications(): Promise<string | undefined
  */
 async function registerTokenOnServer(pushToken: string) {
   try {
-    await apiFetch("/student/push-token", {
-      method: "POST",
-      body: JSON.stringify({
-        token: pushToken,
-        platform: Platform.OS,
-      }),
+    await tirekClient.pushToken.register({
+      token: pushToken,
+      platform: Platform.OS,
     });
   } catch {
     // Non-critical — token registration can retry later

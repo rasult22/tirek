@@ -1,7 +1,3 @@
-import { apiFetch } from "./client";
-import type { OfficeHoursInfoBlock } from "@tirek/shared";
+import { tirekClient } from "./client";
 
-export const officeHoursApi = {
-  infoBlock: () =>
-    apiFetch<OfficeHoursInfoBlock>("/office-hours/student/info-block"),
-};
+export const officeHoursApi = tirekClient.officeHoursStudent;

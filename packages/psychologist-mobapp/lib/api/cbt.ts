@@ -1,9 +1,6 @@
-import { apiFetch } from "./client";
-import type { CbtEntry, PaginatedResponse } from "@tirek/shared";
+import { tirekClient } from "./client";
 
 export const cbtApi = {
   getStudentEntries: (studentId: string, type?: string) =>
-    apiFetch<PaginatedResponse<CbtEntry>>(
-      `/psychologist/cbt/${studentId}${type ? `?type=${type}` : ""}`,
-    ),
+    tirekClient.psychologist.cbt.getStudentEntries(studentId, type),
 };

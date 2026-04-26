@@ -11,6 +11,7 @@
     "./i18n": "./src/i18n/index.ts",
     "./language-sync": "./src/language-sync/index.ts",
     "./validators": "./src/validators/index.ts",
-    "./evening-prompt": "./src/evening-prompt/index.ts"
+    "./evening-prompt": "./src/evening-prompt/index.ts",
+    "./api": "./src/api/index.ts"
   }
 }

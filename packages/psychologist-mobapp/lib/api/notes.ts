@@ -1,21 +1,10 @@
-import { apiFetch } from "./client";
-import type { PsychologistNote, PaginatedResponse } from "@tirek/shared";
+import { tirekClient } from "./client";
 
 export const notesApi = {
   getAll: (studentId: string) =>
-    apiFetch<PaginatedResponse<PsychologistNote>>(
-      `/psychologist/students/${studentId}/notes?limit=100`,
-    ),
-
+    tirekClient.psychologist.notes.getAll(studentId),
   add: (studentId: string, data: { content: string }) =>
-    apiFetch<PsychologistNote>(`/psychologist/students/${studentId}/notes`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
+    tirekClient.psychologist.notes.add(studentId, data),
   update: (noteId: string, data: { content: string }) =>
-    apiFetch<PsychologistNote>(`/psychologist/notes/${noteId}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }),
+    tirekClient.psychologist.notes.update(noteId, data),
 };

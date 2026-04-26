@@ -1,6 +1,3 @@
-import { apiFetch } from "./client.js";
-import type { StreakInfo } from "@tirek/shared";
+import { tirekClient } from "./client.js";
 
-export const streaksApi = {
-  get: () => apiFetch<StreakInfo>("/student/streaks"),
-};
+export const streaksApi = tirekClient.streaks;
