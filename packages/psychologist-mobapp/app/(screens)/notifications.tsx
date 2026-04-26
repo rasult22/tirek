@@ -23,6 +23,12 @@ import { hapticLight } from "../../lib/haptics";
 import type { Notification } from "@tirek/shared";
 
 const typeIcons: Record<string, { emoji: string; color: string }> = {
+  // Canonical types (backend normalizes legacy values into these):
+  crisis_red: { emoji: "\u{1F6A8}", color: "danger" },
+  concern_yellow: { emoji: "⚠️", color: "warning" },
+  info: { emoji: "ℹ️", color: "secondary" },
+  chat: { emoji: "\u{1F4AC}", color: "success" },
+  // Legacy fallbacks for read-tolerance:
   crisis: { emoji: "\u{1F6A8}", color: "danger" },
   sos_alert: { emoji: "\u{1F198}", color: "danger" },
   concern_detected: { emoji: "\u26A0\uFE0F", color: "warning" },
@@ -82,9 +88,15 @@ export default function NotificationsScreen() {
   function handleTap(n: Notification) {
     hapticLight();
     if (!n.read) markReadMutation.mutate(n.id);
-    if (n.type === "direct_message") {
+    if (n.type === "chat" || n.type === "direct_message") {
       router.push("/(tabs)/messages");
-    } else if (n.type === "sos_alert" || n.type === "concern_detected") {
+    } else if (
+      n.type === "crisis_red" ||
+      n.type === "concern_yellow" ||
+      n.type === "sos_alert" ||
+      n.type === "concern_detected" ||
+      n.type === "crisis"
+    ) {
       router.push("/(tabs)/crisis");
     }
   }

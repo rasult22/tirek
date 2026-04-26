@@ -30,9 +30,9 @@ export default function TabsLayout() {
   const t = useT();
   const insets = useSafeAreaInsets();
 
-  const { data: activeAlerts } = useQuery({
-    queryKey: ["crisis", "active"],
-    queryFn: crisisApi.getActive,
+  const { data: counts } = useQuery({
+    queryKey: ["crisis", "counts"],
+    queryFn: crisisApi.getCounts,
     refetchInterval: 30_000,
   });
 
@@ -42,7 +42,7 @@ export default function TabsLayout() {
     refetchInterval: 30_000,
   });
 
-  const alertCount = activeAlerts?.data?.length ?? 0;
+  const alertCount = counts?.red ?? 0;
   const unreadCount = unreadData?.count ?? 0;
 
   const titleMap: Record<string, string> = {

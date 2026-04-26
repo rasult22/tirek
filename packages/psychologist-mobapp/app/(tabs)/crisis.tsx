@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import {
   View,
   Pressable,
@@ -19,22 +19,20 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing,
-} from "react-native-reanimated";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text, Badge } from "../../components/ui";
+import { Text } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { crisisApi, type ResolveData } from "../../lib/api/crisis";
 import { hapticLight, hapticSuccess } from "../../lib/haptics";
-import type { SOSEvent } from "@tirek/shared";
+import type {
+  CrisisFeed,
+  CrisisSignal,
+  CrisisSignalSeverity,
+  CrisisSignalSource,
+} from "@tirek/shared";
 
 interface ResolveState {
   notes: string;
@@ -49,24 +47,34 @@ export default function CrisisScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const [activeFeed, setActiveFeed] = useState<CrisisFeed>("red");
   const [resolveStates, setResolveStates] = useState<
     Record<string, ResolveState>
   >({});
   const [resolveSheetId, setResolveSheetId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [legendOpen, setLegendOpen] = useState(false);
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   const {
-    data: active,
-    isLoading: activeLoading,
-    isError,
-    refetch,
+    data: redData,
+    isLoading: redLoading,
+    isError: redError,
+    refetch: refetchRed,
   } = useQuery({
-    queryKey: ["crisis", "active"],
-    queryFn: crisisApi.getActive,
+    queryKey: ["crisis", "feed", "red"],
+    queryFn: () => crisisApi.getFeed("red"),
     refetchInterval: 15_000,
+  });
+
+  const {
+    data: yellowData,
+    isLoading: yellowLoading,
+    isError: yellowError,
+  } = useQuery({
+    queryKey: ["crisis", "feed", "yellow"],
+    queryFn: () => crisisApi.getFeed("yellow"),
+    refetchInterval: 30_000,
   });
 
   const { data: history, isLoading: historyLoading } = useQuery({
@@ -113,26 +121,52 @@ export default function CrisisScreen() {
     return `${Math.floor(hours / 24)}${t.psychologist.timeAgoDays}`;
   }
 
+  function sourceLabel(source: CrisisSignalSource) {
+    switch (source) {
+      case "sos_urgent":
+        return t.psychologist.signalSourceSosUrgent;
+      case "ai_friend":
+        return t.psychologist.signalSourceAiFriend;
+      case "diagnostics":
+        return t.psychologist.signalSourceDiagnostics;
+    }
+  }
+
+  function severityLabel(severity: CrisisSignalSeverity) {
+    switch (severity) {
+      case "high":
+        return t.psychologist.severityHigh;
+      case "medium":
+        return t.psychologist.severityMedium;
+      case "low":
+        return t.psychologist.severityLow;
+    }
+  }
+
   async function handleRefresh() {
     setRefreshing(true);
     await queryClient.invalidateQueries({ queryKey: ["crisis"] });
     setRefreshing(false);
   }
 
-  const activeAlerts = active?.data ?? [];
-  const historyEvents = history?.data ?? [];
+  const redSignals = redData?.data ?? [];
+  const yellowSignals = yellowData?.data ?? [];
+  const historySignals = history?.data ?? [];
+  const isRed = activeFeed === "red";
+  const currentSignals = isRed ? redSignals : yellowSignals;
+  const currentLoading = isRed ? redLoading : yellowLoading;
 
-  const resolveAlert = resolveSheetId
-    ? activeAlerts.find((a) => a.id === resolveSheetId)
+  const resolveSignal = resolveSheetId
+    ? [...redSignals, ...yellowSignals].find((s) => s.id === resolveSheetId)
     : null;
 
-  if (isError) {
+  if (redError && yellowError) {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: c.bg }]}
         edges={["top"]}
       >
-        <ErrorState onRetry={() => refetch()} />
+        <ErrorState onRetry={() => refetchRed()} />
       </SafeAreaView>
     );
   }
@@ -152,254 +186,456 @@ export default function CrisisScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={c.primary}
+            tintColor={c.text}
           />
         }
       >
-        {/* ── LEVEL LEGEND ── */}
-        <Pressable
-          onPress={() => { hapticLight(); setLegendOpen(!legendOpen); }}
-          style={[styles.legendToggle, { marginBottom: 16 }]}
-        >
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIcon, { backgroundColor: `${c.primary}1A` }]}>
-              <Ionicons name="information-circle" size={14} color={c.primary} />
-            </View>
-            <Text variant="h3">{t.psychologist.crisisLevelLegend}</Text>
-          </View>
-          <Ionicons
-            name="chevron-down"
-            size={16}
-            color={c.textLight}
-            style={{ transform: [{ rotate: legendOpen ? "180deg" : "0deg" }] }}
-          />
-        </Pressable>
+        {/* Feed tabs */}
+        <View style={[styles.tabsRow, { backgroundColor: c.surfaceSecondary }]}>
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              setActiveFeed("red");
+            }}
+            style={[
+              styles.tab,
+              isRed && [{ backgroundColor: c.surface }, shadow(1)],
+            ]}
+          >
+            <View
+              style={[
+                styles.tabDot,
+                { backgroundColor: isRed ? c.danger : `${c.danger}80` },
+              ]}
+            />
+            <Text
+              variant="body"
+              style={{
+                fontFamily: "DMSans-Bold",
+                color: isRed ? c.text : c.textLight,
+              }}
+            >
+              {t.psychologist.redFeed}
+            </Text>
+            {redSignals.length > 0 && (
+              <View
+                style={[
+                  styles.countBadge,
+                  {
+                    backgroundColor: isRed ? c.danger : `${c.danger}1A`,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontFamily: "DMSans-Bold",
+                    color: isRed ? "#FFF" : c.danger,
+                  }}
+                >
+                  {String(redSignals.length)}
+                </Text>
+              </View>
+            )}
+          </Pressable>
 
-        {legendOpen && (
-          <View style={styles.legendCards}>
-            {([
-              { level: 1, title: t.psychologist.crisisLevel1Title, desc: t.psychologist.crisisLevel1Desc, bg: "#FACC151A", textColor: "#CA8A04", badgeBg: "#FACC15" },
-              { level: 2, title: t.psychologist.crisisLevel2Title, desc: t.psychologist.crisisLevel2Desc, bg: `${c.warning}1A`, textColor: c.warning, badgeBg: c.warning },
-              { level: 3, title: t.psychologist.crisisLevel3Title, desc: t.psychologist.crisisLevel3Desc, bg: `${c.danger}1A`, textColor: c.danger, badgeBg: c.danger },
-            ] as const).map(({ level, title, desc, bg, textColor, badgeBg }) => (
-              <View key={level} style={[styles.legendCard, { backgroundColor: bg }]}>
-                <View style={[styles.legendBadge, { backgroundColor: badgeBg }]}>
-                  <Text style={{ fontSize: 12, fontFamily: "DMSans-Bold", color: "#FFF" }}>{level}</Text>
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              setActiveFeed("yellow");
+            }}
+            style={[
+              styles.tab,
+              !isRed && [{ backgroundColor: c.surface }, shadow(1)],
+            ]}
+          >
+            <View
+              style={[
+                styles.tabDot,
+                { backgroundColor: !isRed ? c.warning : `${c.warning}80` },
+              ]}
+            />
+            <Text
+              variant="body"
+              style={{
+                fontFamily: "DMSans-Bold",
+                color: !isRed ? c.text : c.textLight,
+              }}
+            >
+              {t.psychologist.yellowFeed}
+            </Text>
+            {yellowSignals.length > 0 && (
+              <View
+                style={[
+                  styles.countBadge,
+                  {
+                    backgroundColor: !isRed ? c.warning : `${c.warning}1A`,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 10,
+                    fontFamily: "DMSans-Bold",
+                    color: !isRed ? "#FFF" : c.warning,
+                  }}
+                >
+                  {String(yellowSignals.length)}
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
+
+        {/* Current feed */}
+        {currentLoading ? (
+          <SkeletonList count={3} />
+        ) : currentSignals.length > 0 ? (
+          <View style={styles.cardsList}>
+            {currentSignals.map((signal: CrisisSignal) => (
+              <View
+                key={signal.id}
+                style={[
+                  styles.signalCard,
+                  {
+                    backgroundColor: c.surface,
+                    borderColor:
+                      isRed && signal.severity === "high"
+                        ? c.danger
+                        : c.borderLight,
+                  },
+                  shadow(1),
+                ]}
+              >
+                <View style={styles.signalHeader}>
+                  <View
+                    style={[
+                      styles.avatar,
+                      {
+                        backgroundColor: isRed
+                          ? `${c.danger}1A`
+                          : `${c.warning}26`,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: "DMSans-Bold",
+                        color: isRed ? c.danger : c.warning,
+                      }}
+                    >
+                      {signal.studentName.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.signalInfo}>
+                    <Text
+                      style={{ fontFamily: "DMSans-Bold", color: c.text }}
+                      numberOfLines={1}
+                    >
+                      {signal.studentName}
+                    </Text>
+                    <View style={styles.signalMetaRow}>
+                      {signal.studentGrade !== null && (
+                        <Text variant="caption">
+                          {signal.studentGrade}
+                          {signal.studentClassLetter ?? ""}
+                          {" · "}
+                        </Text>
+                      )}
+                      <Ionicons name="time-outline" size={11} color={c.textLight} />
+                      <Text variant="caption">
+                        {" "}
+                        {formatTimeAgo(signal.createdAt)}
+                        {" · "}
+                        {sourceLabel(signal.source)}
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    style={[
+                      styles.severityBadge,
+                      {
+                        backgroundColor:
+                          signal.severity === "high"
+                            ? isRed
+                              ? c.danger
+                              : c.warning
+                            : signal.severity === "medium"
+                              ? c.warning
+                              : c.surfaceSecondary,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontFamily: "DMSans-Bold",
+                        color: signal.severity === "low" ? c.textLight : "#FFF",
+                      }}
+                    >
+                      {severityLabel(signal.severity)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ fontSize: 13, fontFamily: "DMSans-SemiBold", color: textColor }}>{title}</Text>
-                  <Text variant="caption" style={{ marginTop: 2, lineHeight: 16 }}>{desc}</Text>
+
+                {/* Signal Summary (психологу — БЕЗ цитат ученика) */}
+                <View
+                  style={[
+                    styles.summaryBox,
+                    {
+                      backgroundColor: isRed
+                        ? `${c.danger}0D`
+                        : `${c.warning}0D`,
+                      borderColor: isRed
+                        ? `${c.danger}1A`
+                        : `${c.warning}26`,
+                    },
+                  ]}
+                >
+                  <Text style={{ fontSize: 13, color: c.text, lineHeight: 20 }}>
+                    {signal.summary}
+                  </Text>
+                </View>
+
+                {/* Quick actions */}
+                <View style={styles.actionsRow}>
+                  <Pressable
+                    onPress={() => {
+                      hapticLight();
+                      router.push(`/(screens)/messages/${signal.studentId}`);
+                    }}
+                    style={[
+                      styles.actionBtn,
+                      { backgroundColor: c.surfaceSecondary },
+                    ]}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={c.success} />
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "DMSans-Medium",
+                        color: c.text,
+                      }}
+                    >
+                      {t.psychologist.writeMessage}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      hapticLight();
+                      setResolveSheetId(signal.id);
+                    }}
+                    style={[
+                      styles.actionBtn,
+                      { backgroundColor: c.surfaceSecondary },
+                    ]}
+                  >
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={16}
+                      color={c.textLight}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "DMSans-Medium",
+                        color: c.text,
+                      }}
+                    >
+                      {t.psychologist.resolveSignal}
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      hapticLight();
+                      router.push(`/(screens)/students/${signal.studentId}`);
+                    }}
+                    style={[
+                      styles.actionBtn,
+                      { backgroundColor: c.surfaceSecondary },
+                    ]}
+                  >
+                    <Ionicons name="person-outline" size={16} color={c.primary} />
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontFamily: "DMSans-Medium",
+                        color: c.text,
+                      }}
+                    >
+                      {t.psychologist.profile}
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
             ))}
           </View>
-        )}
-
-        {/* ── ACTIVE ALERTS ── */}
-        <View style={styles.sectionHeader}>
-          <View
-            style={[styles.sectionIcon, { backgroundColor: `${c.danger}1A` }]}
-          >
-            <Ionicons name="alert-circle" size={14} color={c.danger} />
-          </View>
-          <Text variant="h3">{t.psychologist.activeAlerts}</Text>
-          {activeAlerts.length > 0 && (
-            <Badge count={activeAlerts.length} variant="danger" />
-          )}
-        </View>
-
-        {activeLoading ? (
-          <SkeletonList count={3} />
-        ) : activeAlerts.length > 0 ? (
-          <View style={styles.alertsList}>
-            {activeAlerts.map((alert: SOSEvent) => (
-              <AlertCard
-                key={alert.id}
-                alert={alert}
-                colors={c}
-                t={t}
-                formatTimeAgo={formatTimeAgo}
-                onProfile={() =>
-                  router.push(`/(screens)/students/${alert.userId}`)
-                }
-                onMessage={() => router.push("/(tabs)/messages")}
-                onResolve={() => setResolveSheetId(alert.id)}
-              />
-            ))}
-          </View>
         ) : (
-          <View style={styles.emptyState}>
+          <View
+            style={[
+              styles.emptyCard,
+              { backgroundColor: c.surface, borderColor: c.borderLight },
+              shadow(1),
+            ]}
+          >
             <View
-              style={[
-                styles.emptyIcon,
-                { backgroundColor: `${c.success}1A` },
-              ]}
+              style={[styles.emptyIcon, { backgroundColor: `${c.success}1A` }]}
             >
-              <Ionicons name="shield-checkmark" size={24} color={c.success} />
+              <Ionicons
+                name={isRed ? "shield-checkmark-outline" : "alert-circle-outline"}
+                size={24}
+                color={c.success}
+              />
             </View>
-            <Text
-              variant="body"
-              style={{ fontFamily: "DMSans-SemiBold", textAlign: "center" }}
-            >
-              {t.psychologist.noActiveAlerts}
+            <Text style={{ fontFamily: "DMSans-Bold", color: c.text }}>
+              {isRed
+                ? t.psychologist.noRedFeedSignals
+                : t.psychologist.noYellowFeedSignals}
             </Text>
-            <Text variant="bodyLight">{t.psychologist.allStudentsSafe}</Text>
+            <Text variant="caption">{t.psychologist.allCalm}</Text>
           </View>
         )}
 
-        {/* ── RESOLVED HISTORY ── */}
+        {/* History toggle */}
         <Pressable
           onPress={() => {
             hapticLight();
             setHistoryOpen(!historyOpen);
           }}
-          style={[styles.historyToggle, { marginTop: 20 }]}
+          style={styles.historyToggle}
         >
-          <View style={styles.sectionHeader}>
+          <View style={styles.historyHeaderRow}>
             <View
               style={[
-                styles.sectionIcon,
+                styles.historyIcon,
                 { backgroundColor: c.surfaceSecondary },
               ]}
             >
-              <Ionicons
-                name="checkmark-circle"
-                size={14}
-                color={c.success}
-              />
+              <Ionicons name="checkmark-circle" size={14} color={c.success} />
             </View>
-            <Text variant="h3">{t.psychologist.resolvedHistory}</Text>
+            <Text style={{ fontFamily: "DMSans-Bold", color: c.text }}>
+              {t.psychologist.resolvedHistory}
+            </Text>
           </View>
           <Ionicons
-            name="chevron-down"
+            name={historyOpen ? "chevron-up" : "chevron-down"}
             size={16}
             color={c.textLight}
-            style={{
-              transform: [{ rotate: historyOpen ? "180deg" : "0deg" }],
-            }}
           />
         </Pressable>
 
         {historyOpen && (
-          <View style={{ marginTop: 8 }}>
+          <View style={{ gap: 8 }}>
             {historyLoading ? (
-              <ActivityIndicator
-                color={c.textLight}
-                style={{ paddingVertical: 24 }}
-              />
-            ) : historyEvents.length > 0 ? (
-              <View style={styles.alertsList}>
-                {historyEvents.map((event: SOSEvent) => {
-                  const isExpanded = expandedHistoryId === event.id;
-                  const actions = [
-                    { done: event.contactedStudent, label: t.psychologist.contactedStudentDone },
-                    { done: event.contactedParent, label: t.psychologist.contactedParentDone },
-                    { done: event.documented, label: t.psychologist.documentedDone },
-                  ];
-                  const hasAnyAction = actions.some((a) => a.done);
-
-                  return (
-                    <Pressable
-                      key={event.id}
-                      onPress={() => { hapticLight(); setExpandedHistoryId(isExpanded ? null : event.id); }}
-                      style={[styles.historyCard, { backgroundColor: c.surface, borderColor: c.borderLight }]}
-                    >
-                      {/* Collapsed header row */}
-                      <View style={styles.historyHeaderRow}>
-                        <View style={[styles.historyIcon, { backgroundColor: `${c.success}12` }]}>
-                          <Ionicons name="checkmark-circle" size={14} color={c.success} />
-                        </View>
-                        <View style={styles.historyInfo}>
-                          <Text variant="body" style={{ fontFamily: "DMSans-SemiBold" }} numberOfLines={1}>
-                            {event.studentName ?? t.psychologist.student}
+              <ActivityIndicator size="small" color={c.textLight} />
+            ) : historySignals.length > 0 ? (
+              historySignals.map((signal) => {
+                const isExpanded = expandedHistoryId === signal.id;
+                return (
+                  <Pressable
+                    key={signal.id}
+                    onPress={() =>
+                      setExpandedHistoryId(isExpanded ? null : signal.id)
+                    }
+                    style={[
+                      styles.historyCard,
+                      { backgroundColor: c.surface, borderColor: c.borderLight },
+                    ]}
+                  >
+                    <View style={styles.historyHeaderRow}>
+                      <View
+                        style={[
+                          styles.historyIcon,
+                          { backgroundColor: `${c.success}14` },
+                        ]}
+                      >
+                        <Ionicons name="checkmark-circle" size={14} color={c.success} />
+                      </View>
+                      <View style={styles.historyInfo}>
+                        <Text
+                          style={{ fontFamily: "DMSans-Bold", color: c.text }}
+                          numberOfLines={1}
+                        >
+                          {signal.studentName}
+                        </Text>
+                        {!isExpanded && (
+                          <Text variant="caption" numberOfLines={1}>
+                            {signal.summary}
                           </Text>
-                          {!isExpanded && event.notes && (
-                            <Text variant="caption" numberOfLines={1}>{event.notes}</Text>
-                          )}
-                        </View>
-                        <View style={styles.historyRight}>
-                          <View style={[styles.levelBadge, { backgroundColor: event.level >= 3 ? `${c.danger}1A` : event.level === 2 ? `${c.warning}1A` : "#FACC151A" }]}>
-                            <Text style={{ fontSize: 10, fontFamily: "DMSans-Bold", color: event.level >= 3 ? c.danger : event.level === 2 ? c.warning : "#CA8A04" }}>
-                              L{event.level}
-                            </Text>
-                          </View>
-                          <Ionicons
-                            name="chevron-down"
-                            size={14}
-                            color={c.textLight}
-                            style={{ marginTop: 4, transform: [{ rotate: isExpanded ? "180deg" : "0deg" }] }}
-                          />
+                        )}
+                      </View>
+                      <View style={styles.historyRight}>
+                        <View
+                          style={[
+                            styles.levelBadge,
+                            {
+                              backgroundColor:
+                                signal.type === "acute_crisis"
+                                  ? `${c.danger}1A`
+                                  : `${c.warning}26`,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              fontFamily: "DMSans-Bold",
+                              color:
+                                signal.type === "acute_crisis"
+                                  ? c.danger
+                                  : c.warning,
+                            }}
+                          >
+                            {signal.type === "acute_crisis"
+                              ? t.psychologist.redFeed
+                              : t.psychologist.yellowFeed}
+                          </Text>
                         </View>
                       </View>
+                    </View>
 
-                      {/* Expanded details */}
-                      {isExpanded && (
-                        <View style={[styles.expandedDetails, { borderTopColor: c.borderLight }]}>
-                          <View style={styles.detailGrid}>
-                            <View style={styles.detailGridItem}>
-                              <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.triggeredAt}</Text>
-                              <Text style={[styles.detailValue, { color: c.text }]}>
-                                {new Date(event.createdAt).toLocaleString()}
-                              </Text>
-                            </View>
-                            {event.resolvedAt && (
-                              <View style={styles.detailGridItem}>
-                                <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.resolvedAtLabel}</Text>
-                                <Text style={[styles.detailValue, { color: c.text }]}>
-                                  {new Date(event.resolvedAt).toLocaleString()}
-                                </Text>
-                              </View>
-                            )}
-                            <View style={styles.detailGridItem}>
-                              <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.student}</Text>
-                              <Text style={[styles.detailValue, { color: c.text }]}>
-                                {event.studentName ?? "—"}
-                                {event.studentGrade ? ` · ${event.studentGrade}${event.studentClassLetter ?? ""}` : ""}
-                              </Text>
-                            </View>
-                            {event.resolvedByName && (
-                              <View style={styles.detailGridItem}>
-                                <Text style={[styles.detailLabel, { color: c.textLight }]}>{t.psychologist.resolvedByPsychologist}</Text>
-                                <Text style={[styles.detailValue, { color: c.text }]}>{event.resolvedByName}</Text>
-                              </View>
-                            )}
-                          </View>
-
-                          {event.notes && (
-                            <View style={[styles.notesBlock, { backgroundColor: c.surfaceSecondary }]}>
-                              <Text style={{ fontSize: 13, color: c.text, lineHeight: 20 }}>{event.notes}</Text>
-                            </View>
-                          )}
-
-                          <View style={styles.checklistSection}>
-                            <Text style={[styles.detailLabel, { color: c.textLight, marginBottom: 6 }]}>{t.psychologist.actionsTaken}</Text>
-                            {hasAnyAction ? (
-                              <View style={{ gap: 4 }}>
-                                {actions.map(({ done, label }) => (
-                                  <View key={label} style={styles.checklistItem}>
-                                    <Ionicons
-                                      name={done ? "checkmark" : "remove"}
-                                      size={12}
-                                      color={done ? c.success : c.textLight}
-                                    />
-                                    <Text style={{ fontSize: 12, color: done ? c.text : c.textLight }}>{label}</Text>
-                                  </View>
-                                ))}
-                              </View>
-                            ) : (
-                              <Text style={{ fontSize: 12, color: c.textLight }}>{t.psychologist.noActionsTaken}</Text>
-                            )}
-                          </View>
+                    {isExpanded && (
+                      <View
+                        style={[
+                          styles.expandedDetails,
+                          { borderTopColor: c.borderLight },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.notesBlock,
+                            { backgroundColor: c.surfaceSecondary },
+                          ]}
+                        >
+                          <Text
+                            style={{ fontSize: 13, color: c.text, lineHeight: 20 }}
+                          >
+                            {signal.summary}
+                          </Text>
                         </View>
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </View>
+                        {signal.resolutionNotes ? (
+                          <View
+                            style={[
+                              styles.notesBlock,
+                              { backgroundColor: c.surfaceSecondary, marginTop: 6 },
+                            ]}
+                          >
+                            <Text
+                              style={{ fontSize: 13, color: c.text, lineHeight: 20 }}
+                            >
+                              {signal.resolutionNotes}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })
             ) : (
               <Text
-                variant="bodyLight"
-                style={{ textAlign: "center", paddingVertical: 24 }}
+                variant="caption"
+                style={{ textAlign: "center", paddingVertical: 12 }}
               >
                 {t.common.noData}
               </Text>
@@ -408,64 +644,58 @@ export default function CrisisScreen() {
         )}
       </ScrollView>
 
-      {/* ── RESOLVE BOTTOM SHEET ── */}
-      <Modal
-        visible={!!resolveAlert}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setResolveSheetId(null)}
-      >
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+      {/* Resolve modal */}
+      {resolveSignal && (
+        <Modal
+          visible={!!resolveSheetId}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setResolveSheetId(null)}
         >
-        <View style={styles.sheetWrapper}>
-          <Pressable
-            style={styles.sheetBackdrop}
-            onPress={() => setResolveSheetId(null)}
-          />
-          <View
-            style={[styles.sheetContent, { backgroundColor: c.surface }]}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.sheetWrapper}
           >
-            {/* Drag handle */}
-            <View style={styles.dragHandle}>
-              <View
-                style={[styles.dragBar, { backgroundColor: c.border }]}
-              />
-            </View>
-
-            {resolveAlert && (
+            <Pressable
+              style={styles.sheetBackdrop}
+              onPress={() => setResolveSheetId(null)}
+            />
+            <View style={[styles.sheetContent, { backgroundColor: c.surface }]}>
+              <View style={styles.dragHandle}>
+                <View style={[styles.dragBar, { backgroundColor: c.border }]} />
+              </View>
               <View style={styles.sheetInner}>
-                {/* Header */}
                 <View style={styles.sheetHeader}>
                   <View style={styles.sheetHeaderLeft}>
                     <View
                       style={[
                         styles.sheetAvatar,
-                        { backgroundColor: `${c.danger}1A` },
+                        {
+                          backgroundColor:
+                            resolveSignal.type === "acute_crisis"
+                              ? `${c.danger}1A`
+                              : `${c.warning}26`,
+                        },
                       ]}
                     >
                       <Text
                         style={{
-                          fontSize: 14,
                           fontFamily: "DMSans-Bold",
-                          color: c.danger,
+                          color:
+                            resolveSignal.type === "acute_crisis"
+                              ? c.danger
+                              : c.warning,
                         }}
                       >
-                        {(resolveAlert.studentName ?? "?")
-                          .charAt(0)
-                          .toUpperCase()}
+                        {resolveSignal.studentName.charAt(0).toUpperCase()}
                       </Text>
                     </View>
                     <View>
-                      <Text
-                        variant="h3"
-                        style={{ fontFamily: "DMSans-Bold" }}
-                      >
-                        {resolveAlert.studentName ?? t.psychologist.student}
+                      <Text style={{ fontFamily: "DMSans-Bold", color: c.text }}>
+                        {resolveSignal.studentName}
                       </Text>
                       <Text variant="caption">
-                        {t.psychologist.resolve}
+                        {t.psychologist.resolveSignalTitle}
                       </Text>
                     </View>
                   </View>
@@ -480,7 +710,6 @@ export default function CrisisScreen() {
                   </Pressable>
                 </View>
 
-                {/* Checklist */}
                 <View style={styles.checklist}>
                   {(
                     [
@@ -501,25 +730,22 @@ export default function CrisisScreen() {
                       },
                     ] as const
                   ).map(({ key, icon, label }) => {
-                    const state = getState(resolveAlert.id);
-                    const active = state[key];
+                    const state = getState(resolveSignal.id);
                     return (
                       <Pressable
                         key={key}
                         onPress={() => {
                           hapticLight();
-                          updateState(resolveAlert.id, {
-                            [key]: !active,
-                          });
+                          updateState(resolveSignal.id, { [key]: !state[key] });
                         }}
                         style={[
                           styles.checkItem,
                           {
-                            backgroundColor: active
-                              ? `${c.success}12`
+                            backgroundColor: state[key]
+                              ? `${c.success}14`
                               : c.surfaceSecondary,
-                            borderColor: active
-                              ? `${c.success}30`
+                            borderColor: state[key]
+                              ? `${c.success}33`
                               : "transparent",
                           },
                         ]}
@@ -528,382 +754,171 @@ export default function CrisisScreen() {
                           style={[
                             styles.checkbox,
                             {
-                              backgroundColor: active
+                              backgroundColor: state[key]
                                 ? c.success
                                 : "transparent",
-                              borderColor: active
-                                ? c.success
-                                : c.inputBorder,
+                              borderColor: state[key] ? c.success : c.border,
                             },
                           ]}
                         >
-                          {active && (
-                            <Ionicons
-                              name="checkmark"
-                              size={14}
-                              color="#FFF"
-                            />
+                          {state[key] && (
+                            <Ionicons name="checkmark" size={14} color="#FFF" />
                           )}
                         </View>
                         <Ionicons
                           name={icon}
                           size={18}
-                          color={active ? c.success : c.textLight}
+                          color={state[key] ? c.success : c.textLight}
                         />
-                        <Text
-                          variant="body"
-                          style={
-                            active
-                              ? { fontFamily: "DMSans-SemiBold" }
-                              : undefined
-                          }
-                        >
-                          {label}
-                        </Text>
+                        <Text style={{ color: c.text }}>{label}</Text>
                       </Pressable>
                     );
                   })}
                 </View>
 
-                {/* Notes */}
                 <TextInput
-                  value={getState(resolveAlert.id).notes}
+                  value={getState(resolveSignal.id).notes}
                   onChangeText={(text) =>
-                    updateState(resolveAlert.id, { notes: text })
+                    updateState(resolveSignal.id, { notes: text })
                   }
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
                   placeholder={t.psychologist.resolveNotesPlaceholder}
                   placeholderTextColor={c.textLight}
+                  multiline
                   style={[
                     styles.notesInput,
                     {
-                      borderColor: c.inputBorder,
                       backgroundColor: c.surfaceSecondary,
+                      borderColor: c.border,
                       color: c.text,
                     },
                   ]}
                 />
 
-                {/* Submit */}
                 <Pressable
                   onPress={() =>
                     resolveMutation.mutate({
-                      id: resolveAlert.id,
-                      data: getState(resolveAlert.id),
+                      id: resolveSignal.id,
+                      data: getState(resolveSignal.id),
                     })
                   }
-                  disabled={
-                    !getState(resolveAlert.id).notes.trim() ||
-                    resolveMutation.isPending
-                  }
-                  style={({ pressed }) => [
+                  disabled={resolveMutation.isPending}
+                  style={[
                     styles.resolveBtn,
-                    { backgroundColor: c.success },
-                    pressed && { opacity: 0.9 },
-                    (!getState(resolveAlert.id).notes.trim() ||
-                      resolveMutation.isPending) && { opacity: 0.4 },
+                    {
+                      backgroundColor: c.success,
+                      opacity: resolveMutation.isPending ? 0.5 : 1,
+                    },
                   ]}
                 >
                   {resolveMutation.isPending ? (
-                    <ActivityIndicator color="#FFF" size="small" />
+                    <ActivityIndicator size="small" color="#FFF" />
                   ) : (
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={18}
-                      color="#FFF"
-                    />
+                    <Ionicons name="checkmark-circle" size={18} color="#FFF" />
                   )}
                   <Text style={styles.resolveBtnText}>
-                    {t.psychologist.resolve}
+                    {t.psychologist.resolveSignal}
                   </Text>
                 </Pressable>
               </View>
-            )}
-          </View>
-        </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    </SafeAreaView>
-  );
-}
-
-/* ── Alert Card component ── */
-
-function AlertCard({
-  alert,
-  colors: c,
-  t,
-  formatTimeAgo,
-  onProfile,
-  onMessage,
-  onResolve,
-}: {
-  alert: SOSEvent;
-  colors: any;
-  t: any;
-  formatTimeAgo: (d: string) => string;
-  onProfile: () => void;
-  onMessage: () => void;
-  onResolve: () => void;
-}) {
-  const isCritical = alert.level >= 3;
-
-  // Pulse animation for L3
-  const pulse = useSharedValue(1);
-  if (isCritical) {
-    pulse.value = withRepeat(
-      withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-  }
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    borderColor: isCritical
-      ? `rgba(179,59,59,${pulse.value})`
-      : c.borderLight,
-    borderWidth: isCritical ? 2 : 1,
-  }));
-
-  const levelColors =
-    alert.level >= 3
-      ? { bg: c.danger, text: "#FFF" }
-      : alert.level === 2
-        ? { bg: c.warning, text: "#FFF" }
-        : { bg: "#FACC15", text: "#FFF" };
-
-  return (
-    <Animated.View
-      style={[
-        styles.alertCard,
-        { backgroundColor: c.surface },
-        shadow(1),
-        pulseStyle,
-      ]}
-    >
-      {isCritical && (
-        <View style={[styles.accentBar, { backgroundColor: c.danger }]} />
-      )}
-
-      <View style={styles.alertInner}>
-        {/* Name + level + time */}
-        <View style={styles.alertTopRow}>
-          <View
-            style={[
-              styles.alertAvatar,
-              { backgroundColor: `${c.danger}1A` },
-            ]}
-          >
-            <Text
-              style={{
-                fontSize: 14,
-                fontFamily: "DMSans-Bold",
-                color: c.danger,
-              }}
-            >
-              {(alert.studentName ?? "?").charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <View style={styles.alertInfo}>
-            <Text
-              variant="body"
-              style={{ fontFamily: "DMSans-Bold" }}
-              numberOfLines={1}
-            >
-              {alert.studentName ?? t.psychologist.student}
-            </Text>
-            <View style={styles.alertMeta}>
-              {alert.studentGrade != null && (
-                <>
-                  <Text variant="caption">
-                    {alert.studentGrade}
-                    {alert.studentClassLetter ?? ""}
-                  </Text>
-                  <Text variant="caption" style={{ opacity: 0.3 }}>
-                    {" "}
-                    ·{" "}
-                  </Text>
-                </>
-              )}
-              <Ionicons name="time-outline" size={11} color={c.textLight} />
-              <Text variant="caption"> {formatTimeAgo(alert.createdAt)}</Text>
             </View>
-          </View>
-          <View
-            style={[styles.levelBadgeLg, { backgroundColor: levelColors.bg }]}
-          >
-            <Text
-              style={{
-                fontSize: 13,
-                fontFamily: "DMSans-Bold",
-                color: levelColors.text,
-              }}
-            >
-              {alert.level}
-            </Text>
-          </View>
-        </View>
-
-        {/* Student note */}
-        {alert.notes && (
-          <View
-            style={[
-              styles.alertNote,
-              {
-                backgroundColor: `${c.danger}08`,
-                borderColor: `${c.danger}15`,
-              },
-            ]}
-          >
-            <Text variant="body" style={{ lineHeight: 20 }}>
-              {alert.notes}
-            </Text>
-          </View>
-        )}
-
-        {/* Actions */}
-        <View style={styles.actionsRow}>
-          <Pressable
-            onPress={() => {
-              hapticLight();
-              onProfile();
-            }}
-            style={({ pressed }) => [
-              styles.actionBtn,
-              { backgroundColor: c.surfaceSecondary },
-              pressed && { backgroundColor: c.surfaceHover },
-            ]}
-          >
-            <Ionicons name="person" size={16} color={c.primary} />
-            <Text style={[styles.actionLabel, { color: c.text }]}>
-              {t.psychologist.viewProfile}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              hapticLight();
-              onMessage();
-            }}
-            style={({ pressed }) => [
-              styles.actionBtn,
-              { backgroundColor: c.surfaceSecondary },
-              pressed && { backgroundColor: c.surfaceHover },
-            ]}
-          >
-            <Ionicons name="chatbubble" size={16} color={c.success} />
-            <Text style={[styles.actionLabel, { color: c.text }]}>
-              {t.psychologist.writeMessage}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => {
-              hapticLight();
-              onResolve();
-            }}
-            style={({ pressed }) => [
-              styles.actionBtn,
-              { backgroundColor: c.surfaceSecondary },
-              pressed && { backgroundColor: c.surfaceHover },
-            ]}
-          >
-            <Ionicons
-              name="checkmark-circle"
-              size={16}
-              color={c.textLight}
-            />
-            <Text style={[styles.actionLabel, { color: c.text }]}>
-              {t.psychologist.resolve}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    </Animated.View>
+          </KeyboardAvoidingView>
+        </Modal>
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   headerRow: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.xl,
+    gap: spacing.md,
   },
-  sectionHeader: {
+  tabsRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
+    padding: 4,
+    borderRadius: radius.lg,
+    gap: 4,
   },
-  sectionIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+  tab: {
+    flex: 1,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    paddingVertical: 10,
+    borderRadius: radius.md,
   },
-  alertsList: { gap: 10 },
-  alertCard: {
+  tabDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  countBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: "center",
+  },
+  cardsList: { gap: 10 },
+  signalCard: {
     borderRadius: radius.lg,
-    overflow: "hidden",
+    padding: 14,
+    borderWidth: 1,
+    gap: 12,
   },
-  accentBar: {
-    height: 3,
-  },
-  alertInner: { padding: 16 },
-  alertTopRow: {
+  signalHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
+    gap: 10,
   },
-  alertAvatar: {
+  avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
   },
-  alertInfo: { flex: 1, minWidth: 0 },
-  alertMeta: { flexDirection: "row", alignItems: "center", marginTop: 2 },
-  levelBadgeLg: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
+  signalInfo: { flex: 1, minWidth: 0 },
+  signalMetaRow: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    flexWrap: "wrap",
   },
-  alertNote: {
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  severityBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  summaryBox: {
+    borderRadius: 12,
+    padding: 10,
     borderWidth: 1,
-    marginBottom: 12,
   },
   actionsRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
   },
   actionBtn: {
     flex: 1,
     alignItems: "center",
     gap: 4,
     paddingVertical: 10,
-    borderRadius: radius.md,
+    borderRadius: 12,
   },
-  actionLabel: {
-    fontSize: 11,
-    fontFamily: "DMSans-SemiBold",
-  },
-  emptyState: {
+  emptyCard: {
     alignItems: "center",
-    paddingVertical: 32,
     gap: 8,
+    padding: 24,
+    borderRadius: radius.lg,
+    borderWidth: 1,
   },
   emptyIcon: {
     width: 56,
@@ -912,7 +927,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // History
   historyToggle: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -925,8 +939,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   historyIcon: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
@@ -938,27 +952,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
   },
-  legendToggle: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  legendCards: { gap: 8, marginBottom: 16 },
-  legendCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 12,
-    borderRadius: 16,
-  },
-  legendBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   historyHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -969,40 +962,11 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
   },
-  detailGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  detailGridItem: {
-    width: "50%" as any,
-    marginBottom: 10,
-  },
-  detailLabel: {
-    fontSize: 10,
-    fontFamily: "DMSans-SemiBold",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  detailValue: {
-    fontSize: 12,
-    fontFamily: "DMSans-Medium",
-    marginTop: 2,
-  },
   notesBlock: {
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    marginBottom: 10,
   },
-  checklistSection: {
-    marginTop: 2,
-  },
-  checklistItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  // Resolve sheet
   sheetWrapper: {
     flex: 1,
     justifyContent: "flex-end",

@@ -1,12 +1,16 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getNotifications, getUnreadCount, markRead } from "../api/notifications.js";
-import { Bell, ArrowLeft, CheckCheck } from "lucide-react";
+import { Bell, ArrowLeft } from "lucide-react";
 import { clsx } from "clsx";
 import type { Notification } from "@tirek/shared";
 import { ErrorState } from "../components/ui/ErrorState.js";
+import { useT } from "../hooks/useLanguage.js";
 
 const typeIcons: Record<string, { emoji: string; bg: string }> = {
+  crisis_red: { emoji: "🚨", bg: "bg-danger/10" },
+  concern_yellow: { emoji: "⚠️", bg: "bg-yellow-400/15" },
   crisis: { emoji: "🚨", bg: "bg-danger/10" },
   sos_alert: { emoji: "🆘", bg: "bg-danger/10" },
   concern_detected: { emoji: "⚠️", bg: "bg-warning/10" },
@@ -15,6 +19,15 @@ const typeIcons: Record<string, { emoji: string; bg: string }> = {
   direct_message: { emoji: "💬", bg: "bg-success/10" },
   system: { emoji: "ℹ️", bg: "bg-secondary/10" },
 };
+
+type FilterValue = "all" | "crisis_red" | "concern_yellow" | "info" | "chat";
+
+// Backend already normalizes any legacy types to canonical ones
+// (crisis_red | concern_yellow | info | chat), so filtering is direct.
+function matchesFilter(n: Notification, filter: FilterValue): boolean {
+  if (filter === "all") return true;
+  return n.type === filter;
+}
 
 function formatTimeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -31,6 +44,8 @@ function formatTimeAgo(dateStr: string) {
 export function NotificationsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const t = useT();
+  const [filter, setFilter] = useState<FilterValue>("all");
 
   const { data: notifications, isLoading, isError, refetch } = useQuery({
     queryKey: ["notifications"],
@@ -54,18 +69,16 @@ export function NotificationsPage() {
 
   function handleTap(n: Notification) {
     if (!n.read) markReadMutation.mutate(n.id);
-    if (n.type === "direct_message" && n.metadata?.conversationId) {
+    if (n.type === "chat" && n.metadata?.conversationId) {
       navigate(`/messages/${n.metadata.conversationId}`);
-    } else if (n.type === "sos_alert" || n.type === "concern_detected") {
+    } else if (n.type === "crisis_red" || n.type === "concern_yellow") {
       navigate("/crisis");
-    } else if (n.type === "assignment") {
-      navigate("/diagnostics");
     }
   }
 
-  const items = notifications?.data ?? [];
+  const allItems = notifications?.data ?? [];
+  const items = allItems.filter((n) => matchesFilter(n, filter));
 
-  // Group by date
   const today = new Date().toDateString();
   const yesterday = new Date(Date.now() - 86400000).toDateString();
 
@@ -91,6 +104,17 @@ export function NotificationsPage() {
     return <ErrorState onRetry={() => refetch()} />;
   }
 
+  const filterButtons: Array<{ value: FilterValue; label: string }> = [
+    { value: "all", label: t.psychologist.notificationFilterAll },
+    { value: "crisis_red", label: t.psychologist.notificationFilterCrisisRed },
+    {
+      value: "concern_yellow",
+      label: t.psychologist.notificationFilterConcernYellow,
+    },
+    { value: "info", label: t.psychologist.notificationFilterInfo },
+    { value: "chat", label: t.psychologist.notificationFilterChat },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -109,6 +133,24 @@ export function NotificationsPage() {
             </span>
           )}
         </div>
+      </div>
+
+      {/* Filter chips */}
+      <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+        {filterButtons.map((b) => (
+          <button
+            key={b.value}
+            onClick={() => setFilter(b.value)}
+            className={clsx(
+              "shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+              filter === b.value
+                ? "bg-primary text-white"
+                : "bg-surface-secondary text-text-light",
+            )}
+          >
+            {b.label}
+          </button>
+        ))}
       </div>
 
       {/* Loading */}
@@ -149,7 +191,6 @@ export function NotificationsPage() {
                       : "bg-surface border border-border hover:bg-surface-hover",
                   )}
                 >
-                  {/* Icon */}
                   <div className={clsx(
                     "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-lg",
                     icon.bg,
@@ -157,7 +198,6 @@ export function NotificationsPage() {
                     {icon.emoji}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <p className={clsx(
@@ -175,7 +215,6 @@ export function NotificationsPage() {
                     </p>
                   </div>
 
-                  {/* Unread dot */}
                   {!n.read && (
                     <div className="w-2.5 h-2.5 rounded-full bg-primary shrink-0 mt-1.5" />
                   )}

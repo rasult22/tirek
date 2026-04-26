@@ -13,7 +13,8 @@ import { diagnosticsRouter } from "./modules/diagnostics/diagnostics.routes.js";
 import { diagnosticsPsychologistRouter } from "./modules/diagnostics/diagnostics-psychologist.routes.js";
 import { exercisesRouter } from "./modules/exercises/exercises.routes.js";
 import { contentRouter } from "./modules/content/content.routes.js";
-import { sosStudentRouter, sosPsychologistRouter } from "./modules/sos/sos.routes.js";
+import { sosStudentRouter } from "./modules/sos/sos.routes.js";
+import { crisisFeedPsychologistRouter } from "./modules/crisis-signals/crisis-feed.routes.js";
 import { aiChatRouter } from "./modules/ai-chat/ai-chat.routes.js";
 import { analyticsRouter } from "./modules/analytics/analytics.routes.js";
 import { notesRouter } from "./modules/psychologist-notes/psychologist-notes.routes.js";
@@ -81,7 +82,7 @@ app.route("/student", contentRouter);
 // Psychologist routes
 app.route("/psychologist/invite-codes", inviteCodesRouter);
 app.route("/psychologist/diagnostics", diagnosticsPsychologistRouter);
-app.route("/psychologist/sos", sosPsychologistRouter);
+app.route("/psychologist/crisis-signals", crisisFeedPsychologistRouter);
 app.route("/psychologist/analytics", analyticsRouter);
 app.route("/psychologist", usersRouter);
 app.route("/psychologist", notesRouter);

@@ -2,11 +2,7 @@ import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { directChatApi } from "../api/direct-chat.js";
 import { useT } from "../hooks/useLanguage.js";
-import {
-  getActive,
-  getHistory,
-  resolve,
-} from "../api/crisis.js";
+import { getFeed, getHistory, resolve } from "../api/crisis.js";
 import {
   AlertTriangle,
   Clock,
@@ -19,25 +15,19 @@ import {
   MessageCircle,
   ChevronDown,
   X,
-  Info,
   Check,
   Minus,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { clsx } from "clsx";
 import { toast } from "sonner";
-import type { SOSEvent } from "@tirek/shared";
+import type {
+  CrisisFeed,
+  CrisisSignal,
+  CrisisSignalSeverity,
+  CrisisSignalSource,
+} from "@tirek/shared";
 import { ErrorState } from "../components/ui/ErrorState.js";
-
-// Derive a 1|2|3 severity for display from either the new `type` column
-// (issue #11) or the legacy `level`. New `urgent` is treated as L3; legacy
-// rows fall back to whatever `level` they have, defaulting to 1.
-function alertSeverity(event: SOSEvent): 1 | 2 | 3 {
-  if (event.type === "urgent") return 3;
-  if (event.type === "chat") return 2;
-  if (event.type === "hotline" || event.type === "breathing") return 1;
-  return (event.level ?? 1) as 1 | 2 | 3;
-}
 
 interface ResolveState {
   notes: string;
@@ -51,13 +41,13 @@ export function CrisisPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  const [activeFeed, setActiveFeed] = useState<CrisisFeed>("red");
   const [resolveStates, setResolveStates] = useState<
     Record<string, ResolveState>
   >({});
   const [resolveSheetId, setResolveSheetId] = useState<string | null>(null);
   const [openingChat, setOpeningChat] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [legendOpen, setLegendOpen] = useState(false);
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
 
   const openStudentChat = useCallback(
@@ -75,14 +65,25 @@ export function CrisisPage() {
   );
 
   const {
-    data: active,
-    isLoading: activeLoading,
-    isError,
-    refetch,
+    data: redData,
+    isLoading: redLoading,
+    isError: redError,
+    refetch: refetchRed,
   } = useQuery({
-    queryKey: ["crisis", "active"],
-    queryFn: getActive,
+    queryKey: ["crisis", "feed", "red"],
+    queryFn: () => getFeed("red"),
     refetchInterval: 15_000,
+  });
+
+  const {
+    data: yellowData,
+    isLoading: yellowLoading,
+    isError: yellowError,
+    refetch: refetchYellow,
+  } = useQuery({
+    queryKey: ["crisis", "feed", "yellow"],
+    queryFn: () => getFeed("yellow"),
+    refetchInterval: 30_000,
   });
 
   const { data: history, isLoading: historyLoading } = useQuery({
@@ -129,203 +130,204 @@ export function CrisisPage() {
     return `${Math.floor(hours / 24)}${t.psychologist.timeAgoDays}`;
   }
 
-  const activeAlerts = active?.data ?? [];
-  const historyEvents = history?.data ?? [];
-
-  if (isError) {
-    return <ErrorState onRetry={() => refetch()} />;
+  function sourceLabel(source: CrisisSignalSource) {
+    switch (source) {
+      case "sos_urgent":
+        return t.psychologist.signalSourceSosUrgent;
+      case "ai_friend":
+        return t.psychologist.signalSourceAiFriend;
+      case "diagnostics":
+        return t.psychologist.signalSourceDiagnostics;
+    }
   }
 
-  // The alert that's being resolved (for the bottom sheet)
-  const resolveAlert = resolveSheetId
-    ? activeAlerts.find((a: SOSEvent) => a.id === resolveSheetId)
+  function severityLabel(severity: CrisisSignalSeverity) {
+    switch (severity) {
+      case "high":
+        return t.psychologist.severityHigh;
+      case "medium":
+        return t.psychologist.severityMedium;
+      case "low":
+        return t.psychologist.severityLow;
+    }
+  }
+
+  const redSignals = redData?.data ?? [];
+  const yellowSignals = yellowData?.data ?? [];
+  const historySignals = history?.data ?? [];
+
+  if (redError && yellowError) {
+    return <ErrorState onRetry={() => { refetchRed(); refetchYellow(); }} />;
+  }
+
+  const currentSignals = activeFeed === "red" ? redSignals : yellowSignals;
+  const currentLoading = activeFeed === "red" ? redLoading : yellowLoading;
+  const isRed = activeFeed === "red";
+
+  const resolveSignal = resolveSheetId
+    ? [...redSignals, ...yellowSignals].find((s) => s.id === resolveSheetId)
     : null;
 
   return (
     <>
       <div className="space-y-5 animate-fade-in-up">
-        {/* Page title */}
         <h1 className="text-xl font-bold tracking-tight text-text-main">
           {t.psychologist.crisis}
         </h1>
 
-        {/* ── LEVEL LEGEND ── */}
-        <section>
+        {/* ── FEED TABS ── */}
+        <div className="flex gap-2 p-1 rounded-2xl bg-surface-secondary">
           <button
-            onClick={() => setLegendOpen(!legendOpen)}
-            className="w-full flex items-center justify-between py-2 text-left"
+            onClick={() => setActiveFeed("red")}
+            className={clsx(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+              isRed
+                ? "bg-surface text-text-main shadow-sm"
+                : "text-text-light",
+            )}
           >
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Info size={14} className="text-primary" />
-              </div>
-              <h2 className="text-sm font-bold text-text-main">
-                {t.psychologist.crisisLevelLegend}
-              </h2>
-            </div>
-            <ChevronDown
-              size={16}
+            <span
               className={clsx(
-                "text-text-light transition-transform duration-200",
-                legendOpen && "rotate-180",
+                "w-2 h-2 rounded-full",
+                isRed ? "bg-danger animate-pulse" : "bg-danger/50",
               )}
             />
-          </button>
-
-          {legendOpen && (
-            <div className="mt-2 space-y-2 animate-fade-in-up">
-              {([
-                {
-                  level: 1,
-                  title: t.psychologist.crisisLevel1Title,
-                  desc: t.psychologist.crisisLevel1Desc,
-                  bg: "bg-yellow-400/10",
-                  text: "text-yellow-600",
-                  badge: "bg-yellow-400",
-                },
-                {
-                  level: 2,
-                  title: t.psychologist.crisisLevel2Title,
-                  desc: t.psychologist.crisisLevel2Desc,
-                  bg: "bg-warning/10",
-                  text: "text-warning",
-                  badge: "bg-warning",
-                },
-                {
-                  level: 3,
-                  title: t.psychologist.crisisLevel3Title,
-                  desc: t.psychologist.crisisLevel3Desc,
-                  bg: "bg-danger/10",
-                  text: "text-danger",
-                  badge: "bg-danger",
-                },
-              ] as const).map(({ level, title, desc, bg, text, badge }) => (
-                <div
-                  key={level}
-                  className={clsx(
-                    "flex items-start gap-3 p-3 rounded-xl border border-transparent",
-                    bg,
-                  )}
-                >
-                  <span
-                    className={clsx(
-                      "shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold text-white",
-                      badge,
-                    )}
-                  >
-                    {level}
-                  </span>
-                  <div className="min-w-0">
-                    <p className={clsx("text-sm font-semibold", text)}>
-                      {title}
-                    </p>
-                    <p className="text-xs text-text-light mt-0.5 leading-relaxed">
-                      {desc}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* ── ACTIVE ALERTS ── */}
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-danger/10 flex items-center justify-center">
-              <AlertTriangle size={14} className="text-danger" />
-            </div>
-            <h2 className="text-sm font-bold text-text-main">
-              {t.psychologist.activeAlerts}
-            </h2>
-            {activeAlerts.length > 0 && (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-danger text-white">
-                {activeAlerts.length}
+            {t.psychologist.redFeed}
+            {redSignals.length > 0 && (
+              <span
+                className={clsx(
+                  "px-1.5 py-0.5 text-[10px] font-bold rounded-full",
+                  isRed ? "bg-danger text-white" : "bg-danger/10 text-danger",
+                )}
+              >
+                {redSignals.length}
               </span>
             )}
-          </div>
+          </button>
+          <button
+            onClick={() => setActiveFeed("yellow")}
+            className={clsx(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors",
+              !isRed
+                ? "bg-surface text-text-main shadow-sm"
+                : "text-text-light",
+            )}
+          >
+            <span
+              className={clsx(
+                "w-2 h-2 rounded-full",
+                !isRed ? "bg-yellow-400" : "bg-yellow-400/50",
+              )}
+            />
+            {t.psychologist.yellowFeed}
+            {yellowSignals.length > 0 && (
+              <span
+                className={clsx(
+                  "px-1.5 py-0.5 text-[10px] font-bold rounded-full",
+                  !isRed
+                    ? "bg-yellow-400 text-white"
+                    : "bg-yellow-400/10 text-yellow-600",
+                )}
+              >
+                {yellowSignals.length}
+              </span>
+            )}
+          </button>
+        </div>
 
-          {activeLoading ? (
+        {/* ── ACTIVE FEED ── */}
+        <section>
+          {currentLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 size={22} className="animate-spin text-text-light" />
             </div>
-          ) : activeAlerts.length > 0 ? (
+          ) : currentSignals.length > 0 ? (
             <div className="space-y-2.5 stagger-children">
-              {activeAlerts.map((alert: SOSEvent) => (
+              {currentSignals.map((signal: CrisisSignal) => (
                 <div
-                  key={alert.id}
+                  key={signal.id}
                   className={clsx(
                     "glass-card rounded-2xl overflow-hidden",
-                    alertSeverity(alert) >= 3 && "animate-pulse-border !border-danger",
+                    isRed && signal.severity === "high" &&
+                      "animate-pulse-border !border-danger",
                   )}
                 >
-                  {/* Top: red accent bar for L3 */}
-                  {alertSeverity(alert) >= 3 && (
+                  {isRed && (
                     <div className="h-1 bg-gradient-to-r from-danger via-danger/70 to-danger" />
                   )}
 
                   <div className="p-4">
-                    {/* Name + level + time */}
+                    {/* Name + severity + time */}
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center shrink-0 text-sm font-bold text-danger">
-                        {(alert.studentName ?? "?").charAt(0).toUpperCase()}
+                      <div
+                        className={clsx(
+                          "w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold",
+                          isRed
+                            ? "bg-danger/10 text-danger"
+                            : "bg-yellow-400/10 text-yellow-600",
+                        )}
+                      >
+                        {signal.studentName.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[15px] font-bold text-text-main truncate">
-                          {alert.studentName ?? t.psychologist.student}
+                          {signal.studentName}
                         </p>
                         <div className="flex items-center gap-1.5 text-xs text-text-light">
-                          {alert.studentGrade && (
+                          {signal.studentGrade !== null && (
                             <>
                               <span>
-                                {alert.studentGrade}
-                                {alert.studentClassLetter ?? ""}
+                                {signal.studentGrade}
+                                {signal.studentClassLetter ?? ""}
                               </span>
                               <span className="opacity-30">&middot;</span>
                             </>
                           )}
                           <Clock size={11} />
-                          <span>{formatTimeAgo(alert.createdAt)}</span>
+                          <span>{formatTimeAgo(signal.createdAt)}</span>
+                          <span className="opacity-30">&middot;</span>
+                          <span>{sourceLabel(signal.source)}</span>
                         </div>
                       </div>
                       <span
                         className={clsx(
-                          "shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-xs font-extrabold",
-                          alertSeverity(alert) >= 3 && "bg-danger text-white",
-                          alertSeverity(alert) === 2 && "bg-warning text-white",
-                          alertSeverity(alert) <= 1 && "bg-yellow-400 text-white",
+                          "shrink-0 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide",
+                          signal.severity === "high" &&
+                            (isRed
+                              ? "bg-danger text-white"
+                              : "bg-warning text-white"),
+                          signal.severity === "medium" &&
+                            "bg-yellow-400 text-white",
+                          signal.severity === "low" &&
+                            "bg-surface-secondary text-text-light",
                         )}
                       >
-                        {alertSeverity(alert)}
+                        {severityLabel(signal.severity)}
                       </span>
                     </div>
 
-                    {/* Student note */}
-                    {alert.notes && (
-                      <div className="mb-3 bg-danger/5 rounded-xl px-3 py-2.5 border border-danger/10">
-                        <p className="text-[13px] text-text-main leading-relaxed">
-                          {alert.notes}
-                        </p>
-                      </div>
-                    )}
+                    {/* Signal Summary (психологу — БЕЗ цитат ученика) */}
+                    <div
+                      className={clsx(
+                        "mb-3 rounded-xl px-3 py-2.5 border",
+                        isRed
+                          ? "bg-danger/5 border-danger/10"
+                          : "bg-yellow-400/5 border-yellow-400/15",
+                      )}
+                    >
+                      <p className="text-[13px] text-text-main leading-relaxed">
+                        {signal.summary}
+                      </p>
+                    </div>
 
-                    {/* Actions: 3 buttons in a row */}
+                    {/* Quick actions: 3 inline buttons */}
                     <div className="grid grid-cols-3 gap-2">
                       <button
-                        onClick={() => navigate(`/students/${alert.userId}`)}
-                        className="btn-press flex flex-col items-center gap-1 py-2.5 rounded-xl bg-surface-secondary active:bg-surface-hover transition-colors"
-                      >
-                        <Users size={16} className="text-primary" />
-                        <span className="text-[11px] font-medium text-text-main">
-                          {t.psychologist.profile}
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => openStudentChat(alert.userId)}
-                        disabled={openingChat === alert.userId}
+                        onClick={() => openStudentChat(signal.studentId)}
+                        disabled={openingChat === signal.studentId}
                         className="btn-press flex flex-col items-center gap-1 py-2.5 rounded-xl bg-surface-secondary active:bg-surface-hover disabled:opacity-50 transition-colors"
                       >
-                        {openingChat === alert.userId ? (
+                        {openingChat === signal.studentId ? (
                           <Loader2 size={16} className="animate-spin text-success" />
                         ) : (
                           <MessageCircle size={16} className="text-success" />
@@ -335,12 +337,21 @@ export function CrisisPage() {
                         </span>
                       </button>
                       <button
-                        onClick={() => setResolveSheetId(alert.id)}
+                        onClick={() => setResolveSheetId(signal.id)}
                         className="btn-press flex flex-col items-center gap-1 py-2.5 rounded-xl bg-surface-secondary active:bg-surface-hover transition-colors"
                       >
                         <CheckCircle size={16} className="text-text-light" />
                         <span className="text-[11px] font-medium text-text-main">
-                          {t.psychologist.resolve}
+                          {t.psychologist.resolveSignal}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => navigate(`/students/${signal.studentId}`)}
+                        className="btn-press flex flex-col items-center gap-1 py-2.5 rounded-xl bg-surface-secondary active:bg-surface-hover transition-colors"
+                      >
+                        <Users size={16} className="text-primary" />
+                        <span className="text-[11px] font-medium text-text-main">
+                          {t.psychologist.profile}
                         </span>
                       </button>
                     </div>
@@ -350,14 +361,25 @@ export function CrisisPage() {
             </div>
           ) : (
             <div className="glass-card rounded-2xl p-8 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center mx-auto mb-3">
-                <Shield size={24} className="text-success" />
+              <div
+                className={clsx(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3",
+                  isRed ? "bg-success/10" : "bg-success/10",
+                )}
+              >
+                {isRed ? (
+                  <Shield size={24} className="text-success" />
+                ) : (
+                  <AlertTriangle size={24} className="text-success" />
+                )}
               </div>
               <p className="text-[15px] font-semibold text-text-main">
-                {t.psychologist.noActiveAlerts}
+                {isRed
+                  ? t.psychologist.noRedFeedSignals
+                  : t.psychologist.noYellowFeedSignals}
               </p>
               <p className="text-xs text-text-light mt-1">
-                {t.psychologist.allStudentsSafe}
+                {t.psychologist.allCalm}
               </p>
             </div>
           )}
@@ -390,31 +412,36 @@ export function CrisisPage() {
             <div className="mt-1">
               {historyLoading ? (
                 <div className="flex justify-center py-6">
-                  <Loader2
-                    size={20}
-                    className="animate-spin text-text-light"
-                  />
+                  <Loader2 size={20} className="animate-spin text-text-light" />
                 </div>
-              ) : historyEvents.length > 0 ? (
+              ) : historySignals.length > 0 ? (
                 <div className="space-y-2 stagger-children">
-                  {historyEvents.map((event: SOSEvent) => {
-                    const isExpanded = expandedHistoryId === event.id;
+                  {historySignals.map((signal) => {
+                    const isExpanded = expandedHistoryId === signal.id;
                     const actions = [
-                      { done: event.contactedStudent, label: t.psychologist.contactedStudentDone },
-                      { done: event.contactedParent, label: t.psychologist.contactedParentDone },
-                      { done: event.documented, label: t.psychologist.documentedDone },
+                      {
+                        done: signal.contactedStudent,
+                        label: t.psychologist.contactedStudentDone,
+                      },
+                      {
+                        done: signal.contactedParent,
+                        label: t.psychologist.contactedParentDone,
+                      },
+                      {
+                        done: signal.documented,
+                        label: t.psychologist.documentedDone,
+                      },
                     ];
                     const hasAnyAction = actions.some((a) => a.done);
 
                     return (
                       <div
-                        key={event.id}
+                        key={signal.id}
                         className="rounded-xl bg-surface border border-border overflow-hidden"
                       >
-                        {/* Collapsed header */}
                         <button
                           onClick={() =>
-                            setExpandedHistoryId(isExpanded ? null : event.id)
+                            setExpandedHistoryId(isExpanded ? null : signal.id)
                           }
                           className="w-full flex items-center gap-3 p-3 text-left"
                         >
@@ -423,11 +450,11 @@ export function CrisisPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-text-main truncate">
-                              {event.studentName ?? t.psychologist.student}
+                              {signal.studentName}
                             </p>
-                            {!isExpanded && event.notes && (
+                            {!isExpanded && (
                               <p className="text-xs text-text-light truncate mt-0.5">
-                                {event.notes}
+                                {signal.summary}
                               </p>
                             )}
                           </div>
@@ -435,12 +462,14 @@ export function CrisisPage() {
                             <span
                               className={clsx(
                                 "px-1.5 py-0.5 text-[10px] font-bold rounded-md",
-                                alertSeverity(event) >= 3 && "bg-danger/10 text-danger",
-                                alertSeverity(event) === 2 && "bg-warning/10 text-warning",
-                                alertSeverity(event) <= 1 && "bg-yellow-400/10 text-yellow-600",
+                                signal.type === "acute_crisis"
+                                  ? "bg-danger/10 text-danger"
+                                  : "bg-yellow-400/10 text-yellow-600",
                               )}
                             >
-                              L{alertSeverity(event)}
+                              {signal.type === "acute_crisis"
+                                ? t.psychologist.redFeed
+                                : t.psychologist.yellowFeed}
                             </span>
                             <ChevronDown
                               size={14}
@@ -452,65 +481,63 @@ export function CrisisPage() {
                           </div>
                         </button>
 
-                        {/* Expanded details */}
                         {isExpanded && (
                           <div className="px-3 pb-3 pt-0 border-t border-border animate-fade-in-up">
                             <div className="grid grid-cols-2 gap-2.5 mt-3">
-                              {/* Triggered at */}
                               <div>
                                 <p className="text-[10px] text-text-light uppercase tracking-wide">
                                   {t.psychologist.triggeredAt}
                                 </p>
                                 <p className="text-xs font-medium text-text-main mt-0.5">
-                                  {new Date(event.createdAt).toLocaleString()}
+                                  {new Date(signal.createdAt).toLocaleString()}
                                 </p>
                               </div>
-                              {/* Resolved at */}
-                              {event.resolvedAt && (
+                              {signal.resolvedAt && (
                                 <div>
                                   <p className="text-[10px] text-text-light uppercase tracking-wide">
                                     {t.psychologist.resolvedAtLabel}
                                   </p>
                                   <p className="text-xs font-medium text-text-main mt-0.5">
-                                    {new Date(event.resolvedAt).toLocaleString()}
+                                    {new Date(signal.resolvedAt).toLocaleString()}
                                   </p>
                                 </div>
                               )}
-                              {/* Student */}
                               <div>
                                 <p className="text-[10px] text-text-light uppercase tracking-wide">
                                   {t.psychologist.student}
                                 </p>
                                 <p className="text-xs font-medium text-text-main mt-0.5">
-                                  {event.studentName ?? "—"}
-                                  {event.studentGrade
-                                    ? ` · ${event.studentGrade}${event.studentClassLetter ?? ""}`
+                                  {signal.studentName}
+                                  {signal.studentGrade !== null
+                                    ? ` · ${signal.studentGrade}${signal.studentClassLetter ?? ""}`
                                     : ""}
                                 </p>
                               </div>
-                              {/* Resolved by */}
-                              {event.resolvedByName && (
-                                <div>
-                                  <p className="text-[10px] text-text-light uppercase tracking-wide">
-                                    {t.psychologist.resolvedByPsychologist}
-                                  </p>
-                                  <p className="text-xs font-medium text-text-main mt-0.5">
-                                    {event.resolvedByName}
-                                  </p>
-                                </div>
-                              )}
+                              <div>
+                                <p className="text-[10px] text-text-light uppercase tracking-wide">
+                                  {t.psychologist.signalSummary}
+                                </p>
+                                <p className="text-xs font-medium text-text-main mt-0.5">
+                                  {sourceLabel(signal.source)} ·{" "}
+                                  {severityLabel(signal.severity)}
+                                </p>
+                              </div>
                             </div>
 
-                            {/* Notes */}
-                            {event.notes && (
-                              <div className="mt-3 bg-surface-secondary rounded-lg px-3 py-2">
+                            <div className="mt-3 bg-surface-secondary rounded-lg px-3 py-2">
+                              <p className="text-[13px] text-text-main leading-relaxed">
+                                {signal.summary}
+                              </p>
+                            </div>
+
+                            {signal.resolutionNotes && (
+                              <div className="mt-2 bg-surface-secondary rounded-lg px-3 py-2">
                                 <p className="text-[13px] text-text-main leading-relaxed">
-                                  {event.notes}
+                                  {signal.resolutionNotes}
                                 </p>
                               </div>
                             )}
 
-                            {/* Actions checklist */}
                             <div className="mt-3">
                               <p className="text-[10px] text-text-light uppercase tracking-wide mb-1.5">
                                 {t.psychologist.actionsTaken}
@@ -561,39 +588,40 @@ export function CrisisPage() {
       </div>
 
       {/* ── RESOLVE BOTTOM SHEET ── */}
-      {resolveAlert && (
+      {resolveSignal && (
         <div
           className="fixed inset-0 z-50 flex flex-col justify-end"
           onClick={() => setResolveSheetId(null)}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-          {/* Sheet */}
           <div
             className="relative bg-surface rounded-t-3xl max-h-[85dvh] overflow-y-auto safe-bottom animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-border" />
             </div>
 
             <div className="px-5 pb-6">
-              {/* Sheet header */}
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center text-sm font-bold text-danger">
-                    {(resolveAlert.studentName ?? "?")
-                      .charAt(0)
-                      .toUpperCase()}
+                  <div
+                    className={clsx(
+                      "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
+                      resolveSignal.type === "acute_crisis"
+                        ? "bg-danger/10 text-danger"
+                        : "bg-yellow-400/10 text-yellow-600",
+                    )}
+                  >
+                    {resolveSignal.studentName.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <p className="text-base font-bold text-text-main">
-                      {resolveAlert.studentName ?? t.psychologist.student}
+                      {resolveSignal.studentName}
                     </p>
                     <p className="text-xs text-text-light">
-                      {t.psychologist.resolve}
+                      {t.psychologist.resolveSignalTitle}
                     </p>
                   </div>
                 </div>
@@ -605,7 +633,6 @@ export function CrisisPage() {
                 </button>
               </div>
 
-              {/* Checklist */}
               <div className="space-y-2 mb-4">
                 {(
                   [
@@ -626,13 +653,13 @@ export function CrisisPage() {
                     },
                   ] as const
                 ).map(({ key, icon: Icon, label }) => {
-                  const state = getState(resolveAlert.id);
+                  const state = getState(resolveSignal.id);
                   return (
                     <button
                       type="button"
                       key={key}
                       onClick={() =>
-                        updateState(resolveAlert.id, {
+                        updateState(resolveSignal.id, {
                           [key]: !state[key],
                         })
                       }
@@ -661,18 +688,9 @@ export function CrisisPage() {
                       </div>
                       <Icon
                         size={18}
-                        className={
-                          state[key] ? "text-success" : "text-text-light"
-                        }
+                        className={state[key] ? "text-success" : "text-text-light"}
                       />
-                      <span
-                        className={clsx(
-                          "text-sm",
-                          state[key]
-                            ? "text-text-main font-medium"
-                            : "text-text-main",
-                        )}
-                      >
+                      <span className="text-sm text-text-main">
                         {label}
                       </span>
                     </button>
@@ -680,11 +698,10 @@ export function CrisisPage() {
                 })}
               </div>
 
-              {/* Notes */}
               <textarea
-                value={getState(resolveAlert.id).notes}
+                value={getState(resolveSignal.id).notes}
                 onChange={(e) =>
-                  updateState(resolveAlert.id, { notes: e.target.value })
+                  updateState(resolveSignal.id, { notes: e.target.value })
                 }
                 rows={3}
                 placeholder={t.psychologist.resolveNotesPlaceholder}
@@ -693,18 +710,14 @@ export function CrisisPage() {
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
 
-              {/* Submit */}
               <button
                 onClick={() =>
                   resolveMutation.mutate({
-                    id: resolveAlert.id,
-                    data: getState(resolveAlert.id),
+                    id: resolveSignal.id,
+                    data: getState(resolveSignal.id),
                   })
                 }
-                disabled={
-                  !getState(resolveAlert.id).notes.trim() ||
-                  resolveMutation.isPending
-                }
+                disabled={resolveMutation.isPending}
                 className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-success text-white text-[15px]
                   font-bold active:bg-success/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors btn-press"
               >
@@ -713,7 +726,7 @@ export function CrisisPage() {
                 ) : (
                   <CheckCircle size={18} />
                 )}
-                {t.psychologist.resolve}
+                {t.psychologist.resolveSignal}
               </button>
             </div>
           </div>

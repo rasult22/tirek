@@ -63,11 +63,12 @@ export default function DashboardScreen() {
     queryFn: analyticsApi.overview,
   });
 
-  const { data: activeAlerts, isLoading: alertsLoading } = useQuery({
-    queryKey: ["crisis", "active"],
-    queryFn: crisisApi.getActive,
+  const { data: redData, isLoading: alertsLoading } = useQuery({
+    queryKey: ["crisis", "feed", "red"],
+    queryFn: () => crisisApi.getFeed("red"),
     refetchInterval: 30_000,
   });
+  const redSignals = redData?.data ?? [];
 
   const { data: unreadNotifs } = useQuery({
     queryKey: ["notifications", "count"],
@@ -246,11 +247,11 @@ export default function DashboardScreen() {
               >
                 <Ionicons name="alert-circle" size={14} color={c.danger} />
               </View>
-              <Text variant="h3">{t.psychologist.crisisAlerts}</Text>
-              {(activeAlerts?.data?.length ?? 0) > 0 && (
+              <Text variant="h3">{t.psychologist.redFeedFull}</Text>
+              {redSignals.length > 0 && (
                 <View style={[styles.alertCountBadge, { backgroundColor: c.danger }]}>
                   <Text style={styles.alertCountText}>
-                    {activeAlerts!.data.length}
+                    {redSignals.length}
                   </Text>
                 </View>
               )}
@@ -272,11 +273,11 @@ export default function DashboardScreen() {
 
           {alertsLoading ? (
             <SkeletonList count={2} />
-          ) : activeAlerts && activeAlerts.data.length > 0 ? (
+          ) : redSignals.length > 0 ? (
             <View style={styles.alertsList}>
-              {activeAlerts.data.slice(0, 3).map((alert) => (
+              {redSignals.slice(0, 3).map((signal) => (
                 <Pressable
-                  key={alert.id}
+                  key={signal.id}
                   onPress={() => router.push("/(tabs)/crisis")}
                   style={({ pressed }) => [
                     styles.alertItem,
@@ -301,19 +302,16 @@ export default function DashboardScreen() {
                       style={{ fontWeight: "700" }}
                       numberOfLines={1}
                     >
-                      {alert.studentName ?? t.psychologist.student}
+                      {signal.studentName}
                     </Text>
                     <Text variant="small" numberOfLines={1}>
-                      {t.psychologist.crisisLevel} {alert.level}
-                      {alert.studentGrade
-                        ? ` · ${alert.studentGrade}${alert.studentClass ?? ""}`
-                        : ""}
+                      {signal.summary}
                     </Text>
                   </View>
                   <View style={styles.alertTime}>
                     <Ionicons name="time-outline" size={11} color={c.textLight} />
                     <Text style={{ fontSize: 11, color: c.textLight }}>
-                      {formatTimeAgo(alert.createdAt, t)}
+                      {formatTimeAgo(signal.createdAt, t)}
                     </Text>
                   </View>
                 </Pressable>

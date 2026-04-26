@@ -1,7 +1,7 @@
 import { NavLink } from "react-router";
 import { useT } from "../../hooks/useLanguage.js";
 import { useQuery } from "@tanstack/react-query";
-import { getActive } from "../../api/crisis.js";
+import { getCounts } from "../../api/crisis.js";
 import { clsx } from "clsx";
 import {
   LayoutDashboard,
@@ -25,12 +25,12 @@ export function BottomNav() {
   const t = useT();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const { data: activeAlerts } = useQuery({
-    queryKey: ["crisis", "active"],
-    queryFn: getActive,
+  const { data: counts } = useQuery({
+    queryKey: ["crisis", "counts"],
+    queryFn: getCounts,
     refetchInterval: 30_000,
   });
-  const crisisCount = activeAlerts?.data?.length ?? 0;
+  const crisisCount = counts?.red ?? 0;
 
   const { data: directUnread } = useQuery({
     queryKey: ["direct-chat", "unread-count"],

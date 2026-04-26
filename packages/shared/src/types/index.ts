@@ -321,6 +321,36 @@ export interface SOSEvent {
   studentClassLetter?: string;
 }
 
+export type CrisisSignalType = "acute_crisis" | "concern";
+export type CrisisSignalSeverity = "high" | "medium" | "low";
+export type CrisisSignalSource = "sos_urgent" | "ai_friend" | "diagnostics";
+export type CrisisFeed = "red" | "yellow";
+
+export interface CrisisSignal {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentGrade: number | null;
+  studentClassLetter: string | null;
+  type: CrisisSignalType;
+  severity: CrisisSignalSeverity;
+  source: CrisisSignalSource;
+  summary: string;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+  resolvedAt: string | null;
+  resolvedBy: string | null;
+  resolutionNotes: string | null;
+  contactedStudent: boolean;
+  contactedParent: boolean;
+  documented: boolean;
+}
+
+export interface CrisisFeedCounts {
+  red: number;
+  yellow: number;
+}
+
 export interface ChatSession {
   id: string;
   userId: string;
@@ -354,7 +384,23 @@ export interface InviteCode {
 export interface Notification {
   id: string;
   userId: string;
-  type: "crisis" | "sos_alert" | "concern_detected" | "reminder" | "assignment" | "system" | "direct_message" | "appointment" | "achievement";
+  // Canonical types (post-router): backend normalizes any legacy values to these.
+  // Legacy strings are kept in the union only for read tolerance; new code
+  // should produce only canonical types.
+  type:
+    | "crisis_red"
+    | "concern_yellow"
+    | "info"
+    | "chat"
+    | "crisis"
+    | "sos_alert"
+    | "concern_detected"
+    | "reminder"
+    | "assignment"
+    | "system"
+    | "direct_message"
+    | "appointment"
+    | "achievement";
   title: string;
   body: string;
   read: boolean;

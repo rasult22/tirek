@@ -1,24 +1,40 @@
 import { apiFetch } from "./client.js";
-import type { SOSEvent, PaginatedResponse } from "@tirek/shared";
+import type {
+  CrisisFeed,
+  CrisisFeedCounts,
+  CrisisSignal,
+  PaginatedResponse,
+} from "@tirek/shared";
 
-export function getActive() {
-  return apiFetch<PaginatedResponse<SOSEvent>>("/psychologist/sos/active");
+export function getFeed(feed: CrisisFeed) {
+  return apiFetch<{ data: CrisisSignal[] }>(
+    `/psychologist/crisis-signals?feed=${feed}`,
+  );
+}
+
+export function getCounts() {
+  return apiFetch<CrisisFeedCounts>("/psychologist/crisis-signals/counts");
 }
 
 export interface ResolveData {
-  notes: string;
+  notes?: string;
   contactedStudent?: boolean;
   contactedParent?: boolean;
   documented?: boolean;
 }
 
 export function resolve(id: string, data: ResolveData) {
-  return apiFetch<SOSEvent>(`/psychologist/sos/${id}/resolve`, {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  });
+  return apiFetch<CrisisSignal>(
+    `/psychologist/crisis-signals/${id}/resolve`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    },
+  );
 }
 
 export function getHistory() {
-  return apiFetch<PaginatedResponse<SOSEvent>>("/psychologist/sos/history");
+  return apiFetch<PaginatedResponse<CrisisSignal>>(
+    "/psychologist/crisis-signals/history",
+  );
 }

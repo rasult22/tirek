@@ -2,8 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { useT } from "../hooks/useLanguage.js";
 import { overview } from "../api/analytics.js";
-import { getActive } from "../api/crisis.js";
-import { StatusBadge } from "../components/ui/StatusBadge.js";
+import { getCounts, getFeed } from "../api/crisis.js";
 import {
   Users,
   Activity,
@@ -15,6 +14,7 @@ import {
   BarChart3,
   Clock,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { ErrorState } from "../components/ui/ErrorState.js";
@@ -28,11 +28,21 @@ export function DashboardPage() {
     queryFn: overview,
   });
 
-  const { data: activeAlerts, isLoading: alertsLoading } = useQuery({
-    queryKey: ["crisis", "active"],
-    queryFn: getActive,
+  const { data: counts } = useQuery({
+    queryKey: ["crisis", "counts"],
+    queryFn: getCounts,
     refetchInterval: 30_000,
   });
+
+  const { data: redData, isLoading: redLoading } = useQuery({
+    queryKey: ["crisis", "feed", "red"],
+    queryFn: () => getFeed("red"),
+    refetchInterval: 30_000,
+  });
+
+  const redSignals = redData?.data ?? [];
+  const redCount = counts?.red ?? redSignals.length;
+  const yellowCount = counts?.yellow ?? 0;
 
   const statCards = [
     {
@@ -52,20 +62,20 @@ export function DashboardPage() {
       iconColor: "text-success",
     },
     {
-      label: t.psychologist.pendingTests,
-      value: stats?.pendingTests ?? 0,
-      icon: ClipboardList,
-      gradient: "from-amber-50 to-yellow-50",
-      iconBg: "bg-warning/12",
-      iconColor: "text-warning",
-    },
-    {
-      label: t.psychologist.crisisAlerts,
-      value: stats?.crisisAlerts ?? 0,
+      label: t.psychologist.redFeedFull,
+      value: redCount,
       icon: AlertTriangle,
       gradient: "from-red-50 to-rose-50",
       iconBg: "bg-danger/12",
       iconColor: "text-danger",
+    },
+    {
+      label: t.psychologist.yellowFeedFull,
+      value: yellowCount,
+      icon: Eye,
+      gradient: "from-amber-50 to-yellow-50",
+      iconBg: "bg-yellow-400/15",
+      iconColor: "text-yellow-600",
     },
   ];
 
@@ -145,7 +155,7 @@ export function DashboardPage() {
         ))}
       </div>
 
-      {/* Crisis alerts */}
+      {/* Red Feed — требует внимания сегодня */}
       <div className="glass-card-elevated rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between p-4 border-b border-border-light">
           <div className="flex items-center gap-2">
@@ -153,11 +163,11 @@ export function DashboardPage() {
               <AlertTriangle size={14} className="text-danger" />
             </div>
             <h2 className="text-sm font-bold text-text-main">
-              {t.psychologist.crisisAlerts}
+              {t.psychologist.redFeedFull}
             </h2>
-            {(activeAlerts?.data?.length ?? 0) > 0 && (
+            {redCount > 0 && (
               <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-danger text-white">
-                {activeAlerts!.data.length}
+                {redCount}
               </span>
             )}
           </div>
@@ -165,21 +175,21 @@ export function DashboardPage() {
             onClick={() => navigate("/crisis")}
             className="btn-press text-xs text-primary hover:text-primary-dark font-semibold flex items-center gap-1 transition-colors"
           >
-            View all
+            {t.common.more}
             <ArrowRight size={12} />
           </button>
         </div>
 
         <div className="p-4">
-          {alertsLoading ? (
+          {redLoading ? (
             <div className="flex justify-center py-6">
               <Loader2 size={20} className="animate-spin text-text-light" />
             </div>
-          ) : activeAlerts && activeAlerts.data.length > 0 ? (
+          ) : redSignals.length > 0 ? (
             <div className="space-y-2">
-              {activeAlerts.data.slice(0, 5).map((alert) => (
+              {redSignals.slice(0, 5).map((signal) => (
                 <div
-                  key={alert.id}
+                  key={signal.id}
                   className="btn-press flex items-center gap-3 p-3 rounded-xl bg-danger/4 border border-danger/12 cursor-pointer hover:bg-danger/8 transition-all"
                   onClick={() => navigate("/crisis")}
                 >
@@ -188,18 +198,15 @@ export function DashboardPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-text-main truncate">
-                      {alert.studentName ?? "Student"}
+                      {signal.studentName}
                     </p>
                     <p className="text-xs text-text-light truncate">
-                      {t.psychologist.crisisLevel} {alert.level} &middot;{" "}
-                      {alert.studentGrade
-                        ? `${alert.studentGrade}${alert.studentClass ?? ""}`
-                        : ""}
+                      {signal.summary}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] text-text-light font-medium shrink-0">
                     <Clock size={11} />
-                    {formatTimeAgo(alert.createdAt)}
+                    {formatTimeAgo(signal.createdAt)}
                   </div>
                 </div>
               ))}
@@ -210,7 +217,7 @@ export function DashboardPage() {
                 <Activity size={20} className="text-success" />
               </div>
               <p className="text-sm text-text-light font-medium">
-                No active crisis alerts
+                {t.psychologist.allCalm}
               </p>
             </div>
           )}
