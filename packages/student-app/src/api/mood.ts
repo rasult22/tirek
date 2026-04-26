@@ -1,5 +1,5 @@
 import { apiFetch } from "./client.js";
-import type { MoodEntry, MoodCalendarDay, MoodInsights } from "@tirek/shared";
+import type { MoodEntry, MoodCalendarDay, MoodInsights, MoodToday } from "@tirek/shared";
 
 export const moodApi = {
   create: (data: {
@@ -11,7 +11,7 @@ export const moodApi = {
     factors?: string[] | null;
   }) => apiFetch<MoodEntry>("/student/mood", { method: "POST", body: JSON.stringify(data) }),
 
-  today: () => apiFetch<MoodEntry | null>("/student/mood/today"),
+  today: () => apiFetch<MoodToday>("/student/mood/today"),
 
   calendar: (year: number, month: number) =>
     apiFetch<MoodCalendarDay[]>(`/student/mood/calendar?year=${year}&month=${month}`),

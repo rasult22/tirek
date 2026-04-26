@@ -8,6 +8,7 @@ import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { diagnosticsRepository } from "./diagnostics.repository.js";
 import { achievementsService } from "../achievements/achievements.service.js";
+import { streaksService } from "../streaks/streaks.service.js";
 import { aiReportService } from "./ai-report.singleton.js";
 import { computeScore, type Severity } from "./test-scoring-engine.js";
 import { crisisSignalsService } from "../crisis-signals/crisis-signals.service.js";
@@ -296,6 +297,7 @@ export const diagnosticsService = {
     }
 
     achievementsService.checkAndAward(userId, { trigger: "test" }).catch(() => {});
+    streaksService.recordActivity(userId).catch(() => {});
 
     aiReportService.ensurePending(sessionId).catch((e) => {
       console.error("[diagnostics] failed to ensure AI report row", e);

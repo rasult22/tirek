@@ -1,9 +1,14 @@
 import { v4 as uuidv4 } from "uuid";
-import { ValidationError, ConflictError } from "../../shared/errors.js";
+import { ValidationError } from "../../shared/errors.js";
 import { moodRepository } from "./mood.repository.js";
+import { latestPerSlot, groupByAlmatyDay } from "./mood-slots.js";
 import { streaksService } from "../streaks/streaks.service.js";
 import { virtualPlantService } from "../virtual-plant/virtual-plant.service.js";
 import { achievementsService } from "../achievements/achievements.service.js";
+import { currentDay, startOfDay, endOfDay } from "../../lib/almaty-day/almaty-day.js";
+
+// Единый порог тренда mood/insights — здесь и нигде больше.
+const TREND_THRESHOLD = 0.3;
 
 export const moodService = {
   async createEntry(
@@ -26,10 +31,8 @@ export const moodService = {
       throw new ValidationError("Mood must be an integer between 1 and 5");
     }
 
-    const existing = await moodRepository.findToday(userId);
-    if (existing) {
-      throw new ConflictError("Mood entry already exists for today");
-    }
+    const existingToday = await moodRepository.findInAlmatyDay(userId);
+    const isFirstProductiveActionForToday = existingToday.length === 0;
 
     const entry = await moodRepository.create({
       id: uuidv4(),
@@ -42,32 +45,34 @@ export const moodService = {
       factors: factors ?? null,
     });
 
-    // Record streak activity (fire-and-forget)
-    streaksService.recordActivity(userId).catch(() => {});
-    virtualPlantService.addPoints(userId, 10).catch(() => {});
-    achievementsService.checkAndAward(userId, { trigger: "mood" }).catch(() => {});
+    if (isFirstProductiveActionForToday) {
+      streaksService.recordActivity(userId).catch(() => {});
+      virtualPlantService.addPoints(userId, 10).catch(() => {});
+      achievementsService.checkAndAward(userId, { trigger: "mood" }).catch(() => {});
+    }
 
     return entry;
   },
 
   async getToday(userId: string) {
-    const entry = await moodRepository.findToday(userId);
-    return entry;
+    const entries = await moodRepository.findInAlmatyDay(userId);
+    return latestPerSlot(entries);
   },
 
   async getCalendar(userId: string, year: number, month: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const startDay = `${year}-${String(month).padStart(2, "0")}-01`;
+    const lastDayOfMonth = new Date(year, month, 0).getDate();
+    const endDayStr = `${year}-${String(month).padStart(2, "0")}-${String(lastDayOfMonth).padStart(2, "0")}`;
+    const startDate = startOfDay(startDay);
+    const endDate = endOfDay(endDayStr);
 
-    const entries = await moodRepository.findByDateRange(
-      userId,
-      startDate,
-      endDate,
-    );
+    const entries = await moodRepository.findByDateRange(userId, startDate, endDate);
+    const grouped = groupByAlmatyDay(entries);
 
-    return entries.map((e) => ({
-      date: e.createdAt.toISOString().split("T")[0],
-      mood: e.mood,
+    return Object.entries(grouped).map(([date, slots]) => ({
+      date,
+      daySlotMood: slots.daySlot?.mood ?? null,
+      eveningSlotMood: slots.eveningSlot?.mood ?? null,
     }));
   },
 
@@ -82,11 +87,10 @@ export const moodService = {
       };
     }
 
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const fourteenDaysAgo = new Date(
-      now.getTime() - 14 * 24 * 60 * 60 * 1000,
-    );
+    const today = currentDay();
+    const todayStart = startOfDay(today);
+    const sevenDaysAgo = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(todayStart.getTime() - 13 * 24 * 60 * 60 * 1000);
 
     const thisWeek = entries.filter((e) => e.createdAt >= sevenDaysAgo);
     const lastWeek = entries.filter(
@@ -104,11 +108,10 @@ export const moodService = {
     let trend: "improving" | "declining" | "stable" = "stable";
     if (lastWeek.length > 0 && thisWeek.length > 0) {
       const diff = thisWeekAvg - lastWeekAvg;
-      if (diff > 0.3) trend = "improving";
-      else if (diff < -0.3) trend = "declining";
+      if (diff > TREND_THRESHOLD) trend = "improving";
+      else if (diff < -TREND_THRESHOLD) trend = "declining";
     }
 
-    // Count factor occurrences
     const factorCounts: Record<string, number> = {};
     for (const entry of entries) {
       const factors = entry.factors as string[] | null;

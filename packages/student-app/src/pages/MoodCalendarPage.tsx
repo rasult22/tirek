@@ -61,7 +61,10 @@ export function MoodCalendarPage() {
 
   const moodMap = useMemo(() => {
     const map: Record<string, number> = {};
-    calendarData?.forEach((d) => { map[d.date] = d.mood; });
+    calendarData?.forEach((d) => {
+      const mood = d.eveningSlotMood ?? d.daySlotMood;
+      if (mood !== null && mood !== undefined) map[d.date] = mood;
+    });
     return map;
   }, [calendarData]);
 
@@ -223,14 +226,22 @@ export function MoodCalendarPage() {
                 </button>
               </div>
               <div className="mt-4 flex items-center gap-3">
-                <span className="text-4xl">
-                  {moodLevels.find((m) => m.value === selectedMood.mood)?.emoji}
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-text-main">
-                    {[t.mood.level1, t.mood.level2, t.mood.level3, t.mood.level4, t.mood.level5][selectedMood.mood - 1]}
-                  </p>
-                </div>
+                {(() => {
+                  const mood = selectedMood.eveningSlotMood ?? selectedMood.daySlotMood;
+                  if (mood === null || mood === undefined) return null;
+                  return (
+                    <>
+                      <span className="text-4xl">
+                        {moodLevels.find((m) => m.value === mood)?.emoji}
+                      </span>
+                      <div>
+                        <p className="text-sm font-bold text-text-main">
+                          {[t.mood.level1, t.mood.level2, t.mood.level3, t.mood.level4, t.mood.level5][mood - 1]}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>

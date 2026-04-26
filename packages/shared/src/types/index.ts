@@ -42,7 +42,13 @@ export interface MoodEntry {
 
 export interface MoodCalendarDay {
   date: string;
-  mood: number;
+  daySlotMood: number | null;
+  eveningSlotMood: number | null;
+}
+
+export interface MoodToday {
+  daySlot: MoodEntry | null;
+  eveningSlot: MoodEntry | null;
 }
 
 export interface MoodInsights {

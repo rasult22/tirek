@@ -12,6 +12,7 @@ import { db } from "../../db/index.js";
 import { users, moodEntries, diagnosticSessions, diagnosticTests } from "../../db/schema.js";
 import { eq, desc, and, gte } from "drizzle-orm";
 import { buildStudentContextPure } from "./build-student-context.js";
+import { streaksService } from "../streaks/streaks.service.js";
 
 const VALID_MODES = ["general", "talk", "problem", "exam", "discovery"] as const;
 
@@ -100,6 +101,9 @@ export const aiChatService = {
       content: body.content,
     });
 
+    // AI-Friend message — Productive Action; идемпотентен по Almaty Day внутри streaksService.
+    streaksService.recordActivity(userId).catch(() => {});
+
     // Build student context for agent awareness
     const { context: studentContext } = await buildStudentContext(userId, session.mode);
 
@@ -154,6 +158,8 @@ export const aiChatService = {
       role: "user",
       content: body.content,
     });
+
+    streaksService.recordActivity(userId).catch(() => {});
 
     let assistantContent: string;
     try {

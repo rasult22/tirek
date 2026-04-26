@@ -1,6 +1,7 @@
-import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { moodEntries } from "../../db/schema.js";
+import { startOfDay, endOfDay, currentDay } from "../../lib/almaty-day/almaty-day.js";
 
 export const moodRepository = {
   async create(data: {
@@ -17,18 +18,18 @@ export const moodRepository = {
     return entry;
   },
 
-  async findToday(userId: string) {
-    const [entry] = await db
+  async findInAlmatyDay(userId: string, day: string = currentDay()) {
+    return db
       .select()
       .from(moodEntries)
       .where(
         and(
           eq(moodEntries.userId, userId),
-          sql`DATE(${moodEntries.createdAt}) = CURRENT_DATE`,
+          gte(moodEntries.createdAt, startOfDay(day)),
+          lte(moodEntries.createdAt, endOfDay(day)),
         ),
       )
-      .limit(1);
-    return entry ?? null;
+      .orderBy(desc(moodEntries.createdAt));
   },
 
   async findByDateRange(userId: string, startDate: Date, endDate: Date) {
@@ -47,16 +48,14 @@ export const moodRepository = {
   },
 
   async findRecent(userId: string, days: number) {
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const entries = await db
       .select()
       .from(moodEntries)
       .where(
         and(
           eq(moodEntries.userId, userId),
-          gte(
-            moodEntries.createdAt,
-            sql`NOW() - INTERVAL '${sql.raw(String(days))} days'`,
-          ),
+          gte(moodEntries.createdAt, since),
         ),
       )
       .orderBy(desc(moodEntries.createdAt));

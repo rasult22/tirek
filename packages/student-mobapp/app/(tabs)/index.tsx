@@ -163,23 +163,42 @@ export default function DashboardScreen() {
 
         {/* Mood check-in widget */}
         <View style={styles.moodSection}>
-          {todayMood ? (
-            <Card style={styles.moodDoneCard}>
-              <View style={styles.moodDoneIcon}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={22}
-                  color={c.secondary}
-                />
-              </View>
-              <Text variant="body" style={styles.moodDoneText}>
-                {t.dashboard.moodDone}
-              </Text>
-              <Text style={styles.moodDoneEmoji}>
-                {moodLevels.find((m) => m.value === todayMood.mood)
-                  ?.emoji ?? "😐"}
-              </Text>
-            </Card>
+          {todayMood && (todayMood.daySlot || todayMood.eveningSlot) ? (
+            <Pressable
+              onPress={() => push("/(tabs)/mood")}
+              style={({ pressed }) => [
+                styles.moodDoneCard,
+                pressed && { opacity: 0.9 },
+              ]}
+            >
+              <Card style={styles.moodDoneCard}>
+                <View style={styles.moodDoneIcon}>
+                  <Ionicons name="checkmark-circle" size={22} color={c.secondary} />
+                </View>
+                <View style={styles.moodSlotsRow}>
+                  <View style={styles.moodSlotItem}>
+                    <Text variant="small" style={styles.moodSlotLabel}>
+                      {t.dashboard.moodDaySlot}
+                    </Text>
+                    <Text style={styles.moodDoneEmoji}>
+                      {todayMood.daySlot
+                        ? moodLevels.find((m) => m.value === todayMood.daySlot!.mood)?.emoji ?? "😐"
+                        : "—"}
+                    </Text>
+                  </View>
+                  <View style={styles.moodSlotItem}>
+                    <Text variant="small" style={styles.moodSlotLabel}>
+                      {t.dashboard.moodEveningSlot}
+                    </Text>
+                    <Text style={styles.moodDoneEmoji}>
+                      {todayMood.eveningSlot
+                        ? moodLevels.find((m) => m.value === todayMood.eveningSlot!.mood)?.emoji ?? "😐"
+                        : "—"}
+                    </Text>
+                  </View>
+                </View>
+              </Card>
+            </Pressable>
           ) : (
             <Pressable
               onPress={() => push("/(tabs)/mood")}
@@ -431,6 +450,20 @@ const styles = StyleSheet.create({
   },
   moodDoneEmoji: {
     fontSize: 28,
+  },
+  moodSlotsRow: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "center",
+  },
+  moodSlotItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  moodSlotLabel: {
+    fontWeight: "500",
   },
 
   // Mood check-in

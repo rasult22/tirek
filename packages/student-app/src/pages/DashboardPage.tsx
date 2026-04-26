@@ -112,16 +112,33 @@ export function DashboardPage() {
 
         {/* Mood check-in widget */}
         <div className="mt-6 animate-fade-in-up" style={{ animationDelay: "0.05s" }}>
-          {todayMood ? (
-            <div className="glass-card flex items-center gap-3 rounded-2xl px-5 py-4">
+          {todayMood && (todayMood.daySlot || todayMood.eveningSlot) ? (
+            <Link
+              to="/mood"
+              className="btn-press glass-card flex items-center gap-3 rounded-2xl px-5 py-4 transition-all hover:shadow-md"
+            >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/15">
                 <CheckCircle2 size={20} className="text-secondary" />
               </div>
-              <span className="flex-1 text-sm font-bold text-text-main">{t.dashboard.moodDone}</span>
-              <span className="text-3xl drop-shadow-sm">
-                {moodLevels.find((m) => m.value === todayMood.mood)?.emoji ?? "\u{1F610}"}
-              </span>
-            </div>
+              <div className="flex-1 flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-text-light">{t.dashboard.moodDaySlot}</span>
+                  <span className="text-2xl drop-shadow-sm">
+                    {todayMood.daySlot
+                      ? moodLevels.find((m) => m.value === todayMood.daySlot!.mood)?.emoji ?? "\u{1F610}"
+                      : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-text-light">{t.dashboard.moodEveningSlot}</span>
+                  <span className="text-2xl drop-shadow-sm">
+                    {todayMood.eveningSlot
+                      ? moodLevels.find((m) => m.value === todayMood.eveningSlot!.mood)?.emoji ?? "\u{1F610}"
+                      : "—"}
+                  </span>
+                </div>
+              </div>
+            </Link>
           ) : (
             <Link
               to="/mood"
