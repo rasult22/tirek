@@ -691,6 +691,6 @@ export const ru = {
       growth: "Рост",
     },
   },
-} as const;
+};
 
 export type TranslationKeys = typeof ru;

@@ -25,7 +25,7 @@ export function TestPage() {
 
   const startMutation = useMutation({
     mutationFn: () => testsApi.start(testId!),
-    onSuccess: (session) => setSessionId(session.sessionId ?? session.id),
+    onSuccess: (session) => setSessionId(session.id),
     onError: () => toast.error(t.common.actionFailed),
   });
 
