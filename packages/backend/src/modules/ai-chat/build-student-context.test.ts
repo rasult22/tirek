@@ -18,7 +18,6 @@ test("recent diagnostic tests appear by name and completion date — no severity
         severity: "severe",
       },
     ],
-    mode: "general",
   });
 
   assert.ok(
@@ -42,7 +41,6 @@ test("kz language → response language label is казахский, ru → ру
     user: { name: "X", grade: 9, classLetter: "А", language: "kz" },
     recentMoods: [],
     recentTests: [],
-    mode: "general",
   });
   assert.ok(kz.context.includes("казахский"));
   assert.equal(kz.language, "kz");
@@ -51,7 +49,6 @@ test("kz language → response language label is казахский, ru → ру
     user: { name: "X", grade: 9, classLetter: "А", language: "ru" },
     recentMoods: [],
     recentTests: [],
-    mode: "general",
   });
   assert.ok(ru.context.includes("русский"));
   assert.equal(ru.language, "ru");
@@ -64,8 +61,19 @@ test("no completed tests → no test section in context", () => {
     recentTests: [
       { testName: "Brewing", completedAt: null, totalScore: 5, maxScore: 10, severity: "mild" },
     ],
-    mode: "general",
   });
   assert.ok(!context.includes("Brewing"));
   assert.ok(!context.includes("Недавние тесты"));
+});
+
+test("context has no session mode line — single 'Поговорить с Тирек' button replaced mode selection", () => {
+  const { context } = buildStudentContextPure({
+    user: { name: "X", grade: 9, classLetter: "А", language: "ru" },
+    recentMoods: [],
+    recentTests: [],
+  });
+  assert.ok(
+    !/Режим сессии/i.test(context),
+    `mode line leaked into context:\n${context}`,
+  );
 });

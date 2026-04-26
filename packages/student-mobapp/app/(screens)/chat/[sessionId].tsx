@@ -312,10 +312,10 @@ export default function ChatSessionScreen() {
                   >
                     <View style={styles.redirectHeader}>
                       <Ionicons name="chatbubble-ellipses" size={16} color={c.primaryDark} />
-                      <Text style={[styles.redirectTitle, { color: c.primaryDark }]}>
+                      <Text style={[styles.redirectMessage, { color: c.text }]}>
                         {myPsychologist
-                          ? `Написать ${myPsychologist.name}`
-                          : "Написать психологу"}
+                          ? t.chat.redirectMessage.replace("{name}", myPsychologist.name)
+                          : t.chat.redirectMessageDefault}
                       </Text>
                     </View>
                     {card.reason ? (
@@ -323,6 +323,10 @@ export default function ChatSessionScreen() {
                         {card.reason}
                       </Text>
                     ) : null}
+                    <View style={[styles.redirectCta, { backgroundColor: c.primaryDark }]}>
+                      <Text style={styles.redirectCtaText}>{t.chat.redirectOpenChat}</Text>
+                      <Ionicons name="arrow-forward" size={12} color="#FFFFFF" />
+                    </View>
                   </Pressable>
                 </View>
               ))}
@@ -461,16 +465,34 @@ const styles = StyleSheet.create({
   },
   redirectHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
   },
-  redirectTitle: {
-    fontFamily: "DMSans-Bold",
+  redirectMessage: {
+    flex: 1,
     fontSize: 14,
+    lineHeight: 20,
   },
   redirectReason: {
     marginTop: 4,
+    marginLeft: 24,
     fontSize: 12,
+  },
+  redirectCta: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 12,
+    marginLeft: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: radius.md,
+  },
+  redirectCtaText: {
+    fontFamily: "DMSans-Bold",
+    fontSize: 12,
+    color: "#FFFFFF",
   },
 
   typingDots: { flexDirection: "row", gap: 4, paddingVertical: 4 },

@@ -11,10 +11,10 @@ export const chatApi = {
       "/student/chat/sessions?limit=6",
     ),
 
-  create: (mode: string) =>
+  create: () =>
     apiFetch<ChatSession>("/student/chat/sessions", {
       method: "POST",
-      body: JSON.stringify({ mode }),
+      body: JSON.stringify({}),
     }),
 
   messages: (sessionId: string) =>

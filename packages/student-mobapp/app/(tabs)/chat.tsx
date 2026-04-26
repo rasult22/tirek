@@ -92,7 +92,7 @@ export default function ChatTabScreen() {
   const { refreshing, onRefresh } = useRefresh(refetch);
 
   const createMutation = useMutation({
-    mutationFn: () => chatApi.create("general"),
+    mutationFn: () => chatApi.create(),
     onSuccess: (session) => {
       queryClient.invalidateQueries({ queryKey: ["chat", "sessions"] });
       push({

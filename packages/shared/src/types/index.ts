@@ -324,7 +324,7 @@ export interface SOSEvent {
 export interface ChatSession {
   id: string;
   userId: string;
-  mode: "talk" | "problem" | "exam" | "discovery";
+  mode: string | null;
   startedAt: string;
   lastMessageAt: string;
   preview?: string;

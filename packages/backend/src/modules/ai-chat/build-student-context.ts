@@ -24,7 +24,6 @@ export type StudentContextInput = {
   user: StudentContextUser;
   recentMoods: StudentContextMood[];
   recentTests: StudentContextTest[];
-  mode: string;
 };
 
 export type StudentContextOutput = {
@@ -39,7 +38,7 @@ function formatIsoDate(date: Date): string {
 export function buildStudentContextPure(
   input: StudentContextInput,
 ): StudentContextOutput {
-  const { user, recentMoods, recentTests, mode } = input;
+  const { user, recentMoods, recentTests } = input;
 
   const className = user.grade && user.classLetter
     ? `${user.grade}${user.classLetter}`
@@ -48,7 +47,7 @@ export function buildStudentContextPure(
       : "не указан";
 
   const langLabel = user.language === "kz" ? "казахский" : "русский";
-  let context = `\n═══ КОНТЕКСТ УЧЕНИКА (не озвучивай напрямую, используй для понимания) ═══\nИмя: ${user.name}\nКласс: ${className}\nЯзык интерфейса: ${langLabel}\nРежим сессии: ${mode}\n\n⚠️ ОБЯЗАТЕЛЬНО: Отвечай на ${langLabel} языке — это язык, выбранный учеником в настройках.`;
+  let context = `\n═══ КОНТЕКСТ УЧЕНИКА (не озвучивай напрямую, используй для понимания) ═══\nИмя: ${user.name}\nКласс: ${className}\nЯзык интерфейса: ${langLabel}\n\n⚠️ ОБЯЗАТЕЛЬНО: Отвечай на ${langLabel} языке — это язык, выбранный учеником в настройках.`;
 
   if (recentMoods.length > 0) {
     const avgMood = Math.round(

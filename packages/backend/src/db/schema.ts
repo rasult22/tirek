@@ -277,7 +277,7 @@ export const chatSessions = pgTable("chat_sessions", {
   userId: text("user_id")
     .notNull()
     .references(() => users.id),
-  mode: text("mode").notNull(), // "free" | "guided" | "sos"
+  mode: text("mode"), // legacy: "general" | "talk" | "problem" | "exam" | "discovery"; new sessions = null after #14
   startedAt: timestamp("started_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

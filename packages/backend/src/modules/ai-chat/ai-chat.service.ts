@@ -14,14 +14,12 @@ import { eq, desc, and, gte } from "drizzle-orm";
 import { buildStudentContextPure } from "./build-student-context.js";
 import { streaksService } from "../streaks/streaks.service.js";
 
-const VALID_MODES = ["general", "talk", "problem", "exam", "discovery"] as const;
-
 const FALLBACK_RESPONSES: Record<string, string> = {
   ru: "Извини, у меня возникла техническая проблема. Пожалуйста, попробуй ещё раз через несколько секунд. Если тебе нужна срочная помощь — позвони на телефон доверия: 150.",
   kz: "Кешір, техникалық ақау пайда болды. Бірнеше секундтан кейін қайталап көрші. Шұғыл көмек қажет болса — сенім телефонына хабарлас: 150.",
 };
 
-async function buildStudentContext(userId: string, mode: string): Promise<{ context: string; language: string }> {
+async function buildStudentContext(userId: string): Promise<{ context: string; language: string }> {
   const [user] = await db
     .select({ name: users.name, grade: users.grade, classLetter: users.classLetter, language: users.language })
     .from(users)
@@ -55,23 +53,14 @@ async function buildStudentContext(userId: string, mode: string): Promise<{ cont
     user,
     recentMoods,
     recentTests,
-    mode,
   });
 }
 
 export const aiChatService = {
-  async createSession(userId: string, body: { mode?: string }) {
-    const mode = body.mode || "general";
-    if (!VALID_MODES.includes(mode as (typeof VALID_MODES)[number])) {
-      throw new ValidationError(
-        `Mode must be one of: ${VALID_MODES.join(", ")}`,
-      );
-    }
-
+  async createSession(userId: string) {
     const session = await aiChatRepository.createSession({
       id: uuidv4(),
       userId,
-      mode,
     });
 
     return session;
@@ -105,7 +94,7 @@ export const aiChatService = {
     streaksService.recordActivity(userId).catch(() => {});
 
     // Build student context for agent awareness
-    const { context: studentContext } = await buildStudentContext(userId, session.mode);
+    const { context: studentContext } = await buildStudentContext(userId);
 
     const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisis_signal.`;
 
@@ -163,7 +152,7 @@ export const aiChatService = {
 
     let assistantContent: string;
     try {
-      const { context: studentContext, language } = await buildStudentContext(userId, session.mode);
+      const { context: studentContext, language } = await buildStudentContext(userId);
       const toolContext = `\n═══ СИСТЕМНЫЕ ДАННЫЕ ДЛЯ ИНСТРУМЕНТОВ (не озвучивай) ═══\nuserId: ${userId}\nsessionId: ${sessionId}\nИспользуй эти данные при вызове crisis_signal.`;
       const agent = mastra.getAgent("supportAgent");
       const response = await agent.generate(

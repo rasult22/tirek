@@ -68,7 +68,7 @@ export default function ChatHistoryScreen() {
         {/* New chat button */}
         <Pressable
           onPress={() => {
-            chatApi.create("general").then((session) => {
+            chatApi.create().then((session) => {
               replace({
                 pathname: "/(screens)/chat/[sessionId]",
                 params: { sessionId: session.id },

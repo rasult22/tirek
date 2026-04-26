@@ -4,7 +4,7 @@ import { chatSessions, chatMessages } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 
 export const aiChatRepository = {
-  async createSession(data: { id: string; userId: string; mode: string }) {
+  async createSession(data: { id: string; userId: string }) {
     const [session] = await db.insert(chatSessions).values(data).returning();
     return session;
   },

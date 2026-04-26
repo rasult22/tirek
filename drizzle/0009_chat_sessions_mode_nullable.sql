@@ -1,0 +1,1 @@
+ALTER TABLE "chat_sessions" ALTER COLUMN "mode" DROP NOT NULL;

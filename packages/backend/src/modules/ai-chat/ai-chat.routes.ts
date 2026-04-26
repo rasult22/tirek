@@ -10,8 +10,7 @@ const aiChatRouter = new Hono<{ Variables: AppVariables }>();
 // POST /chat/sessions - create a new chat session
 aiChatRouter.post("/sessions", async (c) => {
   try {
-    const body = await c.req.json().catch(() => ({}));
-    const result = await aiChatService.createSession(c.var.user.userId, body);
+    const result = await aiChatService.createSession(c.var.user.userId);
     return c.json(result, 201);
   } catch (err) {
     return handleError(c, err);

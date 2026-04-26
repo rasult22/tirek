@@ -143,15 +143,7 @@ export const ru = {
   },
   chat: {
     title: "Чат с Тірек",
-    selectMode: "О чём хочешь поговорить?",
-    modeTalk: "Просто поговорить",
-    modeTalkDesc: "Выговориться, поделиться",
-    modeProblem: "Помощь с проблемой",
-    modeProblemDesc: "Тревога, конфликт, одиночество",
-    modeExam: "Подготовка к экзаменам",
-    modeExamDesc: "Стресс, тайм-менеджмент",
-    modeDiscovery: "Самопознание",
-    modeDiscoveryDesc: "Разобраться в чувствах",
+    talkToTirek: "Поговорить с Тірек",
     inputPlaceholder: "Напиши сообщение...",
     disclaimer:
       "Я не заменяю живого специалиста. При серьёзных проблемах обратись к школьному психологу.",
@@ -160,6 +152,9 @@ export const ru = {
     emptyState: "Напиши мне — я тут, чтобы поговорить!",
     emptyHistory: "Пока нет чатов. Начни новый!",
     psychologistNotified: "Психолог уведомлён о ситуации",
+    redirectMessage: "Ты можешь написать {name}, она поможет с этим",
+    redirectMessageDefault: "Ты можешь написать школьному психологу, он поможет с этим",
+    redirectOpenChat: "Открыть чат",
   },
   tests: {
     title: "Диагностика",

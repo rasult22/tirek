@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Send, MessageCircle } from "lucide-react";
+import { ArrowLeft, Send, MessageCircle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { chatApi } from "../api/chat.js";
@@ -69,7 +69,7 @@ export function ChatPage() {
 
     // If no session yet — create one first
     if (!sid) {
-      const session = await chatApi.create("general");
+      const session = await chatApi.create();
       sid = session.id;
       isNewSession = true;
       // Store in ref immediately so subsequent logic uses it,
@@ -220,17 +220,21 @@ export function ChatPage() {
                 disabled={!myPsychologist || openingRedirect}
                 className="max-w-[80%] rounded-2xl rounded-bl-md border border-primary/30 bg-primary/5 px-4 py-3 text-left text-sm text-text-main shadow-sm transition-all hover:bg-primary/10 disabled:opacity-50"
               >
-                <div className="flex items-center gap-2">
-                  <MessageCircle size={16} className="text-primary-dark" />
-                  <span className="font-bold text-primary-dark">
+                <div className="flex items-start gap-2">
+                  <MessageCircle size={16} className="mt-0.5 shrink-0 text-primary-dark" />
+                  <span className="text-text-main">
                     {myPsychologist
-                      ? `Написать ${myPsychologist.name}`
-                      : "Написать психологу"}
+                      ? t.chat.redirectMessage.replace("{name}", myPsychologist.name)
+                      : t.chat.redirectMessageDefault}
                   </span>
                 </div>
                 {card.reason && (
-                  <p className="mt-1 text-xs text-text-light">{card.reason}</p>
+                  <p className="mt-1 ml-6 text-xs text-text-light">{card.reason}</p>
                 )}
+                <div className="mt-3 ml-6 inline-flex items-center gap-1.5 rounded-xl bg-primary-dark px-3 py-1.5 text-xs font-bold text-white">
+                  {t.chat.redirectOpenChat}
+                  <ArrowRight size={12} />
+                </div>
               </button>
             </div>
           ))}

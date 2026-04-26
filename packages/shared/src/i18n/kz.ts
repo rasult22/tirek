@@ -145,15 +145,7 @@ export const kz: TranslationKeys = {
   },
   chat: {
     title: "Тірекпен сөйлесу",
-    selectMode: "Не туралы сөйлескің келеді?",
-    modeTalk: "Жай сөйлесу",
-    modeTalkDesc: "Жүрегіңді жеңілдету, бөлісу",
-    modeProblem: "Мәселеге көмек",
-    modeProblemDesc: "Алаңдаушылық, жанжал, жалғыздық",
-    modeExam: "Емтиханға дайындық",
-    modeExamDesc: "Стресс, уақытты басқару",
-    modeDiscovery: "Өзін-өзі тану",
-    modeDiscoveryDesc: "Сезімдерді түсіну",
+    talkToTirek: "Тірекпен сөйлесу",
     inputPlaceholder: "Хабарлама жазыңыз...",
     disclaimer:
       "Мен тірі маманды алмастырмаймын. Маңызды мәселелерде мектеп психологына хабарласыңыз.",
@@ -162,6 +154,9 @@ export const kz: TranslationKeys = {
     emptyState: "Маған жаз — мен осында, сөйлесуге дайынмын!",
     emptyHistory: "Әзірше чаттар жоқ. Жаңасын бастаңыз!",
     psychologistNotified: "Психолог жағдай туралы хабардар етілді",
+    redirectMessage: "{name} жаза аласың, ол саған көмектеседі",
+    redirectMessageDefault: "Мектеп психологына жаза аласың, ол саған көмектеседі",
+    redirectOpenChat: "Чатты ашу",
   },
   tests: {
     title: "Диагностика",

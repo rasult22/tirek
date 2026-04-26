@@ -5,10 +5,10 @@ import { useAuthStore } from "../store/auth-store.js";
 export const chatApi = {
   sessions: () => apiFetch<PaginatedResponse<ChatSession>>("/student/chat/sessions?limit=6"),
 
-  create: (mode: string) =>
+  create: () =>
     apiFetch<ChatSession>("/student/chat/sessions", {
       method: "POST",
-      body: JSON.stringify({ mode }),
+      body: JSON.stringify({}),
     }),
 
   messages: (sessionId: string) =>
