@@ -4,10 +4,7 @@ import { moodRepository } from "./mood.repository.js";
 import { latestPerSlot, groupByAlmatyDay } from "./mood-slots.js";
 import { productiveActionService } from "../productive-action/index.js";
 import { startOfDay, endOfDay } from "../../lib/almaty-day/almaty-day.js";
-import {
-  computeInsights,
-  DEFAULT_TREND_THRESHOLD,
-} from "../../lib/mood-aggregator/mood-aggregator.js";
+import { computeServiceInsights } from "../../lib/mood-aggregator/mood-aggregator.js";
 
 export const moodService = {
   async createEntry(
@@ -72,15 +69,13 @@ export const moodService = {
 
   async getInsights(userId: string) {
     const entries = await moodRepository.findRecent(userId, 14);
-    return computeInsights({
-      entries: entries.map((e) => ({
+    return computeServiceInsights(
+      entries.map((e) => ({
         mood: e.mood,
         factors: e.factors as string[] | null,
         createdAt: e.createdAt,
       })),
-      lookbackDays: 14,
-      trendThreshold: DEFAULT_TREND_THRESHOLD,
-      now: new Date(),
-    });
+      new Date(),
+    );
   },
 };

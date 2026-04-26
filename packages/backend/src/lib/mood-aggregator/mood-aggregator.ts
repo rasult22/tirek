@@ -41,6 +41,24 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/**
+ * Pure обёртка для service-консьюмера: фиксирует те же параметры
+ * (lookbackDays=14, DEFAULT_TREND_THRESHOLD), которые использует tool.
+ * Why: нужна единая функция-вход, которую boundary-тест может звать
+ * напрямую, чтобы поймать регрессию любого локального пересчёта в service.
+ */
+export function computeServiceInsights(
+  entries: MoodEntry[],
+  now: Date,
+): MoodInsights {
+  return computeInsights({
+    entries,
+    lookbackDays: 14,
+    trendThreshold: DEFAULT_TREND_THRESHOLD,
+    now,
+  });
+}
+
 export function computeInsights(input: ComputeInsightsInput): MoodInsights {
   const { entries, lookbackDays, trendThreshold, now } = input;
 

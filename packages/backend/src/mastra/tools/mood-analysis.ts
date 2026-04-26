@@ -3,13 +3,7 @@ import { z } from "zod";
 import { db } from "../../db/index.js";
 import { moodEntries } from "../../db/schema.js";
 import { eq, desc, gte, and } from "drizzle-orm";
-import {
-  computeInsights,
-  DEFAULT_TREND_THRESHOLD,
-} from "../../lib/mood-aggregator/mood-aggregator.js";
-import { insightsToToolOutput } from "../../lib/mood-aggregator/insights-to-tool-output.js";
-
-const LOOKBACK_DAYS = 14;
+import { analyzeMoodEntries, LOOKBACK_DAYS } from "./mood-analysis-core.js";
 
 export const moodAnalysisTool = createTool({
   id: "mood-analysis",
@@ -41,31 +35,15 @@ export const moodAnalysisTool = createTool({
       )
       .orderBy(desc(moodEntries.createdAt));
 
-    const insights = computeInsights({
+    return analyzeMoodEntries({
       entries: entries.map((e) => ({
         mood: e.mood,
         factors: e.factors as string[] | null,
         createdAt: e.createdAt,
+        stressLevel: e.stressLevel,
+        sleepQuality: e.sleepQuality,
       })),
-      lookbackDays: LOOKBACK_DAYS,
-      trendThreshold: DEFAULT_TREND_THRESHOLD,
       now,
     });
-
-    const stressEntries = entries.filter((e) => e.stressLevel != null);
-    const avgStress =
-      stressEntries.length > 0
-        ? stressEntries.reduce((sum, e) => sum + (e.stressLevel ?? 0), 0) /
-          stressEntries.length
-        : null;
-
-    const sleepEntries = entries.filter((e) => e.sleepQuality != null);
-    const avgSleep =
-      sleepEntries.length > 0
-        ? sleepEntries.reduce((sum, e) => sum + (e.sleepQuality ?? 0), 0) /
-          sleepEntries.length
-        : null;
-
-    return insightsToToolOutput({ insights, avgStress, avgSleep });
   },
 });
