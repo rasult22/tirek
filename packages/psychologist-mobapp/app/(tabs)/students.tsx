@@ -17,6 +17,7 @@ import { ErrorState } from "../../components/ErrorState";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { studentsApi } from "../../lib/api/students";
+import { inactivityApi } from "../../lib/api/inactivity";
 import { hapticLight } from "../../lib/haptics";
 
 const moodEmojis: Record<number, string> = {
@@ -60,6 +61,15 @@ export default function StudentsScreen() {
         classLetter: classLetter ?? undefined,
       }),
   });
+
+  const { data: inactiveData } = useQuery({
+    queryKey: ["inactivity", "list"],
+    queryFn: () => inactivityApi.list(),
+  });
+  const inactiveIds = useMemo(
+    () => new Set((inactiveData?.data ?? []).map((s) => s.studentId)),
+    [inactiveData],
+  );
 
   const filteredAndSorted = useMemo(() => {
     if (!students?.data) return [];
@@ -288,6 +298,28 @@ export default function StudentsScreen() {
                     {student.name}
                   </Text>
                   <StatusBadge status={student.status} size="sm" />
+                  {inactiveIds.has(student.id) && (
+                    <View
+                      style={[
+                        styles.inactiveBadge,
+                        {
+                          backgroundColor: `${c.warning}1A`,
+                          borderColor: `${c.warning}40`,
+                        },
+                      ]}
+                    >
+                      <Ionicons name="moon" size={10} color={c.warning} />
+                      <Text
+                        style={{
+                          fontSize: 10,
+                          fontWeight: "700",
+                          color: c.warning,
+                        }}
+                      >
+                        {t.psychologist.inactiveBadge}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <View style={styles.metaRow}>
                   <Text variant="caption">
@@ -387,6 +419,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 2,
+  },
+  inactiveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderWidth: 1,
   },
   emptyState: {
     flex: 1,

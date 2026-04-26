@@ -19,6 +19,7 @@ import { useAuthStore } from "../../lib/store/auth-store";
 import { analyticsApi } from "../../lib/api/analytics";
 import { crisisApi } from "../../lib/api/crisis";
 import { notificationsApi } from "../../lib/api/notifications";
+import { inactivityApi } from "../../lib/api/inactivity";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { hapticLight } from "../../lib/haptics";
@@ -49,6 +50,7 @@ export default function DashboardScreen() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["analytics", "overview"] }),
       queryClient.invalidateQueries({ queryKey: ["crisis", "active"] }),
+      queryClient.invalidateQueries({ queryKey: ["inactivity", "list"] }),
     ]);
     setRefreshing(false);
   };
@@ -75,6 +77,13 @@ export default function DashboardScreen() {
     queryFn: notificationsApi.getUnreadCount,
     refetchInterval: 30_000,
   });
+
+  const { data: inactiveData, isLoading: inactiveLoading } = useQuery({
+    queryKey: ["inactivity", "list"],
+    queryFn: () => inactivityApi.list(),
+    refetchInterval: 60_000,
+  });
+  const inactiveStudents = inactiveData?.data ?? [];
 
   const unreadCount = unreadNotifs?.count ?? 0;
 
@@ -334,6 +343,110 @@ export default function DashboardScreen() {
           )}
         </Card>
 
+        {/* Inactive students */}
+        <Card elevated style={styles.inactiveSection}>
+          <View style={styles.inactiveHeader}>
+            <View style={styles.inactiveHeaderLeft}>
+              <View
+                style={[styles.inactiveIcon, { backgroundColor: `${c.warning}1A` }]}
+              >
+                <Ionicons name="moon-outline" size={14} color={c.warning} />
+              </View>
+              <Text variant="h3">{t.psychologist.inactiveStudentsTitle}</Text>
+              {inactiveStudents.length > 0 && (
+                <View style={[styles.alertCountBadge, { backgroundColor: c.warning }]}>
+                  <Text style={styles.alertCountText}>
+                    {inactiveStudents.length}
+                  </Text>
+                </View>
+              )}
+            </View>
+            {inactiveStudents.length > 5 && (
+              <Pressable
+                onPress={() => router.push("/(tabs)/students")}
+                style={({ pressed }) => pressed && { opacity: 0.7 }}
+              >
+                <View style={styles.viewAllRow}>
+                  <Text
+                    style={{ fontSize: 12, fontWeight: "600", color: c.primary }}
+                  >
+                    {t.psychologist.studentDetail.seeAll}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={14} color={c.primary} />
+                </View>
+              </Pressable>
+            )}
+          </View>
+
+          {inactiveLoading ? (
+            <SkeletonList count={2} />
+          ) : inactiveStudents.length > 0 ? (
+            <View style={styles.alertsList}>
+              {inactiveStudents.slice(0, 5).map((s) => (
+                <Pressable
+                  key={s.studentId}
+                  onPress={() => {
+                    hapticLight();
+                    router.push(`/(screens)/students/${s.studentId}`);
+                  }}
+                  style={({ pressed }) => [
+                    styles.alertItem,
+                    {
+                      backgroundColor: `${c.warning}08`,
+                      borderColor: `${c.warning}1A`,
+                    },
+                    pressed && { opacity: 0.85 },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.alertItemIcon,
+                      { backgroundColor: `${c.warning}1A` },
+                    ]}
+                  >
+                    <Ionicons name="moon" size={16} color={c.warning} />
+                  </View>
+                  <View style={styles.alertItemBody}>
+                    <Text
+                      variant="body"
+                      style={{ fontWeight: "700" }}
+                      numberOfLines={1}
+                    >
+                      {s.studentName}
+                    </Text>
+                    <Text variant="small" numberOfLines={1}>
+                      {s.grade != null
+                        ? `${s.grade}${s.classLetter ?? ""}`
+                        : "—"}
+                    </Text>
+                  </View>
+                  <View style={styles.alertTime}>
+                    <Text style={{ fontSize: 11, color: c.textLight }}>
+                      {s.daysInactive != null
+                        ? `${s.daysInactive} ${t.psychologist.inactiveDaysSuffix}`
+                        : t.psychologist.inactiveNeverActive}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.noAlerts}>
+              <View
+                style={[
+                  styles.noAlertsIcon,
+                  { backgroundColor: `${c.success}1A` },
+                ]}
+              >
+                <Ionicons name="checkmark-circle" size={20} color={c.success} />
+              </View>
+              <Text variant="bodyLight">
+                {t.psychologist.inactiveStudentsEmpty}
+              </Text>
+            </View>
+          )}
+        </Card>
+
         {/* Quick actions */}
         <Card elevated style={styles.quickSection}>
           <Text variant="h3" style={styles.quickTitle}>
@@ -563,6 +676,32 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: radius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  // Inactive students (reuses crisis section visual structure)
+  inactiveSection: {
+    marginTop: 16,
+    padding: 0,
+  },
+  inactiveHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.06)",
+  },
+  inactiveHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  inactiveIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.sm,
     alignItems: "center",
     justifyContent: "center",
   },

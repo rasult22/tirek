@@ -435,6 +435,15 @@ export interface AnalyticsOverview {
   averageMood: number | null;
 }
 
+export interface InactiveStudent {
+  studentId: string;
+  studentName: string;
+  grade: number | null;
+  classLetter: string | null;
+  daysInactive: number | null;
+  lastActiveDate: string | null;
+}
+
 export interface JournalEntry {
   id: string;
   userId: string;
