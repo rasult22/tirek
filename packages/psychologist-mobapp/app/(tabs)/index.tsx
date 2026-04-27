@@ -12,12 +12,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, Card } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
-import { useT } from "../../lib/hooks/useLanguage";
+import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { crisisApi } from "../../lib/api/crisis";
 import { inactivityApi } from "../../lib/api/inactivity";
+import { studentsApi } from "../../lib/api/students";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
+import { formatRiskReason } from "@tirek/shared";
 
 function formatTimeAgo(dateStr: string, t: any) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -31,6 +33,7 @@ function formatTimeAgo(dateStr: string, t: any) {
 
 export default function DashboardScreen() {
   const t = useT();
+  const { language } = useLanguage();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const c = useThemeColors();
@@ -40,7 +43,9 @@ export default function DashboardScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["crisis", "active"] }),
+      queryClient.invalidateQueries({ queryKey: ["crisis", "feed", "red"] }),
+      queryClient.invalidateQueries({ queryKey: ["crisis", "feed", "yellow"] }),
+      queryClient.invalidateQueries({ queryKey: ["students", "at-risk"] }),
       queryClient.invalidateQueries({ queryKey: ["inactivity", "list"] }),
     ]);
     setRefreshing(false);
@@ -53,17 +58,53 @@ export default function DashboardScreen() {
   });
   const redSignals = redData?.data ?? [];
 
+  const { data: yellowData, isLoading: yellowLoading } = useQuery({
+    queryKey: ["crisis", "feed", "yellow"],
+    queryFn: () => crisisApi.getFeed("yellow"),
+    refetchInterval: 60_000,
+  });
+
+  const { data: atRiskData, isLoading: atRiskLoading } = useQuery({
+    queryKey: ["students", "at-risk"],
+    queryFn: () => studentsApi.atRisk(),
+    refetchInterval: 60_000,
+  });
+
   const { data: inactiveData, isLoading: inactiveLoading } = useQuery({
     queryKey: ["inactivity", "list"],
     queryFn: () => inactivityApi.list(),
     refetchInterval: 60_000,
   });
-  const inactiveStudents = inactiveData?.data ?? [];
+  const inactiveStudentsAll = inactiveData?.data ?? [];
+
+  const redStudentIds = new Set(redSignals.map((s) => s.studentId));
+  const yellowSignals = (yellowData?.data ?? []).filter(
+    (s) => !redStudentIds.has(s.studentId),
+  );
+  const yellowStudentIds = new Set(yellowSignals.map((s) => s.studentId));
+  const atRiskStudents = (atRiskData?.data ?? []).filter(
+    (s) =>
+      !redStudentIds.has(s.studentId) && !yellowStudentIds.has(s.studentId),
+  );
+  const attentionStudentIds = new Set([
+    ...yellowStudentIds,
+    ...atRiskStudents.map((s) => s.studentId),
+  ]);
+  const inactiveStudents = inactiveStudentsAll.filter(
+    (s) =>
+      !redStudentIds.has(s.studentId) && !attentionStudentIds.has(s.studentId),
+  );
+
+  const attentionLoading = yellowLoading || atRiskLoading;
+  const attentionEmpty =
+    yellowSignals.length === 0 && atRiskStudents.length === 0;
 
   const showAllCalm =
     !alertsLoading &&
+    !attentionLoading &&
     !inactiveLoading &&
     redSignals.length === 0 &&
+    attentionEmpty &&
     inactiveStudents.length === 0;
 
   return (
@@ -94,6 +135,22 @@ export default function DashboardScreen() {
               {t.psychologist.role}
             </Text>
           </View>
+          <Pressable
+            accessibilityLabel={t.profile.title}
+            onPress={() => {
+              hapticLight();
+              router.push("/(screens)/profile");
+            }}
+            style={({ pressed }) => [
+              styles.profileAvatar,
+              { backgroundColor: `${c.primary}1F` },
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Text style={{ fontSize: 14, fontWeight: "700", color: c.primaryDark }}>
+              {user?.name?.charAt(0)?.toUpperCase() ?? "P"}
+            </Text>
+          </Pressable>
         </View>
 
         {showAllCalm ? (
@@ -224,6 +281,138 @@ export default function DashboardScreen() {
                     ))}
                   </View>
                 )}
+              </Card>
+            )}
+
+            {/* Attention block — yellow signals + at-risk students */}
+            {!attentionEmpty && (
+              <Card elevated style={styles.inactiveSection}>
+                <View style={styles.inactiveHeader}>
+                  <View style={styles.inactiveHeaderLeft}>
+                    <View
+                      style={[
+                        styles.inactiveIcon,
+                        { backgroundColor: `${c.warning}1A` },
+                      ]}
+                    >
+                      <Ionicons
+                        name="eye-outline"
+                        size={14}
+                        color={c.warning}
+                      />
+                    </View>
+                    <Text variant="h3">{t.psychologist.needsAttention}</Text>
+                    <View
+                      style={[
+                        styles.alertCountBadge,
+                        { backgroundColor: c.warning },
+                      ]}
+                    >
+                      <Text style={styles.alertCountText}>
+                        {yellowSignals.length + atRiskStudents.length}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.alertsList}>
+                  {yellowSignals.slice(0, 5).map((signal) => (
+                    <Pressable
+                      key={signal.id}
+                      onPress={() => {
+                        hapticLight();
+                        router.push(`/(screens)/students/${signal.studentId}`);
+                      }}
+                      style={({ pressed }) => [
+                        styles.alertItem,
+                        {
+                          backgroundColor: `${c.warning}08`,
+                          borderColor: `${c.warning}1A`,
+                        },
+                        pressed && { opacity: 0.85 },
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.alertItemIcon,
+                          { backgroundColor: `${c.warning}1A` },
+                        ]}
+                      >
+                        <Ionicons name="eye" size={16} color={c.warning} />
+                      </View>
+                      <View style={styles.alertItemBody}>
+                        <Text
+                          variant="body"
+                          style={{ fontWeight: "700" }}
+                          numberOfLines={1}
+                        >
+                          {signal.studentName}
+                        </Text>
+                        <Text variant="small" numberOfLines={1}>
+                          {signal.summary}
+                        </Text>
+                      </View>
+                      <View style={styles.alertTime}>
+                        <Ionicons
+                          name="time-outline"
+                          size={11}
+                          color={c.textLight}
+                        />
+                        <Text style={{ fontSize: 11, color: c.textLight }}>
+                          {formatTimeAgo(signal.createdAt, t)}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+
+                  {atRiskStudents.slice(0, 5).map((s) => {
+                    const reasonText = formatRiskReason({
+                      reason: s.reason,
+                      t,
+                      language,
+                    });
+                    return (
+                      <Pressable
+                        key={`risk-${s.studentId}`}
+                        onPress={() => {
+                          hapticLight();
+                          router.push(`/(screens)/students/${s.studentId}`);
+                        }}
+                        style={({ pressed }) => [
+                          styles.alertItem,
+                          {
+                            backgroundColor: `${c.warning}08`,
+                            borderColor: `${c.warning}1A`,
+                          },
+                          pressed && { opacity: 0.85 },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            styles.alertItemIcon,
+                            { backgroundColor: `${c.warning}1A` },
+                          ]}
+                        >
+                          <Ionicons name="eye" size={16} color={c.warning} />
+                        </View>
+                        <View style={styles.alertItemBody}>
+                          <Text
+                            variant="body"
+                            style={{ fontWeight: "700" }}
+                            numberOfLines={1}
+                          >
+                            {s.studentName}
+                          </Text>
+                          {reasonText && (
+                            <Text variant="small" numberOfLines={1}>
+                              {reasonText}
+                            </Text>
+                          )}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
               </Card>
             )}
 
@@ -363,6 +552,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  profileAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 12,
   },
 
   // Crisis

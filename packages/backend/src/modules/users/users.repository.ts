@@ -6,6 +6,8 @@ import {
   conversations,
   directMessages,
   psychologistNotes,
+  diagnosticSessions,
+  diagnosticTests,
 } from "../../db/schema.js";
 import type { PaginationParams } from "../../shared/pagination.js";
 
@@ -105,6 +107,36 @@ export const usersRepository = {
       .innerJoin(users, eq(studentPsychologist.studentId, users.id))
       .where(and(...conditions));
     return Number(row?.value ?? 0);
+  },
+
+  async findCompletedSessionsForPsychologistStudents(psychologistId: string) {
+    return db
+      .select({
+        studentId: studentPsychologist.studentId,
+        studentName: users.name,
+        sessionId: diagnosticSessions.id,
+        testSlug: diagnosticTests.slug,
+        testName: diagnosticTests.nameRu,
+        severity: diagnosticSessions.severity,
+        flaggedItems: diagnosticSessions.flaggedItems,
+        completedAt: diagnosticSessions.completedAt,
+      })
+      .from(studentPsychologist)
+      .innerJoin(users, eq(studentPsychologist.studentId, users.id))
+      .innerJoin(
+        diagnosticSessions,
+        eq(diagnosticSessions.userId, studentPsychologist.studentId),
+      )
+      .innerJoin(
+        diagnosticTests,
+        eq(diagnosticSessions.testId, diagnosticTests.id),
+      )
+      .where(
+        and(
+          eq(studentPsychologist.psychologistId, psychologistId),
+          sql`${diagnosticSessions.completedAt} IS NOT NULL`,
+        ),
+      );
   },
 
   async findStudentById(studentId: string, psychologistId: string) {

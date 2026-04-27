@@ -30,6 +30,50 @@ export const usersService = {
     }
   },
 
+  async getAtRiskStudents(psychologistId: string) {
+    const rows = await usersRepository.findCompletedSessionsForPsychologistStudents(
+      psychologistId,
+    );
+
+    const byStudent = new Map<
+      string,
+      { name: string; sessions: TestSessionForRisk[] }
+    >();
+    for (const r of rows) {
+      const session = toRiskSession({
+        id: r.sessionId,
+        testSlug: r.testSlug,
+        testName: r.testName,
+        severity: r.severity,
+        flaggedItems: r.flaggedItems,
+        completedAt: r.completedAt,
+      });
+      if (!session) continue;
+      const existing = byStudent.get(r.studentId);
+      if (existing) {
+        existing.sessions.push(session);
+      } else {
+        byStudent.set(r.studentId, {
+          name: r.studentName,
+          sessions: [session],
+        });
+      }
+    }
+
+    const result: {
+      studentId: string;
+      studentName: string;
+      status: "attention" | "crisis";
+      reason: ReturnType<typeof calculateRiskStatus>["reason"];
+    }[] = [];
+    for (const [studentId, { name, sessions }] of byStudent) {
+      const { status, reason } = calculateRiskStatus(sessions);
+      if (status === "normal") continue;
+      result.push({ studentId, studentName: name, status, reason });
+    }
+    return { data: result };
+  },
+
   async getStudentDetail(studentId: string, psychologistId: string) {
     const student = await usersRepository.findStudentById(studentId, psychologistId);
     if (!student) {

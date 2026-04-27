@@ -28,6 +28,16 @@ usersRouter.get("/students", async (c) => {
   }
 });
 
+// GET /students/at-risk - students with Risk Status ≠ normal
+usersRouter.get("/students/at-risk", async (c) => {
+  try {
+    const result = await usersService.getAtRiskStudents(c.var.user.userId);
+    return c.json(result);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 // GET /students/:id - get student detail
 usersRouter.get("/students/:id", async (c) => {
   try {

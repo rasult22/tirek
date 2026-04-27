@@ -110,6 +110,13 @@ export interface StudentDetail {
   testResults: (DiagnosticSession & { testSlug?: string; testName?: string })[];
 }
 
+export interface AtRiskStudent {
+  studentId: string;
+  studentName: string;
+  status: "attention" | "crisis";
+  reason: RiskReason | null;
+}
+
 export interface SuggestedAction {
   type: "exercise" | "journal" | "chat" | "hotline";
   textKey: string;
@@ -360,6 +367,7 @@ export interface TirekClient {
       list(filters?: StudentsListFilters): Promise<PaginatedResponse<StudentOverview>>;
       get(id: string): Promise<StudentDetail>;
       detach(id: string): Promise<{ success: boolean }>;
+      atRisk(): Promise<{ data: AtRiskStudent[] }>;
     };
     achievements: {
       getStudentAchievements(studentId: string): Promise<{
@@ -618,6 +626,7 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
         get: (id) => request(`/psychologist/students/${id}`),
         detach: (id) =>
           request(`/psychologist/students/${id}`, { method: "DELETE" }),
+        atRisk: () => request(`/psychologist/students/at-risk`),
       },
 
       achievements: {

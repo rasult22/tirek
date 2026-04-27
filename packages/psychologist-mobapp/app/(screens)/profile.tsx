@@ -195,6 +195,40 @@ export default function ProfileScreen() {
           </Card>
         )}
 
+        {/* My schedule */}
+        <Pressable
+          onPress={() => {
+            hapticLight();
+            router.push("/(screens)/office-hours");
+          }}
+          style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+        >
+          <Card style={styles.sectionCard}>
+            <View style={styles.scheduleRow}>
+              <View
+                style={[
+                  styles.sectionIcon,
+                  { backgroundColor: `${c.primary}14` },
+                ]}
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={c.primaryDark}
+                />
+              </View>
+              <Text variant="body" style={{ fontWeight: "700", flex: 1 }}>
+                {t.officeHours.pageTitle}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={c.textLight}
+              />
+            </View>
+          </Card>
+        </Pressable>
+
         {/* Theme switcher */}
         <Card style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -440,6 +474,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  scheduleRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,

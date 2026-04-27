@@ -14,6 +14,8 @@ import {
   Check,
   Pencil,
   X,
+  Calendar,
+  ChevronRight,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
@@ -136,6 +138,18 @@ export function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* My schedule */}
+      <button
+        onClick={() => navigate("/office-hours")}
+        className="w-full bg-surface rounded-xl border border-border shadow-sm p-4 flex items-center gap-3 hover:bg-surface-hover transition-colors text-left"
+      >
+        <Calendar size={18} className="text-primary shrink-0" />
+        <span className="flex-1 text-base font-semibold text-text-main">
+          {t.officeHours.pageTitle}
+        </span>
+        <ChevronRight size={18} className="text-text-light shrink-0" />
+      </button>
 
       {/* Language switcher */}
       <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
