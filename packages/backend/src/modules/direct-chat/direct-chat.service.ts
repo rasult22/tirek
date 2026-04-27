@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
 import { directChatRepository } from "./direct-chat.repository.js";
-import { notificationsRepository } from "../notifications/notifications.repository.js";
 import {
   ForbiddenError,
   NotFoundError,
@@ -18,13 +17,6 @@ async function verifyAccess(conversationId: string, userId: string) {
     throw new ForbiddenError("Access denied to this conversation");
   }
   return conv;
-}
-
-function getRecipientId(
-  conv: { studentId: string; psychologistId: string },
-  senderId: string,
-) {
-  return conv.studentId === senderId ? conv.psychologistId : conv.studentId;
 }
 
 export const directChatService = {
@@ -130,7 +122,7 @@ export const directChatService = {
       throw new ValidationError("Message content is required");
     }
 
-    const conv = await verifyAccess(conversationId, userId);
+    await verifyAccess(conversationId, userId);
 
     const message = await directChatRepository.createMessage({
       conversationId,
@@ -139,24 +131,6 @@ export const directChatService = {
     });
 
     await directChatRepository.updateConversationLastMessage(conversationId);
-
-    // Create notification for recipient
-    const recipientId = getRecipientId(conv, userId);
-    notificationsRepository
-      .create({
-        id: uuidv4(),
-        userId: recipientId,
-        type: "direct_message",
-        title: "Новое сообщение",
-        body:
-          body.content.length > 100
-            ? body.content.slice(0, 100) + "…"
-            : body.content,
-        metadata: { conversationId },
-      })
-      .catch((err) => {
-        console.error("Notification creation error (non-blocking):", err);
-      });
 
     return message;
   },

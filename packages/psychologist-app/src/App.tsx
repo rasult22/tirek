@@ -20,7 +20,6 @@ import { AssignTestPage } from "./pages/AssignTestPage.js";
 import { CrisisPage } from "./pages/CrisisPage.js";
 import { InviteCodesPage } from "./pages/InviteCodesPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
-import { NotificationsPage } from "./pages/NotificationsPage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
 import { DirectChatPage } from "./pages/DirectChatPage.js";
 import { OfficeHoursPage } from "./pages/OfficeHoursPage.js";
@@ -80,7 +79,6 @@ export function App() {
             <Route path="/crisis" element={<ProtectedRoute><CrisisPage /></ProtectedRoute>} />
             <Route path="/invite-codes" element={<ProtectedRoute><InviteCodesPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>

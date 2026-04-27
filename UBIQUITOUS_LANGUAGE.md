@@ -161,7 +161,7 @@
 
 - **"SOS level" (0/1/2/3)** в текущем коде — **устаревшая модель**. Заменяется на **SOS Action** (`breathing`/`hotline`/`chat`/`urgent`) + **Crisis Signal Type** + **Crisis Signal Severity**. Шкала 0-3 путала серьёзность ситуации с выбранным действием и с AI-сигналами. Не использовать в новом коде.
 
-- **"Notification"** в текущей БД имеет 5+ типов (`crisis`, `sos_alert`, `concern_detected`, `appointment`, `direct_message`, `achievement`) — это зоопарк. В новой модели: `crisis_red` / `concern_yellow` / `info` / `chat` (и `appointment` уходит вместе с откатом booking). **Notification** — это канал, а **Crisis Signal** — доменное событие; их не путать.
+- **"Notification"** ранее имел 5+ типов inbox-сущности (`crisis`, `sos_alert`, `concern_detected`, `appointment`, `direct_message`, `achievement`) — это зоопарк. Inbox удалён из MVP (см. ниже). Push-канал остаётся: **Push Notification** доставляет red 24/7 + остальное в **Office Hours**, без накопления в БД.
 
 - **"Session"** используется в трёх разных смыслах: **AI-Friend Session** (thread беседы с AI), **Test Session** (одно прохождение теста), и HTTP/JWT session (техническое). В домене — только первые два, всегда с префиксом.
 
@@ -177,7 +177,7 @@
 
 - **"Notes"** ранее использовалось для **Private Note** (заметки Psychologist'а о Student'е) — эта фича удаляется из MVP вместе с таблицей и API. Существующее `notes` в **Office Hours Template/Override** — это короткая подпись к интервалам ("онлайн", "уехала"), отдельный концепт, не Private Note.
 
-- **"Notifications"** как inbox-сущность удаляется из MVP. Все сигналы доходят до Psychologist'а через табовые бейджи (Crisis Signals, Direct Chat) и push-уведомления, отфильтрованные **Office Hours**. Отдельный экран уведомлений и `notificationsApi.getUnreadCount` уходят.
+- **"Notifications"** как inbox-сущность удалена из MVP. Все сигналы доходят до Psychologist'а через табовые бейджи (Crisis Signals, Direct Chat) и push-уведомления, отфильтрованные **Office Hours**. Экран уведомлений, колокольчик в шапке, таблица `notifications` и `notificationsApi` больше не существуют.
 
 - **"Mode"** (режим AI-чата: general/talk/problem/exam/discovery) — устарело, фронт уже убрал выбор режима. **AI-Friend Session** теперь без режима; тональность агент выбирает по первому сообщению Student'а.
 

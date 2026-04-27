@@ -363,22 +363,6 @@ export const journalEntries = pgTable("journal_entries", {
     .notNull(),
 });
 
-// ── 18. notifications ───────────────────────────────────────────────
-export const notifications = pgTable("notifications", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id),
-  type: text("type").notNull(),
-  title: text("title").notNull(),
-  body: text("body"),
-  read: boolean("read").default(false),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
 // ── 19. conversations (direct chat) ────────────────────────────────
 export const conversations = pgTable(
   "conversations",

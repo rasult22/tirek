@@ -6,14 +6,12 @@ import type {
   CrisisSignalsModuleDeps,
   CrisisSignalRow,
   PersistedCrisisSignal,
-  PersistedNotification,
   ResolveInput,
 } from "./index.js";
 
 type Fakes = {
   signals: PersistedCrisisSignal[];
   rows: CrisisSignalRow[]; // enriched view (with student fields, resolution, linked psy)
-  notifications: PersistedNotification[];
   warnings: Array<{ msg: string; ctx?: Record<string, unknown> }>;
   studentLinks: Map<string, string[]>;
   studentInfo: Map<
@@ -34,7 +32,6 @@ function makeModule(overrides: ModuleOverrides = {}) {
   const fakes: Fakes = {
     signals: [],
     rows: [],
-    notifications: [],
     warnings: [],
     studentLinks: new Map(Object.entries(overrides.studentLinks ?? { "stu-1": ["psy-1"] })),
     studentInfo: new Map(
@@ -79,10 +76,6 @@ function makeModule(overrides: ModuleOverrides = {}) {
     },
     findPsychologistIdsForStudent: async (studentId) =>
       fakes.studentLinks.get(studentId) ?? [],
-    createNotification: async (notification) => {
-      fakes.notifications.push(notification);
-      return notification.id;
-    },
     findActiveByPsychologistAndType: async (psychologistId, type) =>
       fakes.rows
         .filter(
@@ -126,7 +119,7 @@ function makeModule(overrides: ModuleOverrides = {}) {
   return { module: createCrisisSignalsModule(deps), fakes };
 }
 
-test("report ai_friend acute_crisis → persists signal and notifies linked psychologist", async () => {
+test("report ai_friend acute_crisis → persists signal", async () => {
   const { module, fakes } = makeModule();
 
   const signal = await module.report({
@@ -148,9 +141,6 @@ test("report ai_friend acute_crisis → persists signal and notifies linked psyc
 
   assert.equal(fakes.signals.length, 1);
   assert.equal(fakes.signals[0].id, signal.id);
-  assert.equal(fakes.notifications.length, 1);
-  assert.equal(fakes.notifications[0].userId, "psy-1");
-  assert.equal(fakes.notifications[0].type, "crisis_red");
 });
 
 test("BOUNDARY: ai_friend report → signal appears in psychologist Red Feed", async () => {
@@ -385,18 +375,6 @@ test("resolve throws NotFoundError for missing or other-psy signal", async () =>
   );
 });
 
-test("creates one notification per linked psychologist", async () => {
-  const { module, fakes } = makeModule({
-    studentLinks: { "stu-1": ["psy-A", "psy-B"] },
-  });
-
-  await module.report({ source: "urgent_help", userId: "stu-1" });
-
-  assert.equal(fakes.notifications.length, 2);
-  const recipients = fakes.notifications.map((n) => n.userId).sort();
-  assert.deepEqual(recipients, ["psy-A", "psy-B"]);
-});
-
 test("warns when student has no linked psychologist but still persists signal", async () => {
   const { module, fakes } = makeModule({
     studentLinks: { "stu-orphan": [] },
@@ -406,14 +384,13 @@ test("warns when student has no linked psychologist but still persists signal", 
   const sig = await module.report({ source: "urgent_help", userId: "stu-orphan" });
 
   assert.equal(fakes.signals.length, 1);
-  assert.equal(fakes.notifications.length, 0);
   assert.equal(fakes.warnings.length, 1);
   assert.equal(fakes.warnings[0].ctx?.studentId, "stu-orphan");
   assert.equal(fakes.warnings[0].ctx?.signalId, sig.id);
 });
 
 test("report urgent_help → type=acute_crisis severity=high regardless of input", async () => {
-  const { module, fakes } = makeModule();
+  const { module } = makeModule();
 
   const signal = await module.report({
     source: "urgent_help",
@@ -426,8 +403,6 @@ test("report urgent_help → type=acute_crisis severity=high regardless of input
   assert.equal(signal.studentId, "stu-1");
   assert.equal(typeof signal.summary, "string");
   assert.ok(signal.summary.length > 0, "summary must be non-empty");
-  assert.equal(fakes.notifications.length, 1);
-  assert.equal(fakes.notifications[0].type, "crisis_red");
 });
 
 test("report urgent_help preserves provided metadata verbatim on signal", async () => {
@@ -440,7 +415,7 @@ test("report urgent_help preserves provided metadata verbatim on signal", async 
 });
 
 test("report test_session severe → type=acute_crisis severity=medium with test metadata", async () => {
-  const { module, fakes } = makeModule();
+  const { module } = makeModule();
 
   const signal = await module.report({
     source: "test_session",
@@ -462,6 +437,4 @@ test("report test_session severe → type=acute_crisis severity=medium with test
     testSeverity: "severe",
     flaggedItems: [{ questionIndex: 9, reason: "suicidal_ideation" }],
   });
-  assert.equal(fakes.notifications.length, 1);
-  assert.equal(fakes.notifications[0].type, "crisis_red");
 });

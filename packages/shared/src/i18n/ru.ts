@@ -381,7 +381,6 @@ export const ru = {
     profile: "Профиль",
     messages: "Сообщения",
     officeHours: "Расписание психолога",
-    notifications: "Уведомления",
   },
   psychologist: {
     dashboard: "Панель управления",
@@ -527,15 +526,6 @@ export const ru = {
       letsStart: "Начать работу",
       skip: "Пропустить",
       stepOf: "из",
-    },
-    notifications: {
-      title: "Уведомления",
-      noNotifications: "Нет уведомлений",
-      noNotificationsDesc: "Новые уведомления появятся здесь",
-      today: "Сегодня",
-      yesterday: "Вчера",
-      markAsRead: "Отметить прочитанным",
-      justNow: "Только что",
     },
     studentDetail: {
       moodTrend: "Тренд настроения",

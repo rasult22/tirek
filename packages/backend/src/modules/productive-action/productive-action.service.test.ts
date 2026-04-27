@@ -17,7 +17,6 @@ type Fakes = {
   } | null;
   plant: { growthPoints: number } | null;
   awardedSlugs: Set<string>;
-  notifications: Array<{ slug: string }>;
 };
 
 type Overrides = {
@@ -35,7 +34,6 @@ function makeService(overrides: Overrides = {}) {
     streak: null,
     plant: null,
     awardedSlugs: new Set(),
-    notifications: [],
   };
 
   const deps: ProductiveActionDeps = {
@@ -78,7 +76,6 @@ function makeService(overrides: Overrides = {}) {
       }
       if (fakes.awardedSlugs.has(slug)) return false;
       fakes.awardedSlugs.add(slug);
-      fakes.notifications.push({ slug });
       return true;
     },
     withTransaction: async (fn) => {
@@ -87,7 +84,6 @@ function makeService(overrides: Overrides = {}) {
         streak: fakes.streak ? { ...fakes.streak } : null,
         plant: fakes.plant ? { ...fakes.plant } : null,
         awardedSlugs: new Set(fakes.awardedSlugs),
-        notifications: [...fakes.notifications],
       };
       try {
         return await fn({} as unknown as never);
@@ -95,7 +91,6 @@ function makeService(overrides: Overrides = {}) {
         fakes.streak = snapshot.streak;
         fakes.plant = snapshot.plant;
         fakes.awardedSlugs = snapshot.awardedSlugs;
-        fakes.notifications = snapshot.notifications;
         throw err;
       }
     },

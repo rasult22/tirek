@@ -10,7 +10,6 @@ import {
   diagnosticTests,
 } from "../../db/schema.js";
 import { achievementsRepository } from "./achievements.repository.js";
-import { notificationsRepository } from "../notifications/notifications.repository.js";
 import {
   getCandidateSlugs,
   isConditionMet,
@@ -166,28 +165,7 @@ export const achievementsService = {
 
       if (!isConditionMet(slug, ctx)) continue;
 
-      const rows = await achievementsRepository.award(
-        uuidv4(),
-        userId,
-        achievement.id,
-      );
-
-      // Only create notification if actually awarded (not a conflict)
-      if (rows.length > 0) {
-        notificationsRepository
-          .create({
-            id: uuidv4(),
-            userId,
-            type: "achievement",
-            title: `${achievement.emoji} ${achievement.nameRu}`,
-            body: achievement.descriptionRu,
-            metadata: {
-              achievementSlug: achievement.slug,
-              emoji: achievement.emoji,
-            },
-          })
-          .catch(() => {});
-      }
+      await achievementsRepository.award(uuidv4(), userId, achievement.id);
     }
   },
 };

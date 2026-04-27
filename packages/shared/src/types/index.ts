@@ -381,33 +381,6 @@ export interface InviteCode {
   createdAt: string;
 }
 
-export interface Notification {
-  id: string;
-  userId: string;
-  // Canonical types (post-router): backend normalizes any legacy values to these.
-  // Legacy strings are kept in the union only for read tolerance; new code
-  // should produce only canonical types.
-  type:
-    | "crisis_red"
-    | "concern_yellow"
-    | "info"
-    | "chat"
-    | "crisis"
-    | "sos_alert"
-    | "concern_detected"
-    | "reminder"
-    | "assignment"
-    | "system"
-    | "direct_message"
-    | "appointment"
-    | "achievement";
-  title: string;
-  body: string;
-  read: boolean;
-  metadata?: Record<string, unknown>;
-  createdAt: string;
-}
-
 export interface PsychologistNote {
   id: string;
   psychologistId: string;

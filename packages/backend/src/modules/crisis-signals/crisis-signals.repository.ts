@@ -2,7 +2,6 @@ import { and, desc, eq, isNull, sql, count as dbCount } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import {
   crisisSignals,
-  notifications,
   studentPsychologist,
   users,
 } from "../../db/schema.js";
@@ -13,7 +12,6 @@ import type {
   CrisisSignalSource,
   CrisisSignalType,
   PersistedCrisisSignal,
-  PersistedNotification,
   ResolveInput,
 } from "./index.js";
 
@@ -104,21 +102,6 @@ export const crisisSignalsRepository = {
       .from(studentPsychologist)
       .where(eq(studentPsychologist.studentId, studentId));
     return rows.map((r) => r.psychologistId);
-  },
-
-  async insertNotification(notification: PersistedNotification): Promise<string> {
-    const [row] = await db
-      .insert(notifications)
-      .values({
-        id: notification.id,
-        userId: notification.userId,
-        type: notification.type,
-        title: notification.title,
-        body: notification.body,
-        metadata: notification.metadata,
-      })
-      .returning({ id: notifications.id });
-    return row.id;
   },
 
   async findActiveByPsychologistAndType(

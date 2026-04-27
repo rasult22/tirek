@@ -383,7 +383,6 @@ export const kz: TranslationKeys = {
     profile: "Профиль",
     messages: "Хабарламалар",
     officeHours: "Психологтың кестесі",
-    notifications: "Хабарландырулар",
   },
   psychologist: {
     dashboard: "Басқару панелі",
@@ -529,15 +528,6 @@ export const kz: TranslationKeys = {
       letsStart: "Жұмысты бастау",
       skip: "Өткізіп жіберу",
       stepOf: "ішінен",
-    },
-    notifications: {
-      title: "Хабарландырулар",
-      noNotifications: "Хабарландырулар жоқ",
-      noNotificationsDesc: "Жаңа хабарландырулар осында пайда болады",
-      today: "Бүгін",
-      yesterday: "Кеше",
-      markAsRead: "Оқылды деп белгілеу",
-      justNow: "Дәл қазір",
     },
     studentDetail: {
       moodTrend: "Көңіл-күй тренді",

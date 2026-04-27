@@ -7,8 +7,6 @@ const _module = createCrisisSignalsModule({
   saveSignal: (signal) => crisisSignalsRepository.insertSignal(signal),
   findPsychologistIdsForStudent: (studentId) =>
     crisisSignalsRepository.findPsychologistIdsForStudent(studentId),
-  createNotification: (notification) =>
-    crisisSignalsRepository.insertNotification(notification),
   findActiveByPsychologistAndType: (psychologistId, type) =>
     crisisSignalsRepository.findActiveByPsychologistAndType(
       psychologistId,

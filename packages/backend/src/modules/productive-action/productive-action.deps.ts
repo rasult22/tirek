@@ -6,7 +6,6 @@ import {
   userPlants,
   achievements,
   userAchievements,
-  notifications,
   moodEntries,
   exerciseCompletions,
   exercises,
@@ -168,19 +167,6 @@ export const productiveActionDeps: ProductiveActionDeps = {
       .onConflictDoNothing()
       .returning();
     if (inserted.length === 0) return false;
-
-    // Notification rolls back together with the award if anything later in tx fails.
-    await t.insert(notifications).values({
-      id: uuidv4(),
-      userId,
-      type: "achievement",
-      title: `${achievement.emoji} ${achievement.nameRu}`,
-      body: achievement.descriptionRu,
-      metadata: {
-        achievementSlug: achievement.slug,
-        emoji: achievement.emoji,
-      },
-    });
 
     return true;
   },

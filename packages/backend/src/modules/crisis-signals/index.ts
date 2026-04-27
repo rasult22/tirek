@@ -3,7 +3,6 @@ import { NotFoundError, ValidationError } from "../../shared/errors.js";
 export type CrisisSignalType = "acute_crisis" | "concern";
 export type CrisisSignalSeverity = "high" | "medium" | "low";
 export type CrisisSignalSource = "urgent_help" | "ai_friend" | "test_session";
-export type NotificationType = "crisis_red" | "concern_yellow";
 
 export type AiFriendCategory =
   | "bullying"
@@ -30,15 +29,6 @@ export type PersistedCrisisSignal = {
   summary: string;
   metadata: Record<string, unknown> | null;
   createdAt: Date;
-};
-
-export type PersistedNotification = {
-  id: string;
-  userId: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  metadata: Record<string, unknown> | null;
 };
 
 export type CrisisSignalRow = {
@@ -109,7 +99,6 @@ export type CrisisSignalInput =
 export type CrisisSignalsModuleDeps = {
   saveSignal: (signal: PersistedCrisisSignal) => Promise<string>;
   findPsychologistIdsForStudent: (studentId: string) => Promise<string[]>;
-  createNotification: (notification: PersistedNotification) => Promise<string>;
   findActiveByPsychologistAndType: (
     psychologistId: string,
     type: CrisisSignalType,
@@ -191,27 +180,12 @@ export function createCrisisSignalsModule(deps: CrisisSignalsModuleDeps) {
       };
       await deps.saveSignal(signal);
 
-      const notificationType: NotificationType =
-        signal.type === "acute_crisis" ? "crisis_red" : "concern_yellow";
-      const title =
-        signal.type === "acute_crisis" ? "Кризисный сигнал" : "Требуется внимание";
-
       const psychologistIds = await deps.findPsychologistIdsForStudent(input.userId);
       if (psychologistIds.length === 0) {
         deps.logger.warn(
           "Crisis signal created but student has no linked psychologist",
           { studentId: input.userId, signalId: signal.id, source: signal.source },
         );
-      }
-      for (const psychologistId of psychologistIds) {
-        await deps.createNotification({
-          id: deps.newId(),
-          userId: psychologistId,
-          type: notificationType,
-          title,
-          body: signal.summary,
-          metadata: signal.metadata,
-        });
       }
 
       return signal;

@@ -17,7 +17,6 @@ import { sosStudentRouter } from "./modules/sos/sos.routes.js";
 import { crisisFeedPsychologistRouter } from "./modules/crisis-signals/crisis-feed.routes.js";
 import { aiChatRouter } from "./modules/ai-chat/ai-chat.routes.js";
 import { notesRouter } from "./modules/psychologist-notes/psychologist-notes.routes.js";
-import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
 import { journalRouter } from "./modules/journal/journal.routes.js";
 import { streaksRouter } from "./modules/streaks/streaks.routes.js";
 import { virtualPlantRouter } from "./modules/virtual-plant/virtual-plant.routes.js";
@@ -93,7 +92,6 @@ app.route("/psychologist/export", exportRouter);
 app.route("/psychologist", inactivitySignalRouter);
 
 // Shared routes
-app.route("/notifications", notificationsRouter);
 app.route("/office-hours", officeHoursRouter);
 
 // ── Global error handler ─────────────────────────────────────────────

@@ -25,7 +25,6 @@ import type {
   MoodEntry,
   MoodInsights,
   MoodToday,
-  Notification,
   OfficeHoursEntry,
   OfficeHoursInfoBlock,
   OfficeHoursInterval,
@@ -355,12 +354,6 @@ export interface TirekClient {
     getByDate(psychologistId: string, date: string): Promise<OfficeHoursEntry | null>;
     getRange(psychologistId: string, from: string, to: string): Promise<OfficeHoursEntry[]>;
   };
-  notifications: {
-    list(): Promise<PaginatedResponse<Notification>>;
-    unreadCount(): Promise<{ count: number }>;
-    markRead(id: string): Promise<Notification>;
-  };
-
   // ── Psychologist-side ─────────────────────────────────────────────
   psychologist: {
     students: {
@@ -608,12 +601,6 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
         request(`/office-hours/${psychologistId}?date=${date}`),
       getRange: (psychologistId, from, to) =>
         request(`/office-hours/${psychologistId}?from=${from}&to=${to}`),
-    },
-
-    notifications: {
-      list: () => request("/notifications"),
-      unreadCount: () => request("/notifications/count"),
-      markRead: (id) => request(`/notifications/${id}/read`, { method: "PATCH" }),
     },
 
     psychologist: {

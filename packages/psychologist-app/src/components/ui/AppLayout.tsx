@@ -1,10 +1,7 @@
 import { type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { BottomNav } from "./BottomNav.js";
-import { useQuery } from "@tanstack/react-query";
-import { getUnreadCount } from "../../api/notifications.js";
 import { useAuthStore } from "../../store/auth-store.js";
-import { Bell } from "lucide-react";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -13,14 +10,6 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
-
-  const { data: unread } = useQuery({
-    queryKey: ["notifications", "count"],
-    queryFn: getUnreadCount,
-    refetchInterval: 30_000,
-  });
-
-  const unreadCount = unread?.count ?? 0;
 
   return (
     <div className="flex flex-col h-[100dvh] bg-bg">
@@ -36,20 +25,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* Notification bell — navigates to notifications page */}
-          <button
-            onClick={() => navigate("/notifications")}
-            aria-label="Notifications"
-            className="btn-press relative p-2 rounded-xl hover:bg-surface-hover text-text-light transition-all"
-          >
-            <Bell size={18} strokeWidth={1.8} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold rounded-full bg-danger text-white">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </button>
-
           {/* User avatar */}
           <div
             role="button"

@@ -15,7 +15,6 @@ import { SkeletonList } from "../../components/Skeleton";
 import { useT } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { crisisApi } from "../../lib/api/crisis";
-import { notificationsApi } from "../../lib/api/notifications";
 import { inactivityApi } from "../../lib/api/inactivity";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
@@ -57,20 +56,12 @@ export default function DashboardScreen() {
   });
   const redSignals = redData?.data ?? [];
 
-  const { data: unreadNotifs } = useQuery({
-    queryKey: ["notifications", "count"],
-    queryFn: notificationsApi.getUnreadCount,
-    refetchInterval: 30_000,
-  });
-
   const { data: inactiveData, isLoading: inactiveLoading } = useQuery({
     queryKey: ["inactivity", "list"],
     queryFn: () => inactivityApi.list(),
     refetchInterval: 60_000,
   });
   const inactiveStudents = inactiveData?.data ?? [];
-
-  const unreadCount = unreadNotifs?.count ?? 0;
 
   const quickActions: {
     label: string;
@@ -122,26 +113,6 @@ export default function DashboardScreen() {
               {t.psychologist.role}
             </Text>
           </View>
-          <Pressable
-            onPress={() => {
-              hapticLight();
-              router.push("/(screens)/notifications");
-            }}
-            style={({ pressed }) => [
-              styles.avatarBtn,
-              { backgroundColor: `${c.primary}14` },
-              pressed && { opacity: 0.8 },
-            ]}
-          >
-            <Ionicons name="notifications-outline" size={22} color={c.primary} />
-            {unreadCount > 0 && (
-              <View style={[styles.bellBadge, { backgroundColor: c.danger }]}>
-                <Text style={styles.bellBadgeText}>
-                  {unreadCount > 99 ? "99+" : String(unreadCount)}
-                </Text>
-              </View>
-            )}
-          </Pressable>
         </View>
 
         {/* Crisis alerts */}
@@ -407,30 +378,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  avatarBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
-  },
-  bellBadge: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 4,
-  },
-  bellBadgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
 
   // Crisis
