@@ -26,6 +26,7 @@ import { ErrorState } from "../../components/ErrorState";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { crisisApi, type ResolveData } from "../../lib/api/crisis";
+import { directChatApi } from "../../lib/api/direct-chat";
 import { hapticLight, hapticSuccess } from "../../lib/haptics";
 import type {
   CrisisFeed,
@@ -82,6 +83,22 @@ export default function CrisisScreen() {
     queryFn: crisisApi.getHistory,
     enabled: historyOpen,
   });
+
+  const { data: convData } = useQuery({
+    queryKey: ["direct-chat", "conversations"],
+    queryFn: directChatApi.conversations,
+  });
+
+  async function openChatWithStudent(studentId: string) {
+    const existing = convData?.data?.find((conv) => conv.studentId === studentId);
+    if (existing) {
+      router.push(`/(screens)/messages/${existing.id}`);
+      return;
+    }
+    const created = await directChatApi.createConversation(studentId);
+    queryClient.invalidateQueries({ queryKey: ["direct-chat", "conversations"] });
+    router.push(`/(screens)/messages/${created.id}`);
+  }
 
   const resolveMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ResolveData }) =>
@@ -402,7 +419,7 @@ export default function CrisisScreen() {
                   <Pressable
                     onPress={() => {
                       hapticLight();
-                      router.push(`/(screens)/messages/${signal.studentId}`);
+                      void openChatWithStudent(signal.studentId);
                     }}
                     style={[
                       styles.actionBtn,

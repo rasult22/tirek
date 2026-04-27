@@ -5,11 +5,12 @@ import {
   TextInput,
   Pressable,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,8 +36,21 @@ export default function ConversationScreen() {
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
   const userId = useAuthStore((s) => s.user?.id);
+  const insets = useSafeAreaInsets();
 
   const [input, setInput] = useState("");
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const { data: messagesData } = useQuery({
     queryKey: ["direct-chat", "messages", conversationId],
@@ -120,7 +134,7 @@ export default function ConversationScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top", "bottom"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -151,7 +165,16 @@ export default function ConversationScreen() {
         />
 
         {/* Input */}
-        <View style={[styles.inputBar, { backgroundColor: c.surface, borderTopColor: c.borderLight }]}>
+        <View
+          style={[
+            styles.inputBar,
+            {
+              backgroundColor: c.surface,
+              borderTopColor: c.borderLight,
+              paddingBottom: keyboardOpen ? spacing.md : spacing.md + insets.bottom,
+            },
+          ]}
+        >
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -174,7 +197,12 @@ export default function ConversationScreen() {
             {sendMutation.isPending ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Ionicons name="send" size={18} color="#FFFFFF" />
+              <>
+                <Ionicons name="send" size={16} color="#FFFFFF" />
+                <Text style={{ color: "#FFFFFF", fontWeight: "700", fontSize: 13 }}>
+                  {t.directChat.send}
+                </Text>
+              </>
             )}
           </Pressable>
         </View>
@@ -269,11 +297,13 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.md,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
+    height: 44,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
   },
   sendBtnDisabled: {
     opacity: 0.4,

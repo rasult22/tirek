@@ -5,10 +5,11 @@ import {
   TextInput,
   Pressable,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,8 +38,21 @@ export default function ChatScreen() {
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
   const userId = useAuthStore((s) => s.user?.id);
+  const insets = useSafeAreaInsets();
 
   const [input, setInput] = useState("");
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const { data: messagesData, isLoading } = useQuery({
     queryKey: ["direct-chat", "messages", conversationId],
@@ -123,16 +137,31 @@ export default function ChatScreen() {
           >
             {msg.content}
           </Text>
-          <Text
+          <View
             style={{
-              fontSize: 10,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 4,
               marginTop: 2,
-              color: isMine ? "rgba(255,255,255,0.6)" : c.textLight,
               alignSelf: isMine ? "flex-end" : "flex-start",
             }}
           >
-            {formatMessageTime(msg.createdAt)}
-          </Text>
+            <Text
+              style={{
+                fontSize: 10,
+                color: isMine ? "rgba(255,255,255,0.6)" : c.textLight,
+              }}
+            >
+              {formatMessageTime(msg.createdAt)}
+            </Text>
+            {isMine && (
+              <Ionicons
+                name={msg.readAt ? "checkmark-done" : "checkmark"}
+                size={12}
+                color={msg.readAt ? "#FFF" : "rgba(255,255,255,0.6)"}
+              />
+            )}
+          </View>
         </View>
       </View>
     );
@@ -182,7 +211,16 @@ export default function ChatScreen() {
         )}
 
         {/* Input bar */}
-        <View style={[styles.inputBar, { backgroundColor: c.surface, borderTopColor: c.borderLight }]}>
+        <View
+          style={[
+            styles.inputBar,
+            {
+              backgroundColor: c.surface,
+              borderTopColor: c.borderLight,
+              paddingBottom: keyboardOpen ? 10 : 10 + insets.bottom,
+            },
+          ]}
+        >
           <TextInput
             value={input}
             onChangeText={setInput}
@@ -209,7 +247,10 @@ export default function ChatScreen() {
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Ionicons name="send" size={18} color="#FFF" />
+            <Ionicons name="send" size={16} color="#FFF" />
+            <Text style={{ color: "#FFF", fontFamily: "DMSans-SemiBold", fontSize: 13 }}>
+              {t.directChat.send}
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -293,10 +334,12 @@ const styles = StyleSheet.create({
     fontFamily: "DMSans-Regular",
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
 });
