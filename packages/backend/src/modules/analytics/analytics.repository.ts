@@ -99,6 +99,7 @@ export const analyticsRepository = {
         totalScore: diagnosticSessions.totalScore,
         maxScore: diagnosticSessions.maxScore,
         severity: diagnosticSessions.severity,
+        flaggedItems: diagnosticSessions.flaggedItems,
       })
       .from(diagnosticSessions)
       .innerJoin(

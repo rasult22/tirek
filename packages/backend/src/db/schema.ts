@@ -144,7 +144,8 @@ export const diagnosticSessions = pgTable("diagnostic_sessions", {
   completedAt: timestamp("completed_at", { withTimezone: true }),
   totalScore: integer("total_score"),
   maxScore: integer("max_score"),
-  severity: text("severity"), // "low" | "moderate" | "high"
+  severity: text("severity"), // "minimal" | "mild" | "moderate" | "severe"
+  flaggedItems: jsonb("flagged_items"), // [{ questionIndex, answer, reason }]
 });
 
 // ── 9. diagnostic_answers ───────────────────────────────────────────

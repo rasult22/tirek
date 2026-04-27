@@ -1,5 +1,10 @@
 import { analyticsRepository } from "./analytics.repository.js";
 import { computeClassStats } from "../../lib/analytics-aggregator/analytics-aggregator.js";
+import {
+  calculateRiskStatus,
+  toRiskSession,
+  type TestSessionForRisk,
+} from "../../lib/risk-status-calculator/risk-status-calculator.js";
 
 export const analyticsService = {
   async getOverview(psychologistId: string) {
@@ -12,15 +17,15 @@ export const analyticsService = {
       analyticsRepository.getStudentTestResults(studentId),
     ]);
 
-    let status: "normal" | "attention" | "crisis" = "normal";
-    const hasHigh = testResults.some((r) => r.severity === "high");
-    const hasModerate = testResults.some((r) => r.severity === "moderate");
-    if (hasHigh) status = "crisis";
-    else if (hasModerate) status = "attention";
+    const riskSessions = testResults
+      .map(toRiskSession)
+      .filter((s): s is TestSessionForRisk => s !== null);
+    const { status, reason } = calculateRiskStatus(riskSessions);
 
     return {
       studentId,
       status,
+      reason,
       moodHistory: moodTrend.map((e) => ({
         date: new Date(e.createdAt).toISOString().split("T")[0],
         mood: e.mood,

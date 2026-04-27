@@ -3,6 +3,11 @@ import type { PaginationParams } from "../../shared/pagination.js";
 import { paginated } from "../../shared/pagination.js";
 import { usersRepository } from "./users.repository.js";
 import { analyticsRepository } from "../analytics/analytics.repository.js";
+import {
+  calculateRiskStatus,
+  toRiskSession,
+  type TestSessionForRisk,
+} from "../../lib/risk-status-calculator/risk-status-calculator.js";
 
 export const usersService = {
   async getStudents(
@@ -36,19 +41,15 @@ export const usersService = {
       analyticsRepository.getStudentTestResults(studentId),
     ]);
 
-    // Determine student status based on latest test severity and SOS
-    let status: "normal" | "attention" | "crisis" = "normal";
-    const latestSevere = testResults.find((r) => r.severity === "high");
-    const latestModerate = testResults.find((r) => r.severity === "moderate");
-    if (latestSevere) {
-      status = "crisis";
-    } else if (latestModerate) {
-      status = "attention";
-    }
+    const riskSessions = testResults
+      .map(toRiskSession)
+      .filter((s): s is TestSessionForRisk => s !== null);
+    const { status, reason } = calculateRiskStatus(riskSessions);
 
     return {
       student,
       status,
+      reason,
       moodHistory: moodTrend,
       testResults,
     };

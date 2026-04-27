@@ -85,6 +85,7 @@ async function performScoringAndComplete(input: {
       maxScore: computed.maxScore,
       severity: computed.severity,
       completedAt,
+      flaggedItems: computed.flaggedItems,
     },
   );
 

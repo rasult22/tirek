@@ -146,6 +146,7 @@ export const diagnosticsRepository = {
       maxScore: number;
       severity: string;
       completedAt: Date;
+      flaggedItems: { questionIndex: number; answer: number; reason: string }[];
     },
   ) {
     const [session] = await db

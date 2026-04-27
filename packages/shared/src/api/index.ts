@@ -164,6 +164,29 @@ export interface ClassReportFilters {
   classLetter?: string;
 }
 
+export type RiskReason =
+  | {
+      kind: "severe_test_result";
+      sessionId: string;
+      testSlug: string;
+      testName: string;
+      completedAt: string;
+    }
+  | {
+      kind: "moderate_test_result";
+      sessionId: string;
+      testSlug: string;
+      testName: string;
+      completedAt: string;
+    }
+  | {
+      kind: "flagged_items";
+      sessionId: string;
+      testSlug: string;
+      testName: string;
+      completedAt: string;
+    };
+
 export interface StudentReport {
   moodHistory: { date: string; mood: number }[];
   testResults: {
@@ -176,6 +199,7 @@ export interface StudentReport {
     severity: string;
   }[];
   status: "normal" | "attention" | "crisis";
+  reason: RiskReason | null;
 }
 
 export interface ClassReport {
