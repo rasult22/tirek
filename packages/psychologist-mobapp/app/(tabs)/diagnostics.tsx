@@ -8,19 +8,20 @@ import {
   StyleSheet,
   Modal,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, Stack } from "expo-router";
+import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useT } from "../../../lib/hooks/useLanguage";
-import { Text, SeverityBadge } from "../../../components/ui";
-import { SkeletonList } from "../../../components/Skeleton";
-import { ErrorState } from "../../../components/ErrorState";
-import { useThemeColors, spacing, radius } from "../../../lib/theme";
-import { shadow } from "../../../lib/theme/shadows";
-import { diagnosticsApi } from "../../../lib/api/diagnostics";
-import { exportApi } from "../../../lib/api/export";
-import { hapticLight } from "../../../lib/haptics";
-import { AiReportCard } from "../../../components/diagnostics/AiReportCard";
+import { useT } from "../../lib/hooks/useLanguage";
+import { Text, SeverityBadge } from "../../components/ui";
+import { SkeletonList } from "../../components/Skeleton";
+import { ErrorState } from "../../components/ErrorState";
+import { useThemeColors, spacing, radius } from "../../lib/theme";
+import { shadow } from "../../lib/theme/shadows";
+import { diagnosticsApi } from "../../lib/api/diagnostics";
+import { exportApi } from "../../lib/api/export";
+import { hapticLight } from "../../lib/haptics";
+import { AiReportCard } from "../../components/diagnostics/AiReportCard";
 import type { Severity } from "@tirek/shared";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
@@ -93,17 +94,15 @@ export default function DiagnosticsScreen() {
 
   if (isError) {
     return (
-      <>
-        <Stack.Screen options={{ title: t.psychologist.diagnostics }} />
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
         <ErrorState onRetry={() => refetch()} />
-      </>
+      </SafeAreaView>
     );
   }
 
   return (
     <>
-      <Stack.Screen options={{ title: t.psychologist.diagnostics }} />
-      <View style={[styles.container, { backgroundColor: c.bg }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
         {/* Header */}
         <View style={styles.headerRow}>
           <Text variant="h2">{t.psychologist.diagnostics}</Text>
@@ -464,7 +463,7 @@ export default function DiagnosticsScreen() {
             <Text variant="bodyLight">{t.common.noData}</Text>
           </View>
         )}
-      </View>
+      </SafeAreaView>
 
       {/* AI Report Modal */}
       <Modal

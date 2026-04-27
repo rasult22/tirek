@@ -92,7 +92,7 @@ export function StudentDetailPage() {
     return <ErrorState onRetry={() => refetch()} />;
   }
 
-  const { student, status, moodHistory, testResults } = data;
+  const { student, status, reason, moodHistory, testResults } = data;
 
   const tabs: { key: Tab; label: string; icon: typeof ClipboardList }[] = [
     { key: "overview", label: d.overview, icon: ClipboardList },
@@ -135,6 +135,7 @@ export function StudentDetailPage() {
       <StudentHeroCard
         student={student}
         status={status}
+        reason={reason}
         moodTrend={moodTrend}
         engagement={engagement}
       />

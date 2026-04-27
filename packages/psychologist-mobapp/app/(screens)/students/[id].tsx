@@ -136,7 +136,7 @@ export default function StudentDetailScreen() {
     );
   }
 
-  const { student, status, moodHistory, testResults } = data;
+  const { student, status, reason, moodHistory, testResults } = data;
 
   const tabs: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: "overview", label: d.overview, icon: "grid-outline" },
@@ -188,6 +188,7 @@ export default function StudentDetailScreen() {
         <StudentHeroCard
           student={student}
           status={status}
+          reason={reason}
           moodTrend={moodTrend}
           engagement={engagement}
         />

@@ -575,6 +575,11 @@ export const kz: TranslationKeys = {
       cbtTab: "КМТ",
       achievementsTab: "Жетістіктер",
     },
+    riskReason: {
+      severeTestResult: "Ауыр нәтиже: {testName}, {date}",
+      moderateTestResult: "Орташа нәтиже: {testName}, {date}",
+      flaggedItems: "Тестте қауіпті сигнал: {testName}, {date}",
+    },
   },
   severity: {
     minimal: "Минималды",

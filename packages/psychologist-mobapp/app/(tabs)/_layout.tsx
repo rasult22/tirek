@@ -12,7 +12,7 @@ type IoniconsName = ComponentProps<typeof Ionicons>["name"];
 
 interface TabConfig {
   name: string;
-  titleKey: "dashboard" | "students" | "messages" | "crisis" | "more";
+  titleKey: "dashboard" | "students" | "messages" | "crisis" | "diagnostics";
   icon: IoniconsName;
   iconFocused: IoniconsName;
 }
@@ -22,7 +22,7 @@ const tabConfigs: TabConfig[] = [
   { name: "students", titleKey: "students", icon: "people-outline", iconFocused: "people" },
   { name: "messages", titleKey: "messages", icon: "chatbubbles-outline", iconFocused: "chatbubbles" },
   { name: "crisis", titleKey: "crisis", icon: "alert-circle-outline", iconFocused: "alert-circle" },
-  { name: "more", titleKey: "more", icon: "ellipsis-horizontal-outline", iconFocused: "ellipsis-horizontal" },
+  { name: "diagnostics", titleKey: "diagnostics", icon: "clipboard-outline", iconFocused: "clipboard" },
 ];
 
 export default function TabsLayout() {
@@ -50,7 +50,7 @@ export default function TabsLayout() {
     students: t.psychologist.students,
     messages: t.psychologist.messages,
     crisis: t.psychologist.crisis,
-    more: t.common.more,
+    diagnostics: t.psychologist.diagnostics,
   };
 
   return (

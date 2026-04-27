@@ -1,6 +1,6 @@
 # Ubiquitous Language
 
-> Извлечено из сессии /grill-me (2026-04-24). Источник — 14 продуктовых решений, зафиксированных в memory + диалог о ролях, кризисах, AI-архитектуре и пилоте.
+> Извлечено из сессии /grill-me (2026-04-24), обновлено в /grill-me (2026-04-27, ревизия psychologist-mobapp UX). Источник — продуктовые решения и расхождения между моделью и кодом.
 
 ## Люди и роли
 
@@ -49,6 +49,20 @@
 | **Completion Screen** | Экран в student-app после прохождения Test'а: мягкое сообщение + action buttons, **без показа score/severity** | result screen |
 | **Soft Escalation** | Вариант Completion Screen при критическом результате: мягкое сообщение + кнопки "Написать психологу" / "Позвонить 150" / "Подышать"; параллельно создаётся Crisis Signal | gentle warning |
 
+## Навигация psychologist-app
+
+| Термин | Определение | Aliases to avoid |
+|--------|-------------|------------------|
+| **Main Screen** | Первый экран Psychologist'а: проактивный обзор + сквозной слой кризисов; содержит Crisis Feed (red), Attention List, Inactivity List | dashboard, home (home — допустим, dashboard — нет) |
+| **Attention List** | Блок на Main Screen: Yellow Crisis Signals + Student'ы с **Risk Status** ≠ `normal` без активных red-сигналов | watch list, attention queue |
+| **Inactivity List** | Блок на Main Screen: Student'ы с **Inactivity Signal** без других активных сигналов | dormant list, silent list |
+| **Diagnostics Catalog** | Сегмент таба Диагностика: список доступных Test'ов с метаинфой; вход в детальный экран Test'а и в назначение | tests library, test list |
+| **Test Detail** | Экран Test'а: описание, целевая группа, длительность, tips для Psychologist'а; внизу — две кнопки запуска назначения (ученику / классу) | test info |
+| **Assignment List** | Сегмент таба Диагностика: список всех Test Assignments с фильтром по статусу (`pending` / `in_progress` / `completed` / `expired` / `cancelled`) | assigned tests, assignments overview |
+| **Results List** | Сегмент таба Диагностика: список завершённых Test Sessions с фильтрами (testSlug, severity, grade) | test results |
+| **Active Students** | Сегмент таба Ученики: зарегистрированные Student'ы (активировавшие Invite Code) | registered, joined |
+| **Pending Students** | Сегмент таба Ученики: Invite Code'ы со статусом `available` или `expired` (ожидают активации) | unregistered, awaiting |
+
 ## Кризисы и сигналы
 
 | Термин | Определение | Aliases to avoid |
@@ -78,9 +92,15 @@
 
 | Термин | Определение | Aliases to avoid |
 |--------|-------------|------------------|
-| **Office Hours** | График работы Psychologist'а: ежедневно редактируемые интервалы, когда она в кабинете/доступна | schedule, availability slots |
-| **Student Profile** | Карточка Student'а в psychologist-app: Mood-тренды, Test Sessions, Crisis Signals, приватные заметки | student card, dossier-view |
-| **Private Note** | Приватная заметка Psychologist'а о Student'е, невидима Student'у | comment, annotation |
+| **Office Hours Template** | Недельный шаблон работы Psychologist'а (пн-вс), задаётся один раз и редко редактируется | weekly schedule, availability template |
+| **Office Hours Override** | Per-date исключение (выходной / другие часы), перекрывающее **Office Hours Template** на конкретную дату | exception, day-off |
+| **Office Hours** | Действующие часы работы Psychologist'а на конкретную дату — результат разрешения **Office Hours Template** + **Office Hours Override** для этой даты | schedule, availability |
+| **Student Profile** | Mini-app Psychologist'а для работы с конкретным Student'ом: единый скролл с Overview + Timeline + Danger Zone, без вложенных табов | student card, dossier-view |
+| **Overview** | Верхняя секция Student Profile: текущий **Risk Status** + причина, активные Crisis Signals, Mood за 7 дней, активные Test Assignments, достижения, ближайший приём | summary, dashboard |
+| **Timeline** | Хронологический поток событий Student'а в Student Profile: Test Sessions, Mood Check-ins, CBT Entries, сообщения, изменения **Risk Status**, Crisis Signals; с фильтр-чипами по типу | history, feed, log |
+| **Danger Zone** | Нижняя секция Student Profile с финальными необратимыми действиями (Detach Student) | destructive zone |
+| **Detach Student** | Действие Psychologist'а: разорвать связь со Student'ом, не удаляя его из системы | unlink, disconnect |
+| **Risk Status** | Производный категориальный уровень риска Student'а: `normal` / `attention` / `crisis`, рассчитывается на лету по severity всех его Test Sessions; persistent state не хранится | risk level, status, severity (последнее — атрибут Test Session, не Student'а!) |
 | **Student Dossier** | Структурированная AI-поддерживаемая анкета Student'а для AI-Copilot'а: инциденты, тесты, тренды, темы (Phase 2) | profile, history |
 | **Copilot Report** | Сообщение AI-Copilot'а Psychologist'у с рекомендациями и inline action buttons (Phase 2) | analysis, AI recommendation |
 | **Copilot Scan** | Периодический (раз в день/несколько дней) запуск AI-Copilot'а, анализирующий всех Student'ов Psychologist'а (Phase 2) | analysis batch, daily scan |
@@ -92,6 +112,13 @@
 | **Almaty Day** | Календарные сутки в таймзоне Asia/Almaty — канонические сутки для всех границ (Mood слоты, Streak, Inactivity) | server day, UTC day |
 | **Interface Language** | Язык UI пользователя, хранится в `users.language`, источник истины для AI-Friend и AI-Copilot | locale, lang |
 | **Pilot School** | Первая школа разворачивания Tirek — школа, где работает сестра разработчика; неофициальный эксперимент | prod, first deployment |
+
+## Решение
+
+| Термин | Определение | Aliases to avoid |
+|--------|-------------|------------------|
+| **Crisis Signal Resolution** | Действие Psychologist'а по разбору Crisis Signal: пометка обработанным с `contactedStudent`/`contactedParent`/`documented` флагами + текстом резолюции | close, dismiss |
+| **Acknowledged Signal** | Crisis Signal, разобранный Psychologist'ом — уходит из Red/Yellow Feed, остаётся в Timeline Student'а как событие | resolved (зарезервировано под `resolvedAt` поле) |
 
 ## Отношения
 
@@ -107,6 +134,9 @@
 - **AI-Friend** при критической реплике Student'а создаёт **Crisis Signal** (tip=acute_crisis) молча; при незначительной — делает **Psychologist Redirect** в диалоге.
 - **Crisis Signal** маршрутизируется в **Red Feed** (acute_crisis, Urgent Help) или **Yellow Feed** (concern).
 - **Signal Summary** в **Crisis Signal** — единственный способ **Psychologist**'у узнать о содержании диалога **Student**'а с **AI-Friend**'ом.
+- **Risk Status** Student'а — производная функция от severity его **Test Sessions** (`high` → `crisis`, `moderate` → `attention`, иначе `normal`); НЕ persistent state, без истории и manual override в MVP.
+- **Office Hours Template** + **Office Hours Override** разрешаются в **Office Hours** для конкретной даты; **Student** видит только итоговые Office Hours, **Psychologist** редактирует обе сущности.
+- **Office Hours** на текущую дату фильтруют push-уведомления Psychologist'а: red Crisis Signal'ы пушатся 24/7, yellow и обычные Direct Chat сообщения — только в Office Hours.
 - **AI-Copilot** (Phase 2) читает **Student Dossier** и в **Copilot Report** предлагает **Test Assignment** / контакт / и т.д.; **Psychologist** утверждает.
 
 ## Пример диалога
@@ -140,6 +170,14 @@
 - **"Message"** — в Direct Chat и AI-Friend Chat это разные концепты с разной приватностью. В Direct Chat сообщение — часть Переписки Student↔Psychologist, Psychologist видит дословно. В AI-Friend Chat сообщение — приватно, Psychologist видит только **Signal Summary** если был **Crisis Signal**, не дословно.
 
 - **"Appointment"** — устаревшее понятие booking-модели, откатывается в пользу **Office Hours** (info-блок без бронирования). Таблицы `appointment_slots` и `appointments` в БД — legacy.
+
+- **"Office Hours" в текущем коде = per-date запись** (одна таблица `office_hours`, без шаблона). Это устаревшая интерпретация: пользователь хотел weekly + override, не per-date primary. Новая модель: **Office Hours Template** (7 строк по дню недели) + **Office Hours Override** (только исключения per-date) → разрешаются в актуальные **Office Hours** на дату.
+
+- **"Status"** перегружен: на стороне Test Session это `severity` (low/moderate/high), на стороне Student Profile это **Risk Status** (normal/attention/crisis), на стороне Test Assignment это lifecycle (pending/in_progress/completed/expired/cancelled). Не путать.
+
+- **"Notes"** ранее использовалось для **Private Note** (заметки Psychologist'а о Student'е) — эта фича удаляется из MVP вместе с таблицей и API. Существующее `notes` в **Office Hours Template/Override** — это короткая подпись к интервалам ("онлайн", "уехала"), отдельный концепт, не Private Note.
+
+- **"Notifications"** как inbox-сущность удаляется из MVP. Все сигналы доходят до Psychologist'а через табовые бейджи (Crisis Signals, Direct Chat) и push-уведомления, отфильтрованные **Office Hours**. Отдельный экран уведомлений и `notificationsApi.getUnreadCount` уходят.
 
 - **"Mode"** (режим AI-чата: general/talk/problem/exam/discovery) — устарело, фронт уже убрал выбор режима. **AI-Friend Session** теперь без режима; тональность агент выбирает по первому сообщению Student'а.
 

@@ -573,6 +573,11 @@ export const ru = {
       cbtTab: "КПТ",
       achievementsTab: "Достижения",
     },
+    riskReason: {
+      severeTestResult: "Тяжёлый результат: {testName}, {date}",
+      moderateTestResult: "Умеренный результат: {testName}, {date}",
+      flaggedItems: "Тревожный сигнал в тесте: {testName}, {date}",
+    },
   },
   severity: {
     minimal: "Минимальный",

@@ -1,6 +1,6 @@
 import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useT } from "../../lib/hooks/useLanguage";
+import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { Text, Card, StatusBadge } from "../ui";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import {
@@ -8,11 +8,14 @@ import {
   type MoodTrendResult,
   type EngagementResult,
 } from "../../lib/utils/mood-analytics";
+import { formatRiskReason } from "@tirek/shared";
+import type { RiskReason } from "@tirek/shared/api";
 import type { User } from "@tirek/shared";
 
 interface StudentHeroCardProps {
   student: User;
   status: "normal" | "attention" | "crisis";
+  reason: RiskReason | null;
   moodTrend: MoodTrendResult;
   engagement: EngagementResult;
 }
@@ -50,13 +53,17 @@ const engagementColorMap = {
 export function StudentHeroCard({
   student,
   status,
+  reason,
   moodTrend,
   engagement,
 }: StudentHeroCardProps) {
   const t = useT();
+  const { language } = useLanguage();
   const c = useThemeColors();
   const d = t.psychologist.studentDetail;
   const riskLevel = statusToRiskLevel(status);
+  const reasonText = status !== "normal" ? formatRiskReason({ reason, t, language }) : null;
+  const reasonColor = status === "crisis" ? c.danger : c.warning;
 
   const trendLabels = {
     improving: d.improving,
@@ -107,6 +114,18 @@ export function StudentHeroCard({
             </Text>
             <StatusBadge status={status} size="sm" />
           </View>
+          {reasonText && (
+            <View style={styles.reasonRow}>
+              <Ionicons name="warning-outline" size={12} color={reasonColor} />
+              <Text
+                variant="small"
+                numberOfLines={1}
+                style={[styles.reasonText, { color: reasonColor }]}
+              >
+                {reasonText}
+              </Text>
+            </View>
+          )}
           <Text variant="small" numberOfLines={1}>
             {student.grade != null
               ? `${student.grade}${student.classLetter ?? ""} ${d.class}`
@@ -214,6 +233,16 @@ const styles = StyleSheet.create({
   },
   nameText: {
     flexShrink: 1,
+  },
+  reasonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  reasonText: {
+    flexShrink: 1,
+    fontFamily: "DMSans-SemiBold",
   },
   metricsRow: {
     flexDirection: "row",

@@ -81,9 +81,33 @@ export interface StudentsListFilters {
   status?: string;
 }
 
+export type RiskReason =
+  | {
+      kind: "severe_test_result";
+      sessionId: string;
+      testSlug: string;
+      testName: string;
+      completedAt: string;
+    }
+  | {
+      kind: "moderate_test_result";
+      sessionId: string;
+      testSlug: string;
+      testName: string;
+      completedAt: string;
+    }
+  | {
+      kind: "flagged_items";
+      sessionId: string;
+      testSlug: string;
+      testName: string;
+      completedAt: string;
+    };
+
 export interface StudentDetail {
   student: User;
   status: "normal" | "attention" | "crisis";
+  reason: RiskReason | null;
   moodHistory: MoodEntry[];
   testResults: (DiagnosticSession & { testSlug?: string; testName?: string })[];
 }
@@ -163,29 +187,6 @@ export interface ClassReportFilters {
   grade?: number;
   classLetter?: string;
 }
-
-export type RiskReason =
-  | {
-      kind: "severe_test_result";
-      sessionId: string;
-      testSlug: string;
-      testName: string;
-      completedAt: string;
-    }
-  | {
-      kind: "moderate_test_result";
-      sessionId: string;
-      testSlug: string;
-      testName: string;
-      completedAt: string;
-    }
-  | {
-      kind: "flagged_items";
-      sessionId: string;
-      testSlug: string;
-      testName: string;
-      completedAt: string;
-    };
 
 export interface StudentReport {
   moodHistory: { date: string; mood: number }[];

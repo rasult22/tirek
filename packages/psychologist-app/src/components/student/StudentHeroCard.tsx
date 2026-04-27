@@ -1,7 +1,9 @@
 import { clsx } from "clsx";
-import { TrendingUp, TrendingDown, Minus, Activity, ShieldCheck } from "lucide-react";
-import { useT } from "../../hooks/useLanguage.js";
+import { TrendingUp, TrendingDown, Minus, Activity, ShieldCheck, AlertTriangle } from "lucide-react";
+import { useT, useLanguage } from "../../hooks/useLanguage.js";
 import { StatusBadge } from "../ui/StatusBadge.js";
+import { formatRiskReason } from "@tirek/shared";
+import type { RiskReason } from "@tirek/shared/api";
 import type { User } from "@tirek/shared";
 import type { MoodTrendResult, EngagementResult } from "../../utils/mood-analytics.js";
 import { statusToRiskLevel } from "../../utils/mood-analytics.js";
@@ -9,6 +11,7 @@ import { statusToRiskLevel } from "../../utils/mood-analytics.js";
 interface StudentHeroCardProps {
   student: User;
   status: "normal" | "attention" | "crisis";
+  reason: RiskReason | null;
   moodTrend: MoodTrendResult;
   engagement: EngagementResult;
 }
@@ -43,12 +46,14 @@ const engagementColors = {
   low: "text-text-light",
 };
 
-export function StudentHeroCard({ student, status, moodTrend, engagement }: StudentHeroCardProps) {
+export function StudentHeroCard({ student, status, reason, moodTrend, engagement }: StudentHeroCardProps) {
   const t = useT();
+  const { language } = useLanguage();
   const d = t.psychologist.studentDetail;
 
   const TrendIcon = trendIcons[moodTrend.trend];
   const riskLevel = statusToRiskLevel(status);
+  const reasonText = status !== "normal" ? formatRiskReason({ reason, t, language }) : null;
 
   const trendLabels = { improving: d.improving, stable: d.stable, declining: d.declining };
   const riskLabels = { low: d.riskLow, medium: d.riskMedium, high: d.riskHigh };
@@ -71,6 +76,17 @@ export function StudentHeroCard({ student, status, moodTrend, engagement }: Stud
             <h1 className="text-lg font-bold text-text-main truncate">{student.name}</h1>
             <StatusBadge status={status} size="sm" />
           </div>
+          {reasonText && (
+            <p
+              className={clsx(
+                "flex items-center gap-1 text-xs font-medium mt-1",
+                status === "crisis" ? "text-danger" : "text-warning",
+              )}
+            >
+              <AlertTriangle size={12} className="shrink-0" />
+              <span className="truncate">{reasonText}</span>
+            </p>
+          )}
           <p className="text-xs text-text-light mt-0.5 truncate">
             {student.grade != null
               ? `${student.grade}${student.classLetter ?? ""} ${d.class}`
