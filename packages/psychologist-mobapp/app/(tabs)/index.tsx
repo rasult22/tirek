@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Pressable,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,15 +12,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, Card } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
-import { ErrorState } from "../../components/ErrorState";
 import { useT } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
-import { analyticsApi } from "../../lib/api/analytics";
 import { crisisApi } from "../../lib/api/crisis";
 import { notificationsApi } from "../../lib/api/notifications";
 import { inactivityApi } from "../../lib/api/inactivity";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
-import { shadow } from "../../lib/theme/shadows";
 import { hapticLight } from "../../lib/haptics";
 import type { ComponentProps } from "react";
 
@@ -48,22 +44,11 @@ export default function DashboardScreen() {
   const handleRefresh = async () => {
     setRefreshing(true);
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["analytics", "overview"] }),
       queryClient.invalidateQueries({ queryKey: ["crisis", "active"] }),
       queryClient.invalidateQueries({ queryKey: ["inactivity", "list"] }),
     ]);
     setRefreshing(false);
   };
-
-  const {
-    data: stats,
-    isLoading: statsLoading,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["analytics", "overview"],
-    queryFn: analyticsApi.overview,
-  });
 
   const { data: redData, isLoading: alertsLoading } = useQuery({
     queryKey: ["crisis", "feed", "red"],
@@ -87,43 +72,6 @@ export default function DashboardScreen() {
 
   const unreadCount = unreadNotifs?.count ?? 0;
 
-  const statCards: {
-    label: string;
-    value: number;
-    icon: IoniconsName;
-    iconBg: string;
-    iconColor: string;
-  }[] = [
-    {
-      label: t.psychologist.totalStudents,
-      value: stats?.totalStudents ?? 0,
-      icon: "people",
-      iconBg: `${c.primary}1A`,
-      iconColor: c.primary,
-    },
-    {
-      label: t.psychologist.activeToday,
-      value: stats?.activeToday ?? 0,
-      icon: "pulse",
-      iconBg: `${c.success}1A`,
-      iconColor: c.success,
-    },
-    {
-      label: t.psychologist.pendingTests,
-      value: stats?.pendingTests ?? 0,
-      icon: "clipboard-outline",
-      iconBg: `${c.warning}1A`,
-      iconColor: c.warning,
-    },
-    {
-      label: t.psychologist.crisisAlerts,
-      value: stats?.crisisAlerts ?? 0,
-      icon: "alert-circle",
-      iconBg: `${c.danger}1A`,
-      iconColor: c.danger,
-    },
-  ];
-
   const quickActions: {
     label: string;
     icon: IoniconsName;
@@ -144,25 +92,7 @@ export default function DashboardScreen() {
       iconBg: `${c.warning}14`,
       iconColor: c.warning,
     },
-    {
-      label: t.psychologist.analytics,
-      icon: "bar-chart-outline",
-      iconBg: `${c.success}14`,
-      iconColor: c.success,
-      route: "/(screens)/analytics",
-    },
   ];
-
-  if (isError) {
-    return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: c.bg }]}
-        edges={["top"]}
-      >
-        <ErrorState onRetry={() => refetch()} />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView
@@ -212,39 +142,6 @@ export default function DashboardScreen() {
               </View>
             )}
           </Pressable>
-        </View>
-
-        {/* Stat cards 2x2 */}
-        <View style={styles.statsGrid}>
-          {statCards.map((card) => (
-            <View
-              key={card.label}
-              style={[
-                styles.statCard,
-                {
-                  backgroundColor: c.surface,
-                  borderColor: c.borderLight,
-                },
-                shadow(1),
-              ]}
-            >
-              <View
-                style={[styles.statIcon, { backgroundColor: card.iconBg }]}
-              >
-                <Ionicons name={card.icon} size={16} color={card.iconColor} />
-              </View>
-              <Text variant="number" style={styles.statValue}>
-                {statsLoading ? (
-                  <ActivityIndicator size="small" color={c.textLight} />
-                ) : (
-                  card.value
-                )}
-              </Text>
-              <Text variant="small" style={styles.statLabel}>
-                {card.label}
-              </Text>
-            </View>
-          ))}
         </View>
 
         {/* Crisis alerts */}
@@ -490,36 +387,6 @@ export default function DashboardScreen() {
           </View>
         </Card>
 
-        {/* Mood overview */}
-        <Card elevated style={styles.moodSection}>
-          <Text variant="h3" style={styles.moodTitle}>
-            {t.psychologist.moodOverview}
-          </Text>
-          {stats?.averageMood != null ? (
-            <View style={styles.moodContent}>
-              <Text style={styles.moodEmoji}>
-                {stats.averageMood >= 4
-                  ? "\u{1F60A}"
-                  : stats.averageMood >= 3
-                    ? "\u{1F610}"
-                    : stats.averageMood >= 2
-                      ? "\u{1F61F}"
-                      : "\u{1F622}"}
-              </Text>
-              <Text variant="number">{stats.averageMood.toFixed(1)}</Text>
-              <Text variant="small" style={{ marginTop: 2 }}>
-                {t.psychologist.averageMood}
-              </Text>
-            </View>
-          ) : (
-            <Text
-              variant="bodyLight"
-              style={{ textAlign: "center", paddingVertical: 16 }}
-            >
-              {t.common.noData}
-            </Text>
-          )}
-        </Card>
       </ScrollView>
     </SafeAreaView>
   );
@@ -566,37 +433,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
 
-  // Stat cards
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 20,
-  },
-  statCard: {
-    width: "48%",
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-  },
-  statIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  statValue: {
-    marginBottom: 2,
-  },
-  statLabel: {
-    lineHeight: 14,
-  },
-
   // Crisis
   crisisSection: {
-    marginTop: 16,
+    marginTop: 20,
     padding: 0,
   },
   crisisHeader: {
@@ -731,19 +570,4 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // Mood overview
-  moodSection: {
-    marginTop: 16,
-  },
-  moodTitle: {
-    marginBottom: 12,
-  },
-  moodContent: {
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  moodEmoji: {
-    fontSize: 40,
-    marginBottom: 4,
-  },
 });

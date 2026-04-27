@@ -1,76 +1,14 @@
-import { eq, and, sql, gte, count, isNull } from "drizzle-orm";
+import { eq, and, sql, gte, count } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import {
   studentPsychologist,
   moodEntries,
-  testAssignments,
-  sosEvents,
   diagnosticSessions,
   diagnosticTests,
   users,
 } from "../../db/schema.js";
 
 export const analyticsRepository = {
-  async getOverview(psychologistId: string) {
-    // Total students linked to this psychologist
-    const [totalStudentsRow] = await db
-      .select({ value: count() })
-      .from(studentPsychologist)
-      .where(eq(studentPsychologist.psychologistId, psychologistId));
-
-    // Students with mood entries today
-    const [activeTodayRow] = await db
-      .select({ value: count(moodEntries.userId) })
-      .from(moodEntries)
-      .innerJoin(
-        studentPsychologist,
-        eq(moodEntries.userId, studentPsychologist.studentId),
-      )
-      .where(
-        and(
-          eq(studentPsychologist.psychologistId, psychologistId),
-          sql`DATE(${moodEntries.createdAt}) = CURRENT_DATE`,
-        ),
-      );
-
-    // Pending (unfinished) test assignments
-    const [pendingTestsRow] = await db
-      .select({ value: count() })
-      .from(testAssignments)
-      .where(
-        and(
-          eq(testAssignments.assignedBy, psychologistId),
-          sql`NOT EXISTS (
-            SELECT 1 FROM diagnostic_sessions ds
-            WHERE ds.assignment_id = ${testAssignments.id}
-            AND ds.completed_at IS NOT NULL
-          )`,
-        ),
-      );
-
-    // Active SOS events for linked students
-    const [crisisAlertsRow] = await db
-      .select({ value: count() })
-      .from(sosEvents)
-      .innerJoin(
-        studentPsychologist,
-        eq(sosEvents.userId, studentPsychologist.studentId),
-      )
-      .where(
-        and(
-          eq(studentPsychologist.psychologistId, psychologistId),
-          isNull(sosEvents.resolvedAt),
-        ),
-      );
-
-    return {
-      totalStudents: totalStudentsRow?.value ?? 0,
-      activeToday: activeTodayRow?.value ?? 0,
-      pendingTests: pendingTestsRow?.value ?? 0,
-      crisisAlerts: crisisAlertsRow?.value ?? 0,
-    };
-  },
-
   async getStudentMoodTrend(studentId: string, days: number) {
     return db
       .select()

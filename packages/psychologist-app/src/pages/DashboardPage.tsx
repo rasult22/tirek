@@ -1,38 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { useT } from "../hooks/useLanguage.js";
-import { overview } from "../api/analytics.js";
-import { getCounts, getFeed } from "../api/crisis.js";
+import { getFeed } from "../api/crisis.js";
 import {
-  Users,
   Activity,
-  ClipboardList,
   AlertTriangle,
   ArrowRight,
   ClipboardPlus,
   KeyRound,
-  BarChart3,
   Clock,
   Loader2,
-  Eye,
 } from "lucide-react";
 import { clsx } from "clsx";
-import { ErrorState } from "../components/ui/ErrorState.js";
 
 export function DashboardPage() {
   const t = useT();
   const navigate = useNavigate();
-
-  const { data: stats, isLoading: statsLoading, isError, refetch } = useQuery({
-    queryKey: ["analytics", "overview"],
-    queryFn: overview,
-  });
-
-  const { data: counts } = useQuery({
-    queryKey: ["crisis", "counts"],
-    queryFn: getCounts,
-    refetchInterval: 30_000,
-  });
 
   const { data: redData, isLoading: redLoading } = useQuery({
     queryKey: ["crisis", "feed", "red"],
@@ -41,43 +24,7 @@ export function DashboardPage() {
   });
 
   const redSignals = redData?.data ?? [];
-  const redCount = counts?.red ?? redSignals.length;
-  const yellowCount = counts?.yellow ?? 0;
-
-  const statCards = [
-    {
-      label: t.psychologist.totalStudents,
-      value: stats?.totalStudents ?? 0,
-      icon: Users,
-      gradient: "from-blue-50 to-sky-50",
-      iconBg: "bg-primary/12",
-      iconColor: "text-primary",
-    },
-    {
-      label: t.psychologist.activeToday,
-      value: stats?.activeToday ?? 0,
-      icon: Activity,
-      gradient: "from-emerald-50 to-green-50",
-      iconBg: "bg-success/12",
-      iconColor: "text-success",
-    },
-    {
-      label: t.psychologist.redFeedFull,
-      value: redCount,
-      icon: AlertTriangle,
-      gradient: "from-red-50 to-rose-50",
-      iconBg: "bg-danger/12",
-      iconColor: "text-danger",
-    },
-    {
-      label: t.psychologist.yellowFeedFull,
-      value: yellowCount,
-      icon: Eye,
-      gradient: "from-amber-50 to-yellow-50",
-      iconBg: "bg-yellow-400/15",
-      iconColor: "text-yellow-600",
-    },
-  ];
+  const redCount = redSignals.length;
 
   const quickActions = [
     {
@@ -94,13 +41,6 @@ export function DashboardPage() {
       color: "text-warning",
       bg: "bg-warning/8",
     },
-    {
-      label: t.psychologist.analytics,
-      icon: BarChart3,
-      to: "/analytics",
-      color: "text-success",
-      bg: "bg-success/8",
-    },
   ];
 
   function formatTimeAgo(dateStr: string) {
@@ -113,47 +53,11 @@ export function DashboardPage() {
     return `${Math.floor(hours / 24)}d`;
   }
 
-  if (isError) {
-    return <ErrorState onRetry={() => refetch()} />;
-  }
-
   return (
     <div className="space-y-4 animate-fade-in-up">
       <h1 className="text-xl font-bold tracking-tight text-text-main">
         {t.psychologist.dashboard}
       </h1>
-
-      {/* Stat cards — 2 columns on mobile */}
-      <div className="grid grid-cols-2 gap-3 stagger-children">
-        {statCards.map((card) => (
-          <div
-            key={card.label}
-            className={clsx(
-              "glass-card rounded-2xl p-3.5 bg-gradient-to-br",
-              card.gradient,
-            )}
-          >
-            <div
-              className={clsx(
-                "w-8 h-8 rounded-lg flex items-center justify-center mb-2",
-                card.iconBg,
-              )}
-            >
-              <card.icon size={16} className={card.iconColor} />
-            </div>
-            <p className="text-2xl font-extrabold text-text-main">
-              {statsLoading ? (
-                <Loader2 size={20} className="animate-spin text-text-light" />
-              ) : (
-                card.value
-              )}
-            </p>
-            <p className="text-[10px] font-semibold text-text-light mt-0.5 leading-tight">
-              {card.label}
-            </p>
-          </div>
-        ))}
-      </div>
 
       {/* Red Feed — требует внимания сегодня */}
       <div className="glass-card-elevated rounded-2xl overflow-hidden">
@@ -253,35 +157,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* Mood overview */}
-      <div className="glass-card-elevated rounded-2xl p-4">
-        <h2 className="text-sm font-bold text-text-main mb-3">
-          {t.psychologist.moodOverview}
-        </h2>
-        {stats?.averageMood != null ? (
-          <div className="text-center">
-            <div className="text-4xl mb-1 drop-shadow-sm">
-              {stats.averageMood >= 4
-                ? "\u{1F60A}"
-                : stats.averageMood >= 3
-                  ? "\u{1F610}"
-                  : stats.averageMood >= 2
-                    ? "\u{1F61F}"
-                    : "\u{1F622}"}
-            </div>
-            <p className="text-2xl font-extrabold text-text-main">
-              {stats.averageMood.toFixed(1)}
-            </p>
-            <p className="text-xs text-text-light mt-0.5 font-medium">
-              Average student mood
-            </p>
-          </div>
-        ) : (
-          <p className="text-sm text-text-light text-center py-4">
-            {t.common.noData}
-          </p>
-        )}
-      </div>
     </div>
   );
 }

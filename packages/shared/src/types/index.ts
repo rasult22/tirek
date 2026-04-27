@@ -427,14 +427,6 @@ export interface StudentOverview {
   status: "normal" | "attention" | "crisis";
 }
 
-export interface AnalyticsOverview {
-  totalStudents: number;
-  activeToday: number;
-  pendingTests: number;
-  crisisAlerts: number;
-  averageMood: number | null;
-}
-
 export interface InactiveStudent {
   studentId: string;
   studentName: string;

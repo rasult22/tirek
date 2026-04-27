@@ -7,10 +7,6 @@ import {
 } from "../../lib/risk-status-calculator/risk-status-calculator.js";
 
 export const analyticsService = {
-  async getOverview(psychologistId: string) {
-    return analyticsRepository.getOverview(psychologistId);
-  },
-
   async getStudentReport(psychologistId: string, studentId: string) {
     const [moodTrend, testResults] = await Promise.all([
       analyticsRepository.getStudentMoodTrend(studentId, 30),

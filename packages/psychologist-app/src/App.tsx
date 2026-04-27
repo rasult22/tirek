@@ -19,7 +19,6 @@ import { DiagnosticsPage } from "./pages/DiagnosticsPage.js";
 import { AssignTestPage } from "./pages/AssignTestPage.js";
 import { CrisisPage } from "./pages/CrisisPage.js";
 import { InviteCodesPage } from "./pages/InviteCodesPage.js";
-import { AnalyticsPage } from "./pages/AnalyticsPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
 import { NotificationsPage } from "./pages/NotificationsPage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
@@ -80,7 +79,6 @@ export function App() {
             <Route path="/office-hours" element={<ProtectedRoute><OfficeHoursPage /></ProtectedRoute>} />
             <Route path="/crisis" element={<ProtectedRoute><CrisisPage /></ProtectedRoute>} />
             <Route path="/invite-codes" element={<ProtectedRoute><InviteCodesPage /></ProtectedRoute>} />
-            <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="*" element={<NotFoundPage />} />

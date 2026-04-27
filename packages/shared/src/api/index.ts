@@ -1,7 +1,6 @@
 import type {
   Achievement,
   AchievementsSummary,
-  AnalyticsOverview,
   AssignedTest,
   AuthResponse,
   CbtEntry,
@@ -181,35 +180,6 @@ export interface CrisisResolveData {
   contactedStudent?: boolean;
   contactedParent?: boolean;
   documented?: boolean;
-}
-
-export interface ClassReportFilters {
-  grade?: number;
-  classLetter?: string;
-}
-
-export interface StudentReport {
-  moodHistory: { date: string; mood: number }[];
-  testResults: {
-    id: string;
-    testSlug: string;
-    testName: string;
-    completedAt: string;
-    totalScore: number;
-    maxScore: number;
-    severity: string;
-  }[];
-  status: "normal" | "attention" | "crisis";
-  reason: RiskReason | null;
-}
-
-export interface ClassReport {
-  totalStudents: number;
-  averageMood: number | null;
-  testCompletionRate: number;
-  atRiskCount: number;
-  moodDistribution: { happy: number; neutral: number; sad: number };
-  riskDistribution: { normal: number; attention: number; crisis: number };
 }
 
 export interface GenerateInviteCodesData {
@@ -404,11 +374,6 @@ export interface TirekClient {
         earnedCount: number;
         totalCount: number;
       }>;
-    };
-    analytics: {
-      overview(): Promise<AnalyticsOverview>;
-      studentReport(id: string): Promise<StudentReport>;
-      classReport(filters?: ClassReportFilters): Promise<ClassReport>;
     };
     cbt: {
       getStudentEntries(studentId: string, type?: string): Promise<PaginatedResponse<CbtEntry>>;
@@ -671,18 +636,6 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
       achievements: {
         getStudentAchievements: (studentId) =>
           request(`/psychologist/achievements/${studentId}`),
-      },
-
-      analytics: {
-        overview: () => request("/psychologist/analytics/overview"),
-        studentReport: (id) => request(`/psychologist/analytics/students/${id}`),
-        classReport: (filters) => {
-          const sp = new URLSearchParams();
-          if (filters?.grade) sp.set("grade", String(filters.grade));
-          if (filters?.classLetter) sp.set("classLetter", filters.classLetter);
-          const s = sp.toString();
-          return request(`/psychologist/analytics/class${s ? `?${s}` : ""}`);
-        },
       },
 
       cbt: {

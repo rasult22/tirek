@@ -10,7 +10,6 @@ import {
   ClipboardList,
   AlertTriangle,
   KeyRound,
-  BarChart3,
   UserCircle,
   MessageSquare,
   Calendar,
@@ -49,7 +48,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     { to: "/diagnostics", icon: ClipboardList, label: t.psychologist.diagnostics },
     { to: "/crisis", icon: AlertTriangle, label: t.psychologist.crisis, badge: crisisCount },
     { to: "/invite-codes", icon: KeyRound, label: t.psychologist.inviteCodes },
-    { to: "/analytics", icon: BarChart3, label: t.psychologist.analytics },
     { to: "/profile", icon: UserCircle, label: t.profile.title },
   ];
 
