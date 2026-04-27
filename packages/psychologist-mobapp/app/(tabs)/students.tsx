@@ -14,7 +14,8 @@ import { useT } from "../../lib/hooks/useLanguage";
 import { Text, Input, StatusBadge } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
-import { useThemeColors, spacing, radius } from "../../lib/theme";
+import { FiltersSheet } from "../../components/student/FiltersSheet";
+import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { studentsApi } from "../../lib/api/students";
 import { inactivityApi } from "../../lib/api/inactivity";
@@ -28,9 +29,6 @@ const moodEmojis: Record<number, string> = {
   5: "\u{1F929}",
 };
 
-const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
-
 export default function StudentsScreen() {
   const t = useT();
   const c = useThemeColors();
@@ -41,6 +39,9 @@ export default function StudentsScreen() {
   const [grade, setGrade] = useState<number | null>(null);
   const [classLetter, setClassLetter] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const hasActiveFilter = grade !== null || classLetter !== null;
 
   const {
     data: students,
@@ -105,6 +106,29 @@ export default function StudentsScreen() {
     >
       <View style={styles.header}>
         <Text variant="h1">{t.psychologist.students}</Text>
+        <Pressable
+          onPress={() => {
+            hapticLight();
+            setFiltersOpen(true);
+          }}
+          accessibilityLabel={t.common.filters}
+          hitSlop={8}
+          style={({ pressed }) => [
+            styles.filterButton,
+            { borderColor: c.border, backgroundColor: c.surface },
+            pressed && { opacity: 0.85 },
+          ]}
+        >
+          <Ionicons name="filter-outline" size={18} color={c.text} />
+          {hasActiveFilter && (
+            <View
+              style={[
+                styles.filterDot,
+                { backgroundColor: c.primary, borderColor: c.surface },
+              ]}
+            />
+          )}
+        </Pressable>
       </View>
 
       {/* Search */}
@@ -116,118 +140,6 @@ export default function StudentsScreen() {
           placeholder={`${t.common.search}...`}
         />
       </View>
-
-      {/* Grade chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsContainer}
-        style={styles.chipsScroll}
-      >
-        <Pressable
-          onPress={() => {
-            hapticLight();
-            setGrade(null);
-          }}
-          style={[
-            styles.chip,
-            grade === null
-              ? { backgroundColor: c.primary }
-              : { backgroundColor: c.surfaceSecondary },
-          ]}
-        >
-          <Text
-            variant="small"
-            style={{
-              fontFamily: "DMSans-SemiBold",
-              color: grade === null ? "#FFF" : c.textLight,
-            }}
-          >
-            {t.psychologist.allGrades}
-          </Text>
-        </Pressable>
-        {GRADES.map((g) => (
-          <Pressable
-            key={g}
-            onPress={() => {
-              hapticLight();
-              setGrade(grade === g ? null : g);
-            }}
-            style={[
-              styles.chip,
-              grade === g
-                ? { backgroundColor: c.primary }
-                : { backgroundColor: c.surfaceSecondary },
-            ]}
-          >
-            <Text
-              variant="small"
-              style={{
-                fontFamily: "DMSans-SemiBold",
-                color: grade === g ? "#FFF" : c.textLight,
-              }}
-            >
-              {g}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {/* Class letter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsContainer}
-        style={styles.classChipsScroll}
-      >
-        <Pressable
-          onPress={() => {
-            hapticLight();
-            setClassLetter(null);
-          }}
-          style={[
-            styles.chip,
-            classLetter === null
-              ? { backgroundColor: c.primary }
-              : { backgroundColor: c.surfaceSecondary },
-          ]}
-        >
-          <Text
-            variant="small"
-            style={{
-              fontFamily: "DMSans-SemiBold",
-              color: classLetter === null ? "#FFF" : c.textLight,
-            }}
-          >
-            {t.psychologist.allClasses}
-          </Text>
-        </Pressable>
-        {CLASS_LETTERS.map((l) => (
-          <Pressable
-            key={l}
-            onPress={() => {
-              hapticLight();
-              setClassLetter(classLetter === l ? null : l);
-            }}
-            style={[
-              styles.chip,
-              classLetter === l
-                ? { backgroundColor: c.primary }
-                : { backgroundColor: c.surfaceSecondary },
-            ]}
-          >
-            <Text
-              variant="small"
-              style={{
-                fontFamily: "DMSans-SemiBold",
-                color: classLetter === l ? "#FFF" : c.textLight,
-              }}
-            >
-              {l}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
 
       {/* Student list */}
       {isLoading ? (
@@ -350,6 +262,17 @@ export default function StudentsScreen() {
           ))}
         </ScrollView>
       )}
+
+      <FiltersSheet
+        open={filtersOpen}
+        grade={grade}
+        classLetter={classLetter}
+        onClose={() => setFiltersOpen(false)}
+        onApply={({ grade: g, classLetter: l }) => {
+          setGrade(g);
+          setClassLetter(l);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -359,32 +282,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 4,
   },
+  filterButton: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filterDot: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
+  },
   searchRow: {
     paddingHorizontal: 20,
     paddingVertical: 8,
-  },
-  chipsScroll: {
-    maxHeight: 36,
-    marginBottom: 4,
-  },
-  classChipsScroll: {
-    maxHeight: 36,
-    marginBottom: 8,
-  },
-  chipsContainer: {
-    paddingHorizontal: 20,
-    gap: 6,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
   },
   list: {
     paddingHorizontal: 20,
