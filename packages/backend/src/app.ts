@@ -37,6 +37,7 @@ import {
   cbtPsychologistRouter,
 } from "./modules/cbt/cbt.routes.js";
 import { inactivitySignalRouter } from "./modules/inactivity-signal/inactivity-signal.routes.js";
+import { timelinePsychologistRouter } from "./modules/timeline/timeline.routes.js";
 
 export const app = new Hono<{ Variables: AppVariables }>();
 
@@ -88,6 +89,7 @@ app.route("/psychologist/achievements", achievementsPsychologistRouter);
 app.route("/psychologist/cbt", cbtPsychologistRouter);
 app.route("/psychologist/export", exportRouter);
 app.route("/psychologist", inactivitySignalRouter);
+app.route("/psychologist", timelinePsychologistRouter);
 
 // Shared routes
 app.route("/office-hours", officeHoursRouter);
