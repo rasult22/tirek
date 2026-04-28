@@ -555,6 +555,8 @@ export const ru = {
     generating: "Генерация...",
     officeHours: "Расписание",
     detachStudent: "Отсоединить ученика",
+    printProfile: "Распечатать профиль",
+    printProfileFailed: "Не удалось сформировать PDF",
     detachConfirmTitle: "Отсоединить ученика?",
     detachConfirmDescription: "Вы перестанете получать данные об этом ученике. Его аккаунт останется активным. Это действие нельзя отменить.",
     callStudent: "Позвонить",

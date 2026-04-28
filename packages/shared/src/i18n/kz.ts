@@ -557,6 +557,8 @@ export const kz: TranslationKeys = {
     generating: "Жасалуда...",
     officeHours: "Кесте",
     detachStudent: "Оқушыны ажырату",
+    printProfile: "Профильді басып шығару",
+    printProfileFailed: "PDF жасау сәтсіз аяқталды",
     detachConfirmTitle: "Оқушыны ажырату керек пе?",
     detachConfirmDescription: "Сіз бұл оқушы туралы деректерді алуды тоқтатасыз. Оның аккаунты белсенді болып қалады. Бұл әрекетті қайтару мүмкін емес.",
     callStudent: "Қоңырау шалу",

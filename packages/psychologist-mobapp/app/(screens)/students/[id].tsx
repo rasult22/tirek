@@ -8,10 +8,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import {
+  buildPrintProfile,
+  renderPrintProfileHtml,
+} from "@tirek/shared/format-print-profile";
 import { useT, useLanguage } from "../../../lib/hooks/useLanguage";
 import { Text, Button, Card, SeverityBadge } from "../../../components/ui";
 import { SkeletonList } from "../../../components/Skeleton";
@@ -21,10 +28,12 @@ import { StudentHeroCard } from "../../../components/student/StudentHeroCard";
 import { MoodSparkline } from "../../../components/student/MoodSparkline";
 import { useThemeColors, spacing, radius } from "../../../lib/theme";
 import { studentsApi } from "../../../lib/api/students";
+import { schoolsApi } from "../../../lib/api/schools";
 import { achievementsApi } from "../../../lib/api/achievements";
 import { cbtApi } from "../../../lib/api/cbt";
 import { directChatApi } from "../../../lib/api/direct-chat";
 import { timelineApi } from "../../../lib/api/timeline";
+import { useAuthStore } from "../../../lib/store/auth-store";
 import type {
   TimelineEvent,
   TimelineEventType,
@@ -49,6 +58,8 @@ export default function StudentDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [confirmDetach, setConfirmDetach] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const psychologist = useAuthStore((s) => s.user);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["student", id],
@@ -151,6 +162,48 @@ export default function StudentDetailScreen() {
     { key: "message", label: d.filterMessages },
     { key: "crisis", label: d.filterCrisis },
   ];
+
+  async function handlePrintProfile() {
+    if (!psychologist) return;
+    setPrinting(true);
+    try {
+      let schoolName: string | null = null;
+      if (psychologist.schoolId) {
+        try {
+          const school = await schoolsApi.get(psychologist.schoolId);
+          schoolName = school.name;
+        } catch {
+          schoolName = null;
+        }
+      }
+      const profile = buildPrintProfile({
+        schoolName,
+        psychologistName: psychologist.name,
+        student: {
+          name: student.name,
+          grade: student.grade,
+          classLetter: student.classLetter,
+        },
+        moodHistory,
+        testResults,
+        today: new Date(),
+        lang: language,
+      });
+      const html = renderPrintProfileHtml(profile, language);
+      const { uri } = await Print.printToFileAsync({ html });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: "application/pdf",
+          dialogTitle: t.psychologist.printProfile,
+          UTI: "com.adobe.pdf",
+        });
+      }
+    } catch {
+      Alert.alert(t.psychologist.printProfileFailed);
+    } finally {
+      setPrinting(false);
+    }
+  }
 
   return (
     <>
@@ -386,6 +439,13 @@ export default function StudentDetailScreen() {
             >
               {d.dangerZone}
             </Text>
+            <Button
+              variant="secondary"
+              title={t.psychologist.printProfile}
+              onPress={handlePrintProfile}
+              loading={printing}
+              disabled={printing}
+            />
             <Button
               variant="danger"
               title={t.psychologist.detachStudent}

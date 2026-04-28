@@ -463,6 +463,9 @@ export interface TirekClient {
         notes: string | null,
       ): Promise<OfficeHoursEntry>;
     };
+    schools: {
+      get(id: string): Promise<{ id: string; name: string }>;
+    };
   };
 }
 
@@ -800,6 +803,9 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
             method: "PUT",
             body: JSON.stringify({ date, intervals, notes }),
           }),
+      },
+      schools: {
+        get: (id) => request(`/psychologist/schools/${id}`),
       },
     },
   };
