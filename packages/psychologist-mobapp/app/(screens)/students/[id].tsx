@@ -10,32 +10,24 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../../lib/hooks/useLanguage";
 import { Text, Button } from "../../../components/ui";
 import { SkeletonList } from "../../../components/Skeleton";
 import { ErrorState } from "../../../components/ErrorState";
-import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { StudentHeroCard } from "../../../components/student/StudentHeroCard";
 import { StudentOverviewTab } from "../../../components/student/StudentOverviewTab";
 import { StudentAssessmentsTab } from "../../../components/student/StudentAssessmentsTab";
-import { ActionMenu } from "../../../components/student/ActionMenu";
 import { useThemeColors, spacing, radius } from "../../../lib/theme";
 import { shadow } from "../../../lib/theme/shadows";
 import { studentsApi } from "../../../lib/api/students";
 import { achievementsApi } from "../../../lib/api/achievements";
 import { cbtApi } from "../../../lib/api/cbt";
-import { exportApi } from "../../../lib/api/export";
 import { directChatApi } from "../../../lib/api/direct-chat";
 import {
   calculateMoodTrend,
   calculateEngagement,
 } from "../../../lib/utils/mood-analytics";
-import { hapticSuccess } from "../../../lib/haptics";
 
 type Tab = "overview" | "assessments";
 
@@ -48,7 +40,6 @@ export default function StudentDetailScreen() {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [showDetachConfirm, setShowDetachConfirm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const {
@@ -73,15 +64,6 @@ export default function StudentDetailScreen() {
     queryKey: ["cbt", id],
     queryFn: () => cbtApi.getStudentEntries(id!),
     enabled: !!id,
-  });
-
-  const detachMutation = useMutation({
-    mutationFn: () => studentsApi.detach(id!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      hapticSuccess();
-      router.back();
-    },
   });
 
   const moodTrend = useMemo(
@@ -166,12 +148,6 @@ export default function StudentDetailScreen() {
               }
             }}
           />
-          <ActionMenu
-            onExportCSV={async () => {
-              try { await exportApi.studentCSV(id!); } catch { /* ignore */ }
-            }}
-            onDetach={() => setShowDetachConfirm(true)}
-          />
         </View>
 
         {/* Hero */}
@@ -243,16 +219,6 @@ export default function StudentDetailScreen() {
 
       </ScrollView>
       </KeyboardAvoidingView>
-
-      <ConfirmDialog
-        open={showDetachConfirm}
-        onCancel={() => setShowDetachConfirm(false)}
-        onConfirm={() => detachMutation.mutate()}
-        title={t.psychologist.detachConfirmTitle}
-        description={t.psychologist.detachConfirmDescription}
-        confirmLabel={t.psychologist.detachStudent}
-        variant="danger"
-      />
     </>
   );
 }

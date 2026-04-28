@@ -1,20 +1,16 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, MessageSquare, ClipboardList } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { getStudent } from "../api/students.js";
-import { detachStudent } from "../api/students.js";
-import { exportApi } from "../api/export.js";
 import { directChatApi } from "../api/direct-chat.js";
 import { achievementsApi } from "../api/achievements.js";
 import { cbtApi } from "../api/cbt.js";
-import { ConfirmDialog } from "../components/ui/ConfirmDialog.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
 import { StudentHeroCard } from "../components/student/StudentHeroCard.js";
-import { ActionMenu } from "../components/student/ActionMenu.js";
 import { StudentOverviewTab } from "../components/student/StudentOverviewTab.js";
 import { StudentAssessmentsTab } from "../components/student/StudentAssessmentsTab.js";
 import { calculateMoodTrend, calculateEngagement } from "../utils/mood-analytics.js";
@@ -26,10 +22,8 @@ export function StudentDetailPage() {
   const d = t.psychologist.studentDetail;
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [showDetachConfirm, setShowDetachConfirm] = useState(false);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["student", id],
@@ -47,15 +41,6 @@ export function StudentDetailPage() {
     queryKey: ["cbt", id],
     queryFn: () => cbtApi.getStudentEntries(id!),
     enabled: !!id,
-  });
-
-  const detachMutation = useMutation({
-    mutationFn: () => detachStudent(id!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      navigate("/students");
-    },
-    onError: () => toast.error(t.common.actionFailed),
   });
 
   const moodTrend = useMemo(
@@ -102,24 +87,18 @@ export function StudentDetailPage() {
           <ArrowLeft size={16} />
           {t.common.back}
         </button>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              directChatApi.createConversation(id!).then((conv) => {
-                navigate(`/messages/${conv.id}`);
-              }).catch(() => toast.error(t.common.actionFailed));
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs
-              font-medium hover:bg-primary-dark transition-colors btn-press"
-          >
-            <MessageSquare size={14} />
-            {t.directChat.writeToStudent}
-          </button>
-          <ActionMenu
-            onExportCSV={() => exportApi.studentCSV(id!)}
-            onDetach={() => setShowDetachConfirm(true)}
-          />
-        </div>
+        <button
+          onClick={() => {
+            directChatApi.createConversation(id!).then((conv) => {
+              navigate(`/messages/${conv.id}`);
+            }).catch(() => toast.error(t.common.actionFailed));
+          }}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs
+            font-medium hover:bg-primary-dark transition-colors btn-press"
+        >
+          <MessageSquare size={14} />
+          {t.directChat.writeToStudent}
+        </button>
       </div>
 
       {/* Hero card */}
@@ -173,16 +152,6 @@ export function StudentDetailPage() {
           achievementsLoading={achievementsLoading}
         />
       )}
-
-      <ConfirmDialog
-        open={showDetachConfirm}
-        onCancel={() => setShowDetachConfirm(false)}
-        onConfirm={() => detachMutation.mutate()}
-        title={t.psychologist.detachConfirmTitle}
-        description={t.psychologist.detachConfirmDescription}
-        confirmLabel={t.psychologist.detachStudent}
-        variant="danger"
-      />
     </div>
   );
 }

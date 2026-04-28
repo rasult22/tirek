@@ -43,7 +43,7 @@ Storage токена injectится через `getToken: () => string | null` c
 
 ## Особые случаи
 
-- **CSV-export** — endpoint'ы возвращают raw CSV, не JSON. Метод `psychologist.export.studentCsvUrl(id)` возвращает только URL; саму загрузку каждый пакет делает по-своему (web — blob+download, Expo — file system + Sharing).
+- **CSV-export** — endpoint'ы возвращают raw CSV, не JSON. Метод `psychologist.export.classCsvUrl(filters)` возвращает только URL; саму загрузку каждый пакет делает по-своему (web — blob+download, Expo — file system + Sharing).
 - **SSE streaming** — `chat.streamMessage()` возвращает raw `Response` (без JSON-парсинга), 401 в этом потоке не вызывает `onUnauthorized` — caller обрабатывает сам.
 
 ## Тесты

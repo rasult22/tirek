@@ -34,13 +34,6 @@ function withTokenQuery(url: string): string {
 }
 
 export const exportApi = {
-  studentCSV: (studentId: string) => {
-    const url = withTokenQuery(
-      tirekClient.psychologist.export.studentCsvUrl(studentId),
-    );
-    return downloadAndShare(url, `student-${studentId}-${Date.now()}.csv`);
-  },
-
   classCSV: (grade?: number, classLetter?: string) => {
     const url = withTokenQuery(
       tirekClient.psychologist.export.classCsvUrl({ grade, classLetter }),

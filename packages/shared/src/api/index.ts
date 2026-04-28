@@ -405,7 +405,6 @@ export interface TirekClient {
      * метод exportUrl собирает абсолютный URL — caller сам делает fetch/Linking/Sharing.
      */
     export: {
-      studentCsvUrl(studentId: string): string;
       classCsvUrl(filters: { grade?: number; classLetter?: string }): string;
     };
     inactivity: {
@@ -700,8 +699,6 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
       },
 
       export: {
-        studentCsvUrl: (studentId) =>
-          `${baseUrl}/psychologist/export/students/${studentId}/csv`,
         classCsvUrl: (filters) => {
           const sp = new URLSearchParams();
           if (filters.grade) sp.set("grade", String(filters.grade));

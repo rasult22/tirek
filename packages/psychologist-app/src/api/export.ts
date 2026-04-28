@@ -21,12 +21,6 @@ async function downloadFile(url: string, filename: string) {
 }
 
 export const exportApi = {
-  studentCSV: (studentId: string) =>
-    downloadFile(
-      tirekClient.psychologist.export.studentCsvUrl(studentId),
-      `student-report-${studentId}.csv`,
-    ),
-
   classCSV: (grade?: number, classLetter?: string) => {
     const label = grade ? `${grade}${classLetter ?? ""}` : "all";
     return downloadFile(
