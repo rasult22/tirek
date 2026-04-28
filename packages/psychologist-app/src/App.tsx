@@ -18,7 +18,6 @@ import { StudentDetailPage } from "./pages/StudentDetailPage.js";
 import { DiagnosticsPage } from "./pages/DiagnosticsPage.js";
 import { AssignTestPage } from "./pages/AssignTestPage.js";
 import { CrisisPage } from "./pages/CrisisPage.js";
-import { InviteCodesPage } from "./pages/InviteCodesPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
 import { DirectChatPage } from "./pages/DirectChatPage.js";
@@ -77,7 +76,6 @@ export function App() {
             <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
             <Route path="/office-hours" element={<ProtectedRoute><OfficeHoursPage /></ProtectedRoute>} />
             <Route path="/crisis" element={<ProtectedRoute><CrisisPage /></ProtectedRoute>} />
-            <Route path="/invite-codes" element={<ProtectedRoute><InviteCodesPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

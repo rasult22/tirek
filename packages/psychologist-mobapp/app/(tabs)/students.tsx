@@ -15,11 +15,18 @@ import { Text, Input, StatusBadge } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { FiltersSheet } from "../../components/student/FiltersSheet";
+import { PendingList } from "../../components/student/PendingList";
+import {
+  GenerateCodesSheet,
+  type GenerateCodesPrefill,
+} from "../../components/student/GenerateCodesSheet";
 import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { studentsApi } from "../../lib/api/students";
 import { inactivityApi } from "../../lib/api/inactivity";
 import { hapticLight } from "../../lib/haptics";
+
+type Segment = "active" | "pending";
 
 const moodEmojis: Record<number, string> = {
   1: "\u{1F622}",
@@ -35,11 +42,17 @@ export default function StudentsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const [segment, setSegment] = useState<Segment>("active");
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState<number | null>(null);
   const [classLetter, setClassLetter] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [sheetPrefill, setSheetPrefill] = useState<GenerateCodesPrefill | null>(
+    null,
+  );
 
   const hasActiveFilter = grade !== null || classLetter !== null;
 
@@ -61,11 +74,13 @@ export default function StudentsScreen() {
         grade: grade ?? undefined,
         classLetter: classLetter ?? undefined,
       }),
+    enabled: segment === "active",
   });
 
   const { data: inactiveData } = useQuery({
     queryKey: ["inactivity", "list"],
     queryFn: () => inactivityApi.list(),
+    enabled: segment === "active",
   });
   const inactiveIds = useMemo(
     () => new Set((inactiveData?.data ?? []).map((s) => s.studentId)),
@@ -88,7 +103,23 @@ export default function StudentsScreen() {
     setRefreshing(false);
   }
 
-  if (isError) {
+  function openAddSheet() {
+    setSheetPrefill(null);
+    setSheetOpen(true);
+  }
+
+  function openGenerateNew(prefill: GenerateCodesPrefill) {
+    setSheetPrefill(prefill);
+    setSheetOpen(true);
+  }
+
+  function handleSheetSuccess() {
+    setSheetOpen(false);
+    setSheetPrefill(null);
+    setSegment("pending");
+  }
+
+  if (isError && segment === "active") {
     return (
       <SafeAreaView
         style={[styles.container, { backgroundColor: c.bg }]}
@@ -106,162 +137,258 @@ export default function StudentsScreen() {
     >
       <View style={styles.header}>
         <Text variant="h1">{t.psychologist.students}</Text>
+        {segment === "active" && (
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              setFiltersOpen(true);
+            }}
+            accessibilityLabel={t.common.filters}
+            hitSlop={8}
+            style={({ pressed }) => [
+              styles.filterButton,
+              { borderColor: c.border, backgroundColor: c.surface },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Ionicons name="filter-outline" size={18} color={c.text} />
+            {hasActiveFilter && (
+              <View
+                style={[
+                  styles.filterDot,
+                  { backgroundColor: c.primary, borderColor: c.surface },
+                ]}
+              />
+            )}
+          </Pressable>
+        )}
+      </View>
+
+      {/* Segmented control */}
+      <View
+        style={[
+          styles.segmentWrap,
+          { backgroundColor: c.surfaceSecondary },
+        ]}
+      >
         <Pressable
           onPress={() => {
             hapticLight();
-            setFiltersOpen(true);
+            setSegment("active");
           }}
-          accessibilityLabel={t.common.filters}
-          hitSlop={8}
-          style={({ pressed }) => [
-            styles.filterButton,
-            { borderColor: c.border, backgroundColor: c.surface },
-            pressed && { opacity: 0.85 },
+          style={[
+            styles.segmentBtn,
+            segment === "active" && {
+              backgroundColor: c.surface,
+              ...shadow(1),
+            },
           ]}
         >
-          <Ionicons name="filter-outline" size={18} color={c.text} />
-          {hasActiveFilter && (
-            <View
-              style={[
-                styles.filterDot,
-                { backgroundColor: c.primary, borderColor: c.surface },
-              ]}
-            />
-          )}
+          <Text
+            variant="small"
+            style={{
+              fontFamily: "DMSans-SemiBold",
+              color: segment === "active" ? c.text : c.textLight,
+            }}
+          >
+            {t.psychologist.studentsTabActive}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            hapticLight();
+            setSegment("pending");
+          }}
+          style={[
+            styles.segmentBtn,
+            segment === "pending" && {
+              backgroundColor: c.surface,
+              ...shadow(1),
+            },
+          ]}
+        >
+          <Text
+            variant="small"
+            style={{
+              fontFamily: "DMSans-SemiBold",
+              color: segment === "pending" ? c.text : c.textLight,
+            }}
+          >
+            {t.psychologist.studentsTabPending}
+          </Text>
         </Pressable>
       </View>
 
-      {/* Search */}
-      <View style={styles.searchRow}>
-        <Input
-          icon="search-outline"
-          value={search}
-          onChangeText={setSearch}
-          placeholder={`${t.common.search}...`}
-        />
-      </View>
-
-      {/* Student list */}
-      {isLoading ? (
-        <SkeletonList count={6} />
-      ) : filteredAndSorted.length === 0 ? (
-        <View style={styles.emptyState}>
-          <View
-            style={[
-              styles.emptyIcon,
-              { backgroundColor: `${c.textLight}1A` },
-            ]}
-          >
-            <Ionicons name="people-outline" size={32} color={c.textLight} />
-          </View>
-          <Text variant="bodyLight">{t.common.noData}</Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={c.primary}
+      {segment === "active" ? (
+        <>
+          {/* Search */}
+          <View style={styles.searchRow}>
+            <Input
+              icon="search-outline"
+              value={search}
+              onChangeText={setSearch}
+              placeholder={`${t.common.search}...`}
             />
-          }
-        >
-          {filteredAndSorted.map((student) => (
-            <Pressable
-              key={student.id}
-              onPress={() => {
-                hapticLight();
-                router.push(`/(screens)/students/${student.id}`);
-              }}
-              style={({ pressed }) => [
-                styles.studentCard,
-                {
-                  backgroundColor: c.surface,
-                  borderColor: c.borderLight,
-                },
-                shadow(1),
-                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
-              ]}
-            >
+          </View>
+
+          {/* Student list */}
+          {isLoading ? (
+            <SkeletonList count={6} />
+          ) : filteredAndSorted.length === 0 ? (
+            <View style={styles.emptyState}>
               <View
                 style={[
-                  styles.avatar,
-                  { backgroundColor: `${c.primary}1A` },
+                  styles.emptyIcon,
+                  { backgroundColor: `${c.textLight}1A` },
                 ]}
               >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontFamily: "DMSans-SemiBold",
-                    color: c.primary,
-                  }}
-                >
-                  {student.name.charAt(0).toUpperCase()}
-                </Text>
+                <Ionicons name="people-outline" size={32} color={c.textLight} />
               </View>
-              <View style={styles.cardInfo}>
-                <View style={styles.nameRow}>
-                  <Text
-                    variant="body"
-                    style={{ fontFamily: "DMSans-SemiBold", flexShrink: 1 }}
-                    numberOfLines={1}
+              <Text variant="bodyLight">{t.common.noData}</Text>
+            </View>
+          ) : (
+            <ScrollView
+              contentContainerStyle={styles.list}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor={c.primary}
+                />
+              }
+            >
+              {filteredAndSorted.map((student) => (
+                <Pressable
+                  key={student.id}
+                  onPress={() => {
+                    hapticLight();
+                    router.push(`/(screens)/students/${student.id}`);
+                  }}
+                  style={({ pressed }) => [
+                    styles.studentCard,
+                    {
+                      backgroundColor: c.surface,
+                      borderColor: c.borderLight,
+                    },
+                    shadow(1),
+                    pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.avatar,
+                      { backgroundColor: `${c.primary}1A` },
+                    ]}
                   >
-                    {student.name}
-                  </Text>
-                  <StatusBadge status={student.status} size="sm" />
-                  {inactiveIds.has(student.id) && (
-                    <View
-                      style={[
-                        styles.inactiveBadge,
-                        {
-                          backgroundColor: `${c.warning}1A`,
-                          borderColor: `${c.warning}40`,
-                        },
-                      ]}
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontFamily: "DMSans-SemiBold",
+                        color: c.primary,
+                      }}
                     >
-                      <Ionicons name="moon" size={10} color={c.warning} />
+                      {student.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.cardInfo}>
+                    <View style={styles.nameRow}>
                       <Text
+                        variant="body"
                         style={{
-                          fontSize: 10,
-                          fontWeight: "700",
-                          color: c.warning,
+                          fontFamily: "DMSans-SemiBold",
+                          flexShrink: 1,
                         }}
+                        numberOfLines={1}
                       >
-                        {t.psychologist.inactiveBadge}
+                        {student.name}
+                      </Text>
+                      <StatusBadge status={student.status} size="sm" />
+                      {inactiveIds.has(student.id) && (
+                        <View
+                          style={[
+                            styles.inactiveBadge,
+                            {
+                              backgroundColor: `${c.warning}1A`,
+                              borderColor: `${c.warning}40`,
+                            },
+                          ]}
+                        >
+                          <Ionicons name="moon" size={10} color={c.warning} />
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              fontWeight: "700",
+                              color: c.warning,
+                            }}
+                          >
+                            {t.psychologist.inactiveBadge}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.metaRow}>
+                      <Text variant="caption">
+                        {student.grade != null
+                          ? `${student.grade}${student.classLetter ?? ""}`
+                          : "—"}
+                      </Text>
+                      <Text variant="caption"> · </Text>
+                      <Text variant="caption">
+                        {student.lastMood != null
+                          ? (moodEmojis[student.lastMood] ?? "—")
+                          : "—"}
+                      </Text>
+                      <Text variant="caption"> · </Text>
+                      <Text variant="caption">
+                        {student.lastActive
+                          ? new Date(student.lastActive).toLocaleDateString()
+                          : "—"}
                       </Text>
                     </View>
-                  )}
-                </View>
-                <View style={styles.metaRow}>
-                  <Text variant="caption">
-                    {student.grade != null
-                      ? `${student.grade}${student.classLetter ?? ""}`
-                      : "—"}
-                  </Text>
-                  <Text variant="caption"> · </Text>
-                  <Text variant="caption">
-                    {student.lastMood != null
-                      ? (moodEmojis[student.lastMood] ?? "—")
-                      : "—"}
-                  </Text>
-                  <Text variant="caption"> · </Text>
-                  <Text variant="caption">
-                    {student.lastActive
-                      ? new Date(student.lastActive).toLocaleDateString()
-                      : "—"}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color={`${c.textLight}60`}
-              />
-            </Pressable>
-          ))}
-        </ScrollView>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={`${c.textLight}60`}
+                  />
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </>
+      ) : (
+        <PendingList onGenerateNew={openGenerateNew} />
       )}
+
+      {/* Sticky add button — fixed above tabbar */}
+      <View
+        pointerEvents="box-none"
+        style={styles.stickyWrap}
+      >
+        <Pressable
+          onPress={() => {
+            hapticLight();
+            openAddSheet();
+          }}
+          style={({ pressed }) => [
+            styles.stickyBtn,
+            { backgroundColor: c.primary },
+            shadow(3),
+            pressed && { opacity: 0.9 },
+          ]}
+        >
+          <Ionicons name="add" size={18} color="#FFF" />
+          <Text
+            style={{
+              color: "#FFF",
+              fontFamily: "DMSans-SemiBold",
+              fontSize: 14,
+            }}
+          >
+            {t.psychologist.addNewStudent}
+          </Text>
+        </Pressable>
+      </View>
 
       <FiltersSheet
         open={filtersOpen}
@@ -272,6 +399,13 @@ export default function StudentsScreen() {
           setGrade(g);
           setClassLetter(l);
         }}
+      />
+
+      <GenerateCodesSheet
+        open={sheetOpen}
+        prefill={sheetPrefill}
+        onClose={() => setSheetOpen(false)}
+        onSuccess={handleSheetSuccess}
       />
     </SafeAreaView>
   );
@@ -288,6 +422,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 4,
+    minHeight: 48,
   },
   filterButton: {
     width: 36,
@@ -306,13 +441,27 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1.5,
   },
+  segmentWrap: {
+    flexDirection: "row",
+    marginHorizontal: 20,
+    marginTop: 8,
+    padding: 3,
+    borderRadius: radius.md,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.sm,
+  },
   searchRow: {
     paddingHorizontal: 20,
     paddingVertical: 8,
   },
   list: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 100,
     gap: 8,
   },
   studentCard: {
@@ -365,5 +514,19 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
+  },
+  stickyWrap: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 16,
+  },
+  stickyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 14,
+    borderRadius: radius.md,
   },
 });

@@ -9,7 +9,6 @@ import {
   Users,
   ClipboardList,
   AlertTriangle,
-  KeyRound,
   UserCircle,
   MessageSquare,
   Calendar,
@@ -47,7 +46,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     { to: "/office-hours", icon: Calendar, label: t.psychologist.officeHours },
     { to: "/diagnostics", icon: ClipboardList, label: t.psychologist.diagnostics },
     { to: "/crisis", icon: AlertTriangle, label: t.psychologist.crisis, badge: crisisCount },
-    { to: "/invite-codes", icon: KeyRound, label: t.psychologist.inviteCodes },
     { to: "/profile", icon: UserCircle, label: t.profile.title },
   ];
 
