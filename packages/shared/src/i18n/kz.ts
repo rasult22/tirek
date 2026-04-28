@@ -436,8 +436,6 @@ export const kz: TranslationKeys = {
     studentCard: "Оқушы картасы",
     moodHistory: "Көңіл-күй тарихы",
     testResults: "Тест нәтижелері",
-    notes: "Жазбалар",
-    addNote: "Жазба қосу",
     statusNormal: "Қалыпты",
     statusAttention: "Назар аудару керек",
     statusCrisis: "Дағдарыс",

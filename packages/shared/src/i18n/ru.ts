@@ -434,8 +434,6 @@ export const ru = {
     studentCard: "Карточка ученика",
     moodHistory: "История настроений",
     testResults: "Результаты тестов",
-    notes: "Заметки",
-    addNote: "Добавить заметку",
     statusNormal: "Норма",
     statusAttention: "Требует внимания",
     statusCrisis: "Кризис",

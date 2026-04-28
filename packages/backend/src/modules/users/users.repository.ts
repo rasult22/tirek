@@ -5,7 +5,6 @@ import {
   studentPsychologist,
   conversations,
   directMessages,
-  psychologistNotes,
   diagnosticSessions,
   diagnosticTests,
 } from "../../db/schema.js";
@@ -52,17 +51,7 @@ export const usersRepository = {
         .where(inArray(conversations.id, convIds));
     }
 
-    // 4. Delete psychologist notes about this student
-    await db
-      .delete(psychologistNotes)
-      .where(
-        and(
-          eq(psychologistNotes.studentId, studentId),
-          eq(psychologistNotes.psychologistId, psychologistId),
-        ),
-      );
-
-    // 5. Delete the student-psychologist link
+    // 4. Delete the student-psychologist link
     const result = await db
       .delete(studentPsychologist)
       .where(

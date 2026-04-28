@@ -23,12 +23,10 @@ import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { StudentHeroCard } from "../../../components/student/StudentHeroCard";
 import { StudentOverviewTab } from "../../../components/student/StudentOverviewTab";
 import { StudentAssessmentsTab } from "../../../components/student/StudentAssessmentsTab";
-import { StudentNotesTab } from "../../../components/student/StudentNotesTab";
 import { ActionMenu } from "../../../components/student/ActionMenu";
 import { useThemeColors, spacing, radius } from "../../../lib/theme";
 import { shadow } from "../../../lib/theme/shadows";
 import { studentsApi } from "../../../lib/api/students";
-import { notesApi } from "../../../lib/api/notes";
 import { achievementsApi } from "../../../lib/api/achievements";
 import { cbtApi } from "../../../lib/api/cbt";
 import { exportApi } from "../../../lib/api/export";
@@ -39,7 +37,7 @@ import {
 } from "../../../lib/utils/mood-analytics";
 import { hapticSuccess } from "../../../lib/haptics";
 
-type Tab = "overview" | "assessments" | "notes";
+type Tab = "overview" | "assessments";
 
 export default function StudentDetailScreen() {
   const t = useT();
@@ -62,12 +60,6 @@ export default function StudentDetailScreen() {
     queryKey: ["student", id],
     queryFn: () => studentsApi.getOne(id!),
     enabled: !!id,
-  });
-
-  const { data: notes, isLoading: notesLoading } = useQuery({
-    queryKey: ["notes", id],
-    queryFn: () => notesApi.getAll(id!),
-    enabled: !!id && activeTab === "notes",
   });
 
   const { data: studentAchievements, isLoading: achievementsLoading } =
@@ -111,7 +103,6 @@ export default function StudentDetailScreen() {
     setRefreshing(true);
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["student", id] }),
-      queryClient.invalidateQueries({ queryKey: ["notes", id] }),
       queryClient.invalidateQueries({ queryKey: ["achievements", id] }),
       queryClient.invalidateQueries({ queryKey: ["cbt", id] }),
     ]);
@@ -141,7 +132,6 @@ export default function StudentDetailScreen() {
   const tabs: { key: Tab; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: "overview", label: d.overview, icon: "grid-outline" },
     { key: "assessments", label: d.assessments, icon: "clipboard-outline" },
-    { key: "notes", label: t.psychologist.notes, icon: "document-text-outline" },
   ];
 
   return (
@@ -251,13 +241,6 @@ export default function StudentDetailScreen() {
           />
         )}
 
-        {activeTab === "notes" && (
-          <StudentNotesTab
-            studentId={id!}
-            notes={notes}
-            notesLoading={notesLoading}
-          />
-        )}
       </ScrollView>
       </KeyboardAvoidingView>
 

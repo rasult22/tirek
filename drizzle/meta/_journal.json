@@ -92,6 +92,13 @@
       "when": 1779494400000,
       "tag": "0012_drop_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1779753600000,
+      "tag": "0013_drop_psychologist_notes",
+      "breakpoints": true
     }
   ]
 }

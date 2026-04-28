@@ -300,25 +300,7 @@ export const chatMessages = pgTable("chat_messages", {
     .notNull(),
 });
 
-// ── 16. psychologist_notes ──────────────────────────────────────────
-export const psychologistNotes = pgTable("psychologist_notes", {
-  id: text("id").primaryKey(),
-  psychologistId: text("psychologist_id")
-    .notNull()
-    .references(() => users.id),
-  studentId: text("student_id")
-    .notNull()
-    .references(() => users.id),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
-// ── 17. user_streaks ────────────────────────────────────────────────
+// ── 16. user_streaks ────────────────────────────────────────────────
 export const userStreaks = pgTable("user_streaks", {
   userId: text("user_id")
     .primaryKey()

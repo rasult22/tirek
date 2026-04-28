@@ -109,9 +109,8 @@
 ### Psychologist Workspace
 
 56. Как **Psychologist**, я хочу видеть список своих учеников с фильтрами по классу, статусу (норма / требует внимания / кризис), последней активности.
-57. Как **Psychologist**, я хочу открыть **Student Profile** с полной картиной: mood-тренды, результаты **Test Session**'ов с динамикой, **Crisis Signal**'ы, уровень активности, мои **Private Note**'ы, **AI Test Report**'ы, история **CBT Entry**'ев ученика, **Achievements**.
-58. Как **Psychologist**, я хочу вести **Private Note**'ы по ученику, невидимые для него.
-59. Как **Psychologist**, я хочу редактировать свои **Office Hours** ежедневно (интервалы по дням, с notes "в кабинете" / "онлайн" / "на семинаре"), чтобы гибко корректировать расписание.
+57. Как **Psychologist**, я хочу открыть **Student Profile** с полной картиной: mood-тренды, результаты **Test Session**'ов с динамикой, **Crisis Signal**'ы, уровень активности, **AI Test Report**'ы, история **CBT Entry**'ев ученика, **Achievements**.
+58. Как **Psychologist**, я хочу редактировать свои **Office Hours** ежедневно (интервалы по дням, с notes "в кабинете" / "онлайн" / "на семинаре"), чтобы гибко корректировать расписание.
 60. Как **Student**, я хочу видеть блок "Когда психолог доступна" ("Сегодня до 17:00 🟢 в кабинете" / "Сегодня недоступна") на экране "Написать психологу", чтобы знать, когда зайти лично, **без бронирования**.
 61. Как **Psychologist**, я хочу видеть аналитику класса: средние показатели настроения, распределение по зонам риска, completion rate по тестам, топ-факторы влияния.
 62. Как **Psychologist**, я хочу экспортировать отчёт по ученику или классу в PDF или Excel (CSV), чтобы работать с данными оффлайн или предоставлять администрации.
@@ -247,7 +246,7 @@
 
 ### Без тестов в MVP
 
-- CRUD-модули (Auth, InviteCode, Users, Office Hours, Private Note, Direct Chat, Notifications, Content, Journal) — shallow, высокий cost/value ratio.
+- CRUD-модули (Auth, InviteCode, Users, Office Hours, Direct Chat, Content, Journal) — shallow, высокий cost/value ratio.
 - UI-страницы — unit тесты компонентов не дают ценности при активном product-дизайне.
 - Агентная оркестрация (support-agent instantiation, Mastra framework integration) — полагаемся на фреймворк.
 

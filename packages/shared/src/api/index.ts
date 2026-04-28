@@ -31,7 +31,6 @@ import type {
   PaginatedResponse,
   PlantInfo,
   ProgressStats,
-  PsychologistNote,
   SessionAnswersResponse,
   Severity,
   SOSAction,
@@ -417,11 +416,6 @@ export interface TirekClient {
       generate(data: GenerateInviteCodesData): Promise<InviteCode[]>;
       revoke(id: string): Promise<{ success: boolean }>;
     };
-    notes: {
-      getAll(studentId: string): Promise<PaginatedResponse<PsychologistNote>>;
-      add(studentId: string, data: { content: string }): Promise<PsychologistNote>;
-      update(noteId: string, data: { content: string }): Promise<PsychologistNote>;
-    };
     officeHours: {
       upsert(
         date: string,
@@ -733,21 +727,6 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
           }),
         revoke: (id) =>
           request(`/psychologist/invite-codes/${id}`, { method: "DELETE" }),
-      },
-
-      notes: {
-        getAll: (studentId) =>
-          request(`/psychologist/students/${studentId}/notes?limit=100`),
-        add: (studentId, data) =>
-          request(`/psychologist/students/${studentId}/notes`, {
-            method: "POST",
-            body: JSON.stringify(data),
-          }),
-        update: (noteId, data) =>
-          request(`/psychologist/notes/${noteId}`, {
-            method: "PUT",
-            body: JSON.stringify(data),
-          }),
       },
 
       officeHours: {

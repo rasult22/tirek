@@ -175,7 +175,7 @@
 
 - **"Status"** перегружен: на стороне Test Session это `severity` (low/moderate/high), на стороне Student Profile это **Risk Status** (normal/attention/crisis), на стороне Test Assignment это lifecycle (pending/in_progress/completed/expired/cancelled). Не путать.
 
-- **"Notes"** ранее использовалось для **Private Note** (заметки Psychologist'а о Student'е) — эта фича удаляется из MVP вместе с таблицей и API. Существующее `notes` в **Office Hours Template/Override** — это короткая подпись к интервалам ("онлайн", "уехала"), отдельный концепт, не Private Note.
+- **"Notes"** ранее использовалось для **Private Note** (заметки Psychologist'а о Student'е) — фича удалена из MVP вместе с таблицей `psychologist_notes` и API. Существующее `notes` в **Office Hours Template/Override** — это короткая подпись к интервалам ("онлайн", "уехала"), отдельный концепт, не Private Note.
 
 - **"Notifications"** как inbox-сущность удалена из MVP. Все сигналы доходят до Psychologist'а через табовые бейджи (Crisis Signals, Direct Chat) и push-уведомления, отфильтрованные **Office Hours**. Экран уведомлений, колокольчик в шапке, таблица `notifications` и `notificationsApi` больше не существуют.
 

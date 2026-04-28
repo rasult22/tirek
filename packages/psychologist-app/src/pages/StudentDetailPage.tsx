@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, MessageSquare, ClipboardList, StickyNote } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, ClipboardList } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
 import { useT } from "../hooks/useLanguage.js";
 import { getStudent } from "../api/students.js";
-import { getNotes } from "../api/notes.js";
 import { detachStudent } from "../api/students.js";
 import { exportApi } from "../api/export.js";
 import { directChatApi } from "../api/direct-chat.js";
@@ -18,10 +17,9 @@ import { StudentHeroCard } from "../components/student/StudentHeroCard.js";
 import { ActionMenu } from "../components/student/ActionMenu.js";
 import { StudentOverviewTab } from "../components/student/StudentOverviewTab.js";
 import { StudentAssessmentsTab } from "../components/student/StudentAssessmentsTab.js";
-import { StudentNotesTab } from "../components/student/StudentNotesTab.js";
 import { calculateMoodTrend, calculateEngagement } from "../utils/mood-analytics.js";
 
-type Tab = "overview" | "assessments" | "notes";
+type Tab = "overview" | "assessments";
 
 export function StudentDetailPage() {
   const t = useT();
@@ -37,12 +35,6 @@ export function StudentDetailPage() {
     queryKey: ["student", id],
     queryFn: () => getStudent(id!),
     enabled: !!id,
-  });
-
-  const { data: notes, isLoading: notesLoading } = useQuery({
-    queryKey: ["notes", id],
-    queryFn: () => getNotes(id!),
-    enabled: !!id && activeTab === "notes",
   });
 
   const { data: studentAchievements, isLoading: achievementsLoading } = useQuery({
@@ -97,7 +89,6 @@ export function StudentDetailPage() {
   const tabs: { key: Tab; label: string; icon: typeof ClipboardList }[] = [
     { key: "overview", label: d.overview, icon: ClipboardList },
     { key: "assessments", label: d.assessments, icon: ClipboardList },
-    { key: "notes", label: t.psychologist.notes, icon: StickyNote },
   ];
 
   return (
@@ -180,14 +171,6 @@ export function StudentDetailPage() {
           cbtLoading={cbtLoading}
           achievements={studentAchievements}
           achievementsLoading={achievementsLoading}
-        />
-      )}
-
-      {activeTab === "notes" && (
-        <StudentNotesTab
-          studentId={id!}
-          notes={notes}
-          notesLoading={notesLoading}
         />
       )}
 

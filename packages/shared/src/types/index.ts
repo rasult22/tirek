@@ -381,15 +381,6 @@ export interface InviteCode {
   createdAt: string;
 }
 
-export interface PsychologistNote {
-  id: string;
-  psychologistId: string;
-  studentId: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface StudentOverview {
   id: string;
   name: string;
