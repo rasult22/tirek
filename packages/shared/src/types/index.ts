@@ -514,3 +514,50 @@ export interface AchievementsSummary {
   totalCount: number;
   recentAchievements: UserAchievementItem[];
 }
+
+// ── Timeline events (psychologist student profile) ──────────────────
+export type TimelineEventType = "mood" | "test" | "cbt" | "message" | "crisis";
+
+export type TimelineEvent =
+  | {
+      id: string;
+      type: "mood";
+      occurredAt: string;
+      payload: { mood: number; note: string | null };
+    }
+  | {
+      id: string;
+      type: "test";
+      occurredAt: string;
+      payload: {
+        sessionId: string;
+        testSlug: string;
+        testName: string;
+        severity: string | null;
+      };
+    }
+  | {
+      id: string;
+      type: "cbt";
+      occurredAt: string;
+      payload: { cbtType: string; summary: string };
+    }
+  | {
+      id: string;
+      type: "message";
+      occurredAt: string;
+      payload: {
+        direction: "from_student" | "from_psychologist";
+        preview: string;
+      };
+    }
+  | {
+      id: string;
+      type: "crisis";
+      occurredAt: string;
+      payload: {
+        signalType: string;
+        severity: string;
+        summary: string;
+      };
+    };

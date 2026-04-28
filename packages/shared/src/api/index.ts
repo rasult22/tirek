@@ -38,6 +38,8 @@ import type {
   StreakInfo,
   StudentOverview,
   TestQuestion,
+  TimelineEvent,
+  TimelineEventType,
   User,
   UserAchievementItem,
 } from "../types/index.js";
@@ -378,6 +380,12 @@ export interface TirekClient {
     cbt: {
       getStudentEntries(studentId: string, type?: string): Promise<PaginatedResponse<CbtEntry>>;
     };
+    timeline: {
+      getStudentTimeline(
+        studentId: string,
+        opts?: { type?: TimelineEventType; limit?: number; offset?: number },
+      ): Promise<PaginatedResponse<TimelineEvent>>;
+    };
     crisis: {
       getFeed(feed: CrisisFeed): Promise<{ data: CrisisSignal[] }>;
       getCounts(): Promise<CrisisFeedCounts>;
@@ -632,6 +640,19 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
           request(
             `/psychologist/cbt/${studentId}${type ? `?type=${type}` : ""}`,
           ),
+      },
+
+      timeline: {
+        getStudentTimeline: (studentId, opts) => {
+          const sp = new URLSearchParams();
+          if (opts?.type) sp.set("type", opts.type);
+          if (opts?.limit !== undefined) sp.set("limit", String(opts.limit));
+          if (opts?.offset !== undefined) sp.set("offset", String(opts.offset));
+          const qs = sp.toString();
+          return request(
+            `/psychologist/students/${studentId}/timeline${qs ? `?${qs}` : ""}`,
+          );
+        },
       },
 
       crisis: {
