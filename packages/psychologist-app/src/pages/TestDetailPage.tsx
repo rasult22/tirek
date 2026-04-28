@@ -31,7 +31,9 @@ export function TestDetailPage() {
   const tips = language === "kz" ? td.tipsKz : td.tipsRu;
 
   function goAssign(target: "student" | "class") {
-    navigate(`/diagnostics/assign?testSlug=${td.slug}&target=${target}`);
+    const path =
+      target === "student" ? "/diagnostics/assign-student" : "/diagnostics/assign-class";
+    navigate(`${path}?testSlug=${td.slug}`);
   }
 
   return (

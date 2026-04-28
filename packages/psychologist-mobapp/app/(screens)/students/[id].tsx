@@ -190,7 +190,7 @@ export default function StudentDetailScreen() {
               <Button
                 variant="secondary"
                 title={t.psychologist.assignTest}
-                onPress={() => router.push("/(screens)/diagnostics/assign")}
+                onPress={() => router.push("/(tabs)/diagnostics" as any)}
               />
             </View>
           </View>

@@ -44,9 +44,11 @@ export default function TestDetailScreen() {
 
   function goAssign(target: "student" | "class") {
     hapticLight();
-    router.push(
-      `/(screens)/diagnostics/assign?testSlug=${td.slug}&target=${target}` as any,
-    );
+    const path =
+      target === "student"
+        ? "/(screens)/diagnostics/assign-student"
+        : "/(screens)/diagnostics/assign-class";
+    router.push(`${path}?testSlug=${td.slug}` as any);
   }
 
   return (

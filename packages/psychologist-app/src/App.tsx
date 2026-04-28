@@ -16,7 +16,8 @@ import { DashboardPage } from "./pages/DashboardPage.js";
 import { StudentsListPage } from "./pages/StudentsListPage.js";
 import { StudentDetailPage } from "./pages/StudentDetailPage.js";
 import { DiagnosticsPage } from "./pages/DiagnosticsPage.js";
-import { AssignTestPage } from "./pages/AssignTestPage.js";
+import { AssignToStudentPage } from "./pages/AssignToStudentPage.js";
+import { AssignToClassPage } from "./pages/AssignToClassPage.js";
 import { TestDetailPage } from "./pages/TestDetailPage.js";
 import { CrisisPage } from "./pages/CrisisPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
@@ -72,7 +73,8 @@ export function App() {
             <Route path="/students" element={<ProtectedRoute><StudentsListPage /></ProtectedRoute>} />
             <Route path="/students/:id" element={<ProtectedRoute><StudentDetailPage /></ProtectedRoute>} />
             <Route path="/diagnostics" element={<ProtectedRoute><DiagnosticsPage /></ProtectedRoute>} />
-            <Route path="/diagnostics/assign" element={<ProtectedRoute><AssignTestPage /></ProtectedRoute>} />
+            <Route path="/diagnostics/assign-student" element={<ProtectedRoute><AssignToStudentPage /></ProtectedRoute>} />
+            <Route path="/diagnostics/assign-class" element={<ProtectedRoute><AssignToClassPage /></ProtectedRoute>} />
             <Route path="/diagnostics/tests/:slug" element={<ProtectedRoute><TestDetailPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><DirectChatListPage /></ProtectedRoute>} />
             <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
