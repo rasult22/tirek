@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { Hono } from "hono";
 
 import { createTirekClient, ApiError } from "@tirek/shared/api";
+import type { TestAssignmentRow } from "@tirek/shared/api";
 import type { MoodEntry } from "@tirek/shared";
 
 /**
@@ -231,4 +232,177 @@ test("error mapping: тело без code/error → дефолты UNKNOWN", asy
   assert.equal((err as ApiError).status, 500);
   assert.equal((err as ApiError).code, "UNKNOWN");
   assert.equal((err as ApiError).message, "Unknown error");
+});
+
+// ── psychologist.diagnostics.listAssignments / cancelAssignment ──────
+
+function makeDiagnosticsBackend(opts: {
+  list?: TestAssignmentRow[];
+  cancelResponse?: TestAssignmentRow;
+}) {
+  const app = new Hono();
+  const calls: Array<{
+    method: string;
+    path: string;
+    query: Record<string, string>;
+    body: unknown;
+  }> = [];
+
+  app.get("/psychologist/diagnostics/assignments", (c) => {
+    const url = new URL(c.req.url);
+    const query: Record<string, string> = {};
+    url.searchParams.forEach((value, key) => {
+      query[key] = value;
+    });
+    calls.push({
+      method: "GET",
+      path: url.pathname,
+      query,
+      body: null,
+    });
+    return c.json(opts.list ?? []);
+  });
+
+  app.post("/psychologist/diagnostics/assignments/:id/cancel", async (c) => {
+    calls.push({
+      method: "POST",
+      path: c.req.path,
+      query: {},
+      body: await c.req.json().catch(() => null),
+    });
+    if (!opts.cancelResponse) {
+      return c.json({ error: "no fixture" }, 500);
+    }
+    return c.json(opts.cancelResponse);
+  });
+
+  app.post("/psychologist/diagnostics/assign", async (c) => {
+    calls.push({
+      method: "POST",
+      path: "/psychologist/diagnostics/assign",
+      query: {},
+      body: await c.req.json().catch(() => null),
+    });
+    return c.json({ success: true });
+  });
+
+  return { app, calls };
+}
+
+function fakeAssignment(over: Partial<TestAssignmentRow> = {}): TestAssignmentRow {
+  return {
+    id: "asg-1",
+    testId: "test-1",
+    assignedBy: "psy-1",
+    targetType: "student",
+    targetGrade: null,
+    targetClassLetter: null,
+    targetStudentId: "stu-1",
+    dueDate: null,
+    status: "pending",
+    studentMessage: null,
+    cancelledAt: null,
+    createdAt: "2026-04-26T10:00:00.000Z",
+    ...over,
+  };
+}
+
+test("psychologist.diagnostics.listAssignments: GET без фильтров — без query string", async () => {
+  const fixture = fakeAssignment({ id: "asg-1" });
+  const { app, calls } = makeDiagnosticsBackend({ list: [fixture] });
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => "tok",
+    fetch: makeFetch(app),
+  });
+
+  const result = await client.psychologist.diagnostics.listAssignments();
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "GET");
+  assert.equal(calls[0].path, "/psychologist/diagnostics/assignments");
+  assert.deepEqual(calls[0].query, {});
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, "asg-1");
+});
+
+test("psychologist.diagnostics.listAssignments: фильтр status=pending попадает в query", async () => {
+  const { app, calls } = makeDiagnosticsBackend({ list: [] });
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => "tok",
+    fetch: makeFetch(app),
+  });
+
+  await client.psychologist.diagnostics.listAssignments({ status: "pending" });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].query.status, "pending");
+});
+
+test("psychologist.diagnostics.listAssignments: фильтры status + studentId оба в query", async () => {
+  const { app, calls } = makeDiagnosticsBackend({ list: [] });
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => "tok",
+    fetch: makeFetch(app),
+  });
+
+  await client.psychologist.diagnostics.listAssignments({
+    status: "cancelled",
+    studentId: "stu-42",
+  });
+
+  assert.equal(calls[0].query.status, "cancelled");
+  assert.equal(calls[0].query.studentId, "stu-42");
+});
+
+test("psychologist.diagnostics.cancelAssignment: POST на /assignments/:id/cancel и парсит ответ", async () => {
+  const cancelled = fakeAssignment({
+    status: "cancelled",
+    cancelledAt: "2026-04-28T12:00:00.000Z",
+  });
+  const { app, calls } = makeDiagnosticsBackend({ cancelResponse: cancelled });
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => "tok",
+    fetch: makeFetch(app),
+  });
+
+  const result = await client.psychologist.diagnostics.cancelAssignment("asg-1");
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(
+    calls[0].path,
+    "/psychologist/diagnostics/assignments/asg-1/cancel",
+  );
+  assert.equal(result.status, "cancelled");
+  assert.equal(result.cancelledAt, "2026-04-28T12:00:00.000Z");
+});
+
+test("psychologist.diagnostics.assignTest: studentMessage попадает в тело запроса", async () => {
+  const { app, calls } = makeDiagnosticsBackend({});
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => "tok",
+    fetch: makeFetch(app),
+  });
+
+  await client.psychologist.diagnostics.assignTest({
+    testSlug: "phq-a",
+    target: "student",
+    studentId: "stu-1",
+    studentMessage: "Пожалуйста, пройди этот тест на этой неделе",
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].path, "/psychologist/diagnostics/assign");
+  assert.deepEqual(calls[0].body, {
+    testSlug: "phq-a",
+    target: "student",
+    studentId: "stu-1",
+    studentMessage: "Пожалуйста, пройди этот тест на этой неделе",
+  });
 });

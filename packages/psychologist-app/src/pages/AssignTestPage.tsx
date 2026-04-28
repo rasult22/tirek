@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { assignTest } from "../api/diagnostics.js";
@@ -17,19 +17,27 @@ import {
 import { clsx } from "clsx";
 
 type Target = "student" | "class";
+const STUDENT_MESSAGE_MAX = 500;
 
 export function AssignTestPage() {
   const t = useT();
   const { language } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [testSlug, setTestSlug] = useState("");
-  const [target, setTarget] = useState<Target>("class");
+  const initialTestSlug = searchParams.get("testSlug") ?? "";
+  const initialTarget = (searchParams.get("target") as Target) ?? "class";
+
+  const [testSlug, setTestSlug] = useState(initialTestSlug);
+  const [target, setTarget] = useState<Target>(
+    initialTarget === "student" ? "student" : "class",
+  );
   const [studentId, setStudentId] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
   const [grade, setGrade] = useState("");
   const [classLetter, setClassLetter] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [studentMessage, setStudentMessage] = useState("");
   const [success, setSuccess] = useState(false);
 
   const { data: students } = useQuery({
@@ -53,6 +61,10 @@ export function AssignTestPage() {
         grade: target === "class" && grade ? Number(grade) : undefined,
         classLetter: target === "class" ? classLetter || undefined : undefined,
         dueDate: dueDate || undefined,
+        studentMessage:
+          target === "student" && studentMessage.trim().length > 0
+            ? studentMessage.trim()
+            : undefined,
       }),
     onSuccess: () => {
       setSuccess(true);
@@ -277,6 +289,30 @@ export function AssignTestPage() {
               focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
         </div>
+
+        {/* Student message (only when target=student) */}
+        {target === "student" && (
+          <div>
+            <label className="block text-sm font-medium text-text-main mb-2">
+              {t.psychologist.studentMessageLabel}
+            </label>
+            <textarea
+              value={studentMessage}
+              onChange={(e) =>
+                setStudentMessage(e.target.value.slice(0, STUDENT_MESSAGE_MAX))
+              }
+              rows={3}
+              maxLength={STUDENT_MESSAGE_MAX}
+              placeholder={t.psychologist.studentMessagePlaceholder}
+              className="w-full px-3 py-2 rounded-lg border border-input-border bg-surface text-sm text-text-main
+                focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-y"
+            />
+            <p className="text-[11px] text-text-light mt-1">
+              {studentMessage.length} / {STUDENT_MESSAGE_MAX} —{" "}
+              {t.psychologist.studentMessageMaxHint}
+            </p>
+          </div>
+        )}
 
         {/* Error */}
         {mutation.isError && (

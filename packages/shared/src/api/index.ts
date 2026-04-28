@@ -180,6 +180,37 @@ export interface AssignTestData {
   grade?: number;
   classLetter?: string;
   dueDate?: string;
+  studentMessage?: string;
+}
+
+export type TestAssignmentStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "expired"
+  | "cancelled";
+
+export interface TestAssignmentRow {
+  id: string;
+  testId: string;
+  testSlug?: string;
+  testName?: string;
+  assignedBy: string;
+  targetType: "student" | "class";
+  targetGrade: number | null;
+  targetClassLetter: string | null;
+  targetStudentId: string | null;
+  studentName?: string | null;
+  dueDate: string | null;
+  status: TestAssignmentStatus;
+  studentMessage: string | null;
+  cancelledAt: string | null;
+  createdAt: string;
+}
+
+export interface AssignmentsListFilters {
+  status?: TestAssignmentStatus;
+  studentId?: string;
 }
 
 export interface CrisisResolveData {
@@ -395,6 +426,8 @@ export interface TirekClient {
     diagnostics: {
       getResults(filters?: DiagnosticsFilters): Promise<PaginatedResponse<DiagnosticResultRow>>;
       assignTest(data: AssignTestData): Promise<{ success: boolean }>;
+      listAssignments(filters?: AssignmentsListFilters): Promise<TestAssignmentRow[]>;
+      cancelAssignment(assignmentId: string): Promise<TestAssignmentRow>;
       getReport(sessionId: string): Promise<DiagnosticAiReport | { status: "pending" }>;
       regenerateReport(sessionId: string): Promise<{ status: "pending" }>;
       getSessionAnswers(sessionId: string): Promise<SessionAnswersResponse>;
@@ -684,6 +717,20 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
             method: "POST",
             body: JSON.stringify(data),
           }),
+        listAssignments: (filters) => {
+          const sp = new URLSearchParams();
+          if (filters?.status) sp.set("status", filters.status);
+          if (filters?.studentId) sp.set("studentId", filters.studentId);
+          const qs = sp.toString();
+          return request(
+            `/psychologist/diagnostics/assignments${qs ? `?${qs}` : ""}`,
+          );
+        },
+        cancelAssignment: (assignmentId) =>
+          request(
+            `/psychologist/diagnostics/assignments/${assignmentId}/cancel`,
+            { method: "POST" },
+          ),
         getReport: (sessionId) =>
           request(`/psychologist/diagnostics/sessions/${sessionId}/report`),
         regenerateReport: (sessionId) =>

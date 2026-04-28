@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, Stack } from "expo-router";
+import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { testDefinitions } from "@tirek/shared";
 import { useT, useLanguage } from "../../../lib/hooks/useLanguage";
@@ -25,20 +25,28 @@ type Target = "student" | "class";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
+const STUDENT_MESSAGE_MAX = 500;
 
 export default function AssignTestScreen() {
   const t = useT();
   const { language } = useLanguage();
   const c = useThemeColors();
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    testSlug?: string;
+    target?: string;
+  }>();
 
-  const [testSlug, setTestSlug] = useState("");
-  const [target, setTarget] = useState<Target>("class");
+  const [testSlug, setTestSlug] = useState(params.testSlug ?? "");
+  const [target, setTarget] = useState<Target>(
+    params.target === "student" ? "student" : "class",
+  );
   const [studentId, setStudentId] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
   const [grade, setGrade] = useState<number | null>(null);
   const [classLetter, setClassLetter] = useState<string | null>(null);
   const [dueDate, setDueDate] = useState("");
+  const [studentMessage, setStudentMessage] = useState("");
   const [success, setSuccess] = useState(false);
 
   const { data: students } = useQuery({
@@ -63,6 +71,10 @@ export default function AssignTestScreen() {
         grade: target === "class" && grade ? grade : undefined,
         classLetter: target === "class" && classLetter ? classLetter : undefined,
         dueDate: dueDate || undefined,
+        studentMessage:
+          target === "student" && studentMessage.trim().length > 0
+            ? studentMessage.trim()
+            : undefined,
       }),
     onSuccess: () => {
       setSuccess(true);
@@ -431,6 +443,34 @@ export default function AssignTestScreen() {
           />
         </View>
 
+        {/* Student message — only when target=student */}
+        {target === "student" && (
+          <>
+            <Text variant="body" style={styles.fieldLabel}>
+              {t.psychologist.studentMessageLabel}
+            </Text>
+            <TextInput
+              value={studentMessage}
+              onChangeText={(v) =>
+                setStudentMessage(v.slice(0, STUDENT_MESSAGE_MAX))
+              }
+              placeholder={t.psychologist.studentMessagePlaceholder}
+              placeholderTextColor={c.textLight}
+              multiline
+              numberOfLines={3}
+              maxLength={STUDENT_MESSAGE_MAX}
+              style={[
+                styles.messageInput,
+                { borderColor: c.borderLight, color: c.text, backgroundColor: c.surface },
+              ]}
+            />
+            <Text variant="caption" style={{ marginTop: 4 }}>
+              {studentMessage.length} / {STUDENT_MESSAGE_MAX} —{" "}
+              {t.psychologist.studentMessageMaxHint}
+            </Text>
+          </>
+        )}
+
         {/* Error */}
         {mutation.isError && (
           <View style={[styles.errorBanner, { backgroundColor: `${c.danger}1A` }]}>
@@ -570,6 +610,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "DMSans-Regular",
     padding: 0,
+  },
+  messageInput: {
+    minHeight: 80,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: "DMSans-Regular",
+    textAlignVertical: "top",
   },
   errorBanner: {
     padding: 12,
