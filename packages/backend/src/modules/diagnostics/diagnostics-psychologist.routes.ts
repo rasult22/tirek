@@ -38,6 +38,35 @@ diagnosticsPsychologistRouter.post("/assign", async (c) => {
   }
 });
 
+// GET /assignments?status=...&studentId=... - list psychologist's assignments
+diagnosticsPsychologistRouter.get("/assignments", async (c) => {
+  try {
+    const status = c.req.query("status");
+    const studentId = c.req.query("studentId");
+    const result = await diagnosticsService.listAssignmentsForPsychologist(
+      c.var.user.userId,
+      { status, studentId },
+    );
+    return c.json(result);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
+// POST /assignments/:id/cancel - cancel an assignment
+diagnosticsPsychologistRouter.post("/assignments/:id/cancel", async (c) => {
+  try {
+    const assignmentId = c.req.param("id");
+    const result = await diagnosticsService.cancelAssignment(
+      c.var.user.userId,
+      assignmentId,
+    );
+    return c.json(result);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 // GET /sessions/:sessionId/report - AI-generated report for a session
 diagnosticsPsychologistRouter.get("/sessions/:sessionId/report", async (c) => {
   try {

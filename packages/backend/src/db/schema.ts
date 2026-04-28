@@ -123,6 +123,12 @@ export const testAssignments = pgTable("test_assignments", {
   targetClassLetter: text("target_class_letter"),
   targetStudentId: text("target_student_id").references(() => users.id),
   dueDate: timestamp("due_date", { withTimezone: true }),
+  // pending | in_progress | completed | expired | cancelled
+  // pending — default for active; cancelled — set explicitly via cancel endpoint.
+  // in_progress/completed/expired остаются вычисляемыми в student view.
+  status: text("status").notNull().default("pending"),
+  studentMessage: text("student_message"),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

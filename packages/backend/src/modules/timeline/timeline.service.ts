@@ -11,6 +11,8 @@ const module = createTimelineModule({
   findCbtEvents: timelineRepository.findCbtEvents,
   findMessageEvents: timelineRepository.findMessageEvents,
   findCrisisEvents: timelineRepository.findCrisisEvents,
+  findAssignmentCancelledEvents:
+    timelineRepository.findAssignmentCancelledEvents,
 });
 
 export const timelineService = {

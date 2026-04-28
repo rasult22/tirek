@@ -102,6 +102,7 @@ export interface AssignedTest {
   completedSessionId: string | null;
   overdue: boolean;
   assignedAt: string;
+  studentMessage: string | null;
   test: {
     id: string;
     slug: string;

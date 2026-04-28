@@ -11,6 +11,7 @@ const TIMELINE_TYPES: TimelineEventType[] = [
   "cbt",
   "message",
   "crisis",
+  "assignment_cancelled",
 ];
 
 function parseType(raw: string | undefined): TimelineEventType | undefined {

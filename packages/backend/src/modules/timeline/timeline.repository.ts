@@ -9,6 +9,7 @@ import {
   directMessages,
   crisisSignals,
   studentPsychologist,
+  testAssignments,
 } from "../../db/schema.js";
 import type { TimelineEvent } from "./timeline.js";
 
@@ -143,6 +144,48 @@ export const timelineRepository = {
         preview: previewOf(r.content),
       },
     }));
+  },
+
+  async findAssignmentCancelledEvents(
+    studentId: string,
+  ): Promise<TimelineEvent[]> {
+    const rows = await db
+      .select({
+        id: testAssignments.id,
+        testSlug: diagnosticTests.slug,
+        testName: diagnosticTests.nameRu,
+        cancelledAt: testAssignments.cancelledAt,
+      })
+      .from(testAssignments)
+      .innerJoin(
+        diagnosticTests,
+        eq(testAssignments.testId, diagnosticTests.id),
+      )
+      .where(
+        and(
+          eq(testAssignments.targetType, "student"),
+          eq(testAssignments.targetStudentId, studentId),
+          eq(testAssignments.status, "cancelled"),
+          sql`${testAssignments.cancelledAt} IS NOT NULL`,
+        ),
+      )
+      .orderBy(desc(testAssignments.cancelledAt))
+      .limit(MAX_PER_SOURCE);
+
+    return rows
+      .filter(
+        (r): r is typeof r & { cancelledAt: Date } => r.cancelledAt !== null,
+      )
+      .map((r) => ({
+        id: `assignment_cancelled:${r.id}`,
+        type: "assignment_cancelled",
+        occurredAt: r.cancelledAt,
+        payload: {
+          assignmentId: r.id,
+          testSlug: r.testSlug,
+          testName: r.testName,
+        },
+      }));
   },
 
   async findCrisisEvents(studentId: string): Promise<TimelineEvent[]> {

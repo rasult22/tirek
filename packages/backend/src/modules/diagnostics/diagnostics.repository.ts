@@ -54,16 +54,85 @@ export const diagnosticsRepository = {
       );
     }
 
+    // Cancelled assignments не показываются ученику — иначе он увидит "назначен тест",
+    // который психолог уже отменил.
+    const activeFilter = sql`${testAssignments.status} <> 'cancelled'`;
+
     const assignments = await db
       .select()
       .from(testAssignments)
       .where(
-        classConditions.length > 0
-          ? or(and(...conditions), ...classConditions)
-          : and(...conditions),
+        and(
+          classConditions.length > 0
+            ? or(and(...conditions), ...classConditions)
+            : and(...conditions),
+          activeFilter,
+        ),
       );
 
     return assignments;
+  },
+
+  async findAssignmentById(assignmentId: string) {
+    const [row] = await db
+      .select()
+      .from(testAssignments)
+      .where(eq(testAssignments.id, assignmentId))
+      .limit(1);
+    return row ?? null;
+  },
+
+  async insertAssignment(row: {
+    id: string;
+    testId: string;
+    assignedBy: string;
+    targetType: string;
+    targetGrade: number | null;
+    targetClassLetter: string | null;
+    targetStudentId: string | null;
+    dueDate: Date | null;
+    status: string;
+    studentMessage: string | null;
+    cancelledAt: Date | null;
+  }) {
+    const [inserted] = await db
+      .insert(testAssignments)
+      .values(row)
+      .returning();
+    return inserted;
+  },
+
+  async updateAssignment(
+    assignmentId: string,
+    patch: {
+      status?: string;
+      cancelledAt?: Date | null;
+    },
+  ) {
+    const [updated] = await db
+      .update(testAssignments)
+      .set(patch)
+      .where(eq(testAssignments.id, assignmentId))
+      .returning();
+    return updated ?? null;
+  },
+
+  async findAssignmentsByPsychologist(
+    psychologistId: string,
+    filters: { status?: string; studentId?: string },
+  ) {
+    const conditions = [eq(testAssignments.assignedBy, psychologistId)];
+    if (filters.status) {
+      conditions.push(eq(testAssignments.status, filters.status));
+    }
+    if (filters.studentId) {
+      conditions.push(eq(testAssignments.targetStudentId, filters.studentId));
+    }
+    return db
+      .select()
+      .from(testAssignments)
+      .where(and(...conditions))
+      .orderBy(desc(testAssignments.createdAt));
   },
 
   /**

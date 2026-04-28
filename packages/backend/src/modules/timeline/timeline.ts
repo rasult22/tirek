@@ -42,6 +42,16 @@ export type TimelineEvent =
         severity: string;
         summary: string;
       };
+    }
+  | {
+      id: string;
+      type: "assignment_cancelled";
+      occurredAt: Date;
+      payload: {
+        assignmentId: string;
+        testSlug: string;
+        testName: string;
+      };
     };
 
 export type TimelineEventType = TimelineEvent["type"];
@@ -62,6 +72,7 @@ export interface TimelineModuleDeps {
     psychologistId: string,
   ) => Promise<TimelineEvent[]>;
   findCrisisEvents: (studentId: string) => Promise<TimelineEvent[]>;
+  findAssignmentCancelledEvents: (studentId: string) => Promise<TimelineEvent[]>;
 }
 
 export interface TimelineModule {
@@ -91,6 +102,8 @@ export function createTimelineModule(deps: TimelineModuleDeps): TimelineModule {
         cbt: () => deps.findCbtEvents(studentId),
         message: () => deps.findMessageEvents(studentId, psychologistId),
         crisis: () => deps.findCrisisEvents(studentId),
+        assignment_cancelled: () =>
+          deps.findAssignmentCancelledEvents(studentId),
       };
 
       const wanted: TimelineEventType[] = query.type

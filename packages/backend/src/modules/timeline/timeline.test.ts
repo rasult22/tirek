@@ -14,6 +14,7 @@ function makeModule(overrides: Overrides = {}) {
     findCbtEvents: async () => [],
     findMessageEvents: async () => [],
     findCrisisEvents: async () => [],
+    findAssignmentCancelledEvents: async () => [],
     ...overrides,
   };
   return createTimelineModule(deps);
@@ -327,6 +328,39 @@ test("pagination: limit + offset slice without overlap, total reflects all", asy
     page2.data.map((e) => e.id),
     ["m2", "m3"],
   );
+});
+
+test("filter type=assignment_cancelled: возвращает только события отмены назначений", async () => {
+  const module = makeModule({
+    findAssignmentCancelledEvents: async () => [
+      {
+        id: "assignment_cancelled:asg-1",
+        type: "assignment_cancelled",
+        occurredAt: new Date("2026-04-26T10:00:00.000Z"),
+        payload: { assignmentId: "asg-1", testSlug: "phq-a", testName: "PHQ-A" },
+      },
+    ],
+    findMoodEvents: async () => [
+      {
+        id: "m1",
+        type: "mood",
+        occurredAt: new Date("2026-04-27T10:00:00.000Z"),
+        payload: { mood: 4, note: null },
+      },
+    ],
+  });
+
+  const { data, total } = await module.getStudentTimeline("psy-1", "stu-1", {
+    limit: 20,
+    offset: 0,
+    type: "assignment_cancelled",
+  });
+
+  assert.equal(total, 1);
+  assert.equal(data.length, 1);
+  assert.equal(data[0].type, "assignment_cancelled");
+  if (data[0].type !== "assignment_cancelled") return;
+  assert.equal(data[0].payload.testSlug, "phq-a");
 });
 
 test("mood: returns student's mood entries sorted DESC by occurredAt", async () => {

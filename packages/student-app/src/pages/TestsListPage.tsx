@@ -170,6 +170,16 @@ export function TestsListPage() {
                       <p className="mt-0.5 text-xs text-text-light line-clamp-2">
                         {a.test.description}
                       </p>
+                      {a.studentMessage && (
+                        <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                          <p className="text-[10px] font-bold text-blue-700">
+                            Сообщение от психолога
+                          </p>
+                          <p className="mt-0.5 text-xs text-blue-900 whitespace-pre-wrap">
+                            {a.studentMessage}
+                          </p>
+                        </div>
+                      )}
                       <div className="mt-1.5 flex items-center gap-3 text-[10px] font-bold">
                         {due && (
                           <span

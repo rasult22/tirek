@@ -14,6 +14,16 @@ import {
   SOFT_ESCALATION_ACTIONS,
   type StudentCompletionResponse,
 } from "./test-completion.js";
+import { createAssignmentLifecycle } from "./assignment-lifecycle.js";
+
+const assignmentLifecycle = createAssignmentLifecycle({
+  insertAssignment: (row) => diagnosticsRepository.insertAssignment(row),
+  findAssignmentById: (id) => diagnosticsRepository.findAssignmentById(id),
+  updateAssignment: (id, patch) =>
+    diagnosticsRepository.updateAssignment(id, patch),
+  findAssignmentsByPsychologist: (psychologistId, filters) =>
+    diagnosticsRepository.findAssignmentsByPsychologist(psychologistId, filters),
+});
 
 interface ScoringRules {
   reverseItems?: number[];
@@ -82,6 +92,7 @@ export const diagnosticsService = {
           completedSessionId,
           overdue,
           assignedAt: a.createdAt,
+          studentMessage: a.studentMessage ?? null,
           test: test
             ? {
                 id: test.id,
@@ -239,6 +250,7 @@ export const diagnosticsService = {
       targetStudentId?: string;
       studentId?: string;
       dueDate?: string;
+      studentMessage?: string | null;
     },
   ) {
     const targetType = body.targetType ?? body.target;
@@ -260,25 +272,27 @@ export const diagnosticsService = {
       throw new NotFoundError(`Test not found: ${body.testSlug ?? body.testId}`);
     }
 
-    const { db } = await import("../../db/index.js");
-    const { testAssignments } = await import("../../db/schema.js");
-    const { v4: uuid } = await import("uuid");
+    return assignmentLifecycle.assignTest(psychologistId, {
+      id: uuidv4(),
+      testId: test.id,
+      targetType,
+      targetGrade: body.targetGrade ?? body.grade ?? null,
+      targetClassLetter: body.targetClassLetter ?? body.classLetter ?? null,
+      targetStudentId: body.targetStudentId ?? body.studentId ?? null,
+      dueDate: body.dueDate ? new Date(body.dueDate) : null,
+      studentMessage: body.studentMessage ?? null,
+    });
+  },
 
-    const assignment = await db
-      .insert(testAssignments)
-      .values({
-        id: uuid(),
-        testId: test.id,
-        assignedBy: psychologistId,
-        targetType,
-        targetGrade: body.targetGrade ?? body.grade ?? null,
-        targetClassLetter: body.targetClassLetter ?? body.classLetter ?? null,
-        targetStudentId: body.targetStudentId ?? body.studentId ?? null,
-        dueDate: body.dueDate ? new Date(body.dueDate) : null,
-      })
-      .returning();
+  async cancelAssignment(psychologistId: string, assignmentId: string) {
+    return assignmentLifecycle.cancelAssignment(psychologistId, assignmentId);
+  },
 
-    return assignment[0];
+  async listAssignmentsForPsychologist(
+    psychologistId: string,
+    filters: { status?: string; studentId?: string },
+  ) {
+    return assignmentLifecycle.listAssignments(psychologistId, filters);
   },
 
   async getAiReportForPsychologist(
