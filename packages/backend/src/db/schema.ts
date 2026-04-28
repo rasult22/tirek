@@ -389,27 +389,49 @@ export const directMessages = pgTable("direct_messages", {
     .notNull(),
 });
 
-// ── 21. office_hours ──────────────────────────────────────────────
-// Per-day availability record for a psychologist (replaces legacy appointments model, issue #7).
-export const officeHours = pgTable(
-  "office_hours",
+// ── 21. office_hours_template + office_hours_override (issue #44) ────
+// Двухуровневая модель: weekly template (1=Mon…7=Sun) + per-date override.
+// Резолвинг (template + override → итоговые часы на дату) — в lib/office-hours/resolver.ts.
+
+export const officeHoursTemplate = pgTable(
+  "office_hours_template",
   {
     id: text("id").primaryKey(),
     psychologistId: text("psychologist_id")
       .notNull()
       .references(() => users.id),
-    date: text("date").notNull(), // YYYY-MM-DD in Asia/Almaty
-    intervals: jsonb("intervals").notNull(), // Array<{ start: "HH:mm", end: "HH:mm" }>
+    dayOfWeek: integer("day_of_week").notNull(), // 1..7, ISO 8601
+    intervals: jsonb("intervals").notNull(),
     notes: text("notes"),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },
   (t) => ({
-    uniquePsychologistDate: unique("office_hours_psychologist_id_date_unique").on(
-      t.psychologistId,
-      t.date,
-    ),
+    uniquePsychologistDow: unique(
+      "office_hours_template_psychologist_id_day_of_week_unique",
+    ).on(t.psychologistId, t.dayOfWeek),
+  }),
+);
+
+export const officeHoursOverride = pgTable(
+  "office_hours_override",
+  {
+    id: text("id").primaryKey(),
+    psychologistId: text("psychologist_id")
+      .notNull()
+      .references(() => users.id),
+    date: text("date").notNull(), // YYYY-MM-DD in Asia/Almaty
+    intervals: jsonb("intervals").notNull(),
+    notes: text("notes"),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    uniquePsychologistDate: unique(
+      "office_hours_override_psychologist_id_date_unique",
+    ).on(t.psychologistId, t.date),
   }),
 );
 

@@ -1,16 +1,16 @@
 import { Hono } from "hono";
 import type { AppVariables } from "../../middleware/auth.js";
-import { handleError } from "../../shared/errors.js";
+import { ValidationError, handleError } from "../../shared/errors.js";
 import { officeHoursService } from "./office-hours.service.js";
 
-// ── Shared routes (mounted at /office-hours) ──────────────────────
-// Readable by any authenticated user; Student usually queries their linked
-// psychologist, Psychologist queries own schedule.
+// ── Shared (mounted at /office-hours) ────────────────────────────────
+// Доступно любым авторизованным пользователям. Студент через /resolve
+// смотрит только своего психолога; психолог — только свой ID.
 
 const officeHoursRouter = new Hono<{ Variables: AppVariables }>();
 
-// GET /office-hours/student/info-block — computed view for the caller's linked psychologist.
-// Declared before /:psychologistId so the path prefix takes precedence.
+// GET /office-hours/student/info-block — computed view для линкованного психолога ученика.
+// Объявлен до /resolve, чтобы конкретный путь имел приоритет.
 officeHoursRouter.get("/student/info-block", async (c) => {
   try {
     const block = await officeHoursService.infoBlockForStudent(c.var.user.userId);
@@ -20,39 +20,86 @@ officeHoursRouter.get("/student/info-block", async (c) => {
   }
 });
 
-// GET /office-hours/:psychologistId?date=YYYY-MM-DD
-// GET /office-hours/:psychologistId?from=YYYY-MM-DD&to=YYYY-MM-DD
-officeHoursRouter.get("/:psychologistId", async (c) => {
+// GET /office-hours/resolve?date=YYYY-MM-DD&psychologistId=X
+officeHoursRouter.get("/resolve", async (c) => {
   try {
-    const psychologistId = c.req.param("psychologistId");
     const date = c.req.query("date");
-    const from = c.req.query("from");
-    const to = c.req.query("to");
-
-    if (date) {
-      const row = await officeHoursService.getByDate(psychologistId, date);
-      return c.json(row);
+    const psychologistId = c.req.query("psychologistId");
+    if (!date || !psychologistId) {
+      throw new ValidationError("Both 'date' and 'psychologistId' query params are required");
     }
-    if (from && to) {
-      const rows = await officeHoursService.getRange(psychologistId, from, to);
-      return c.json(rows);
-    }
-    return c.json({ error: "Provide ?date= or ?from=&to=" }, 400);
+    const role = c.var.user.role as "student" | "psychologist" | "admin";
+    const result = await officeHoursService.resolveForDate(
+      c.var.user.userId,
+      role,
+      psychologistId,
+      date,
+    );
+    return c.json(result);
   } catch (err) {
     return handleError(c, err);
   }
 });
 
-// ── Psychologist routes (mounted at /psychologist/office-hours) ───
+// ── Psychologist (mounted at /psychologist/office-hours) ─────────────
 
 const officeHoursPsychologistRouter = new Hono<{ Variables: AppVariables }>();
 
-// PUT / — upsert own schedule for a specific date
-officeHoursPsychologistRouter.put("/", async (c) => {
+// GET /psychologist/office-hours/template — собственный шаблон психолога
+officeHoursPsychologistRouter.get("/template", async (c) => {
   try {
+    const rows = await officeHoursService.getTemplate(c.var.user.userId);
+    return c.json(rows);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
+// PUT /psychologist/office-hours/template/:dayOfWeek — upsert на день недели
+officeHoursPsychologistRouter.put("/template/:dayOfWeek", async (c) => {
+  try {
+    const dayOfWeek = Number.parseInt(c.req.param("dayOfWeek"), 10);
     const body = await c.req.json();
-    const row = await officeHoursService.upsertDay(c.var.user.userId, body);
+    const row = await officeHoursService.upsertTemplateDay(c.var.user.userId, dayOfWeek, body);
     return c.json(row);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
+// GET /psychologist/office-hours/override?from=YYYY-MM-DD&to=YYYY-MM-DD
+officeHoursPsychologistRouter.get("/override", async (c) => {
+  try {
+    const from = c.req.query("from");
+    const to = c.req.query("to");
+    if (!from || !to) {
+      throw new ValidationError("Both 'from' and 'to' query params are required");
+    }
+    const rows = await officeHoursService.getOverrides(c.var.user.userId, from, to);
+    return c.json(rows);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
+// PUT /psychologist/office-hours/override/:date — upsert на дату
+officeHoursPsychologistRouter.put("/override/:date", async (c) => {
+  try {
+    const date = c.req.param("date");
+    const body = await c.req.json();
+    const row = await officeHoursService.upsertOverrideDay(c.var.user.userId, date, body);
+    return c.json(row);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
+// DELETE /psychologist/office-hours/override/:date — удаление override
+officeHoursPsychologistRouter.delete("/override/:date", async (c) => {
+  try {
+    const date = c.req.param("date");
+    await officeHoursService.deleteOverrideDay(c.var.user.userId, date);
+    return c.json({ success: true });
   } catch (err) {
     return handleError(c, err);
   }

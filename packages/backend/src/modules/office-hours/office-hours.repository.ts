@@ -1,18 +1,30 @@
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { db } from "../../db/index.js";
-import { officeHours, studentPsychologist } from "../../db/schema.js";
+import {
+  officeHoursTemplate,
+  officeHoursOverride,
+  studentPsychologist,
+} from "../../db/schema.js";
 import type { Interval } from "../../lib/office-hours/availability.js";
+import type { DayOfWeek } from "../../lib/office-hours/resolver.js";
+import type {
+  OverrideRecord,
+  StudentPsychologistLink,
+  TemplateRecord,
+} from "./office-hours.factory.js";
 
-export type OfficeHoursRow = {
-  id: string;
-  psychologistId: string;
-  date: string;
-  intervals: Interval[];
-  notes: string | null;
-  updatedAt: Date;
-};
+function castTemplate(row: typeof officeHoursTemplate.$inferSelect): TemplateRecord {
+  return {
+    id: row.id,
+    psychologistId: row.psychologistId,
+    dayOfWeek: row.dayOfWeek as DayOfWeek,
+    intervals: (row.intervals as Interval[]) ?? [],
+    notes: row.notes ?? null,
+    updatedAt: row.updatedAt,
+  };
+}
 
-function castRow(row: typeof officeHours.$inferSelect): OfficeHoursRow {
+function castOverride(row: typeof officeHoursOverride.$inferSelect): OverrideRecord {
   return {
     id: row.id,
     psychologistId: row.psychologistId,
@@ -24,43 +36,73 @@ function castRow(row: typeof officeHours.$inferSelect): OfficeHoursRow {
 }
 
 export const officeHoursRepository = {
-  async findByDate(psychologistId: string, date: string): Promise<OfficeHoursRow | null> {
-    const [row] = await db
+  // ── Template ──────────────────────────────────────────────────────
+  async findTemplateByPsychologist(psychologistId: string): Promise<TemplateRecord[]> {
+    const rows = await db
       .select()
-      .from(officeHours)
-      .where(and(eq(officeHours.psychologistId, psychologistId), eq(officeHours.date, date)))
-      .limit(1);
-    return row ? castRow(row) : null;
+      .from(officeHoursTemplate)
+      .where(eq(officeHoursTemplate.psychologistId, psychologistId))
+      .orderBy(asc(officeHoursTemplate.dayOfWeek));
+    return rows.map(castTemplate);
   },
 
-  async findRange(
+  async upsertTemplateDay(data: {
+    id: string;
+    psychologistId: string;
+    dayOfWeek: DayOfWeek;
+    intervals: Interval[];
+    notes: string | null;
+  }): Promise<TemplateRecord> {
+    const [row] = await db
+      .insert(officeHoursTemplate)
+      .values({
+        id: data.id,
+        psychologistId: data.psychologistId,
+        dayOfWeek: data.dayOfWeek,
+        intervals: data.intervals,
+        notes: data.notes,
+      })
+      .onConflictDoUpdate({
+        target: [officeHoursTemplate.psychologistId, officeHoursTemplate.dayOfWeek],
+        set: {
+          intervals: data.intervals,
+          notes: data.notes,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return castTemplate(row!);
+  },
+
+  // ── Override ──────────────────────────────────────────────────────
+  async findOverridesByRange(
     psychologistId: string,
     from: string,
     to: string,
-  ): Promise<OfficeHoursRow[]> {
+  ): Promise<OverrideRecord[]> {
     const rows = await db
       .select()
-      .from(officeHours)
+      .from(officeHoursOverride)
       .where(
         and(
-          eq(officeHours.psychologistId, psychologistId),
-          gte(officeHours.date, from),
-          lte(officeHours.date, to),
+          eq(officeHoursOverride.psychologistId, psychologistId),
+          gte(officeHoursOverride.date, from),
+          lte(officeHoursOverride.date, to),
         ),
       )
-      .orderBy(asc(officeHours.date));
-    return rows.map(castRow);
+      .orderBy(asc(officeHoursOverride.date));
+    return rows.map(castOverride);
   },
 
-  async upsertDay(data: {
+  async upsertOverrideDay(data: {
     id: string;
     psychologistId: string;
     date: string;
     intervals: Interval[];
     notes: string | null;
-  }): Promise<OfficeHoursRow> {
+  }): Promise<OverrideRecord> {
     const [row] = await db
-      .insert(officeHours)
+      .insert(officeHoursOverride)
       .values({
         id: data.id,
         psychologistId: data.psychologistId,
@@ -69,7 +111,7 @@ export const officeHoursRepository = {
         notes: data.notes,
       })
       .onConflictDoUpdate({
-        target: [officeHours.psychologistId, officeHours.date],
+        target: [officeHoursOverride.psychologistId, officeHoursOverride.date],
         set: {
           intervals: data.intervals,
           notes: data.notes,
@@ -77,12 +119,31 @@ export const officeHoursRepository = {
         },
       })
       .returning();
-    return castRow(row!);
+    return castOverride(row!);
   },
 
-  async findStudentPsychologistLink(studentId: string) {
+  async deleteOverrideDay(psychologistId: string, date: string): Promise<boolean> {
+    const result = await db
+      .delete(officeHoursOverride)
+      .where(
+        and(
+          eq(officeHoursOverride.psychologistId, psychologistId),
+          eq(officeHoursOverride.date, date),
+        ),
+      )
+      .returning({ id: officeHoursOverride.id });
+    return result.length > 0;
+  },
+
+  // ── Student → psychologist link ────────────────────────────────────
+  async findStudentPsychologistLink(
+    studentId: string,
+  ): Promise<StudentPsychologistLink | null> {
     const [link] = await db
-      .select()
+      .select({
+        studentId: studentPsychologist.studentId,
+        psychologistId: studentPsychologist.psychologistId,
+      })
       .from(studentPsychologist)
       .where(eq(studentPsychologist.studentId, studentId))
       .limit(1);

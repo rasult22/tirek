@@ -1,11 +1,23 @@
 import { tirekClient } from "./client.js";
-import type { OfficeHoursInterval } from "@tirek/shared";
+import type { OfficeHoursDayOfWeek, OfficeHoursInterval } from "@tirek/shared";
 
 export const officeHoursApi = {
-  getByDate: (psychologistId: string, date: string) =>
-    tirekClient.officeHoursPublic.getByDate(psychologistId, date),
-  getRange: (psychologistId: string, from: string, to: string) =>
-    tirekClient.officeHoursPublic.getRange(psychologistId, from, to),
-  upsert: (date: string, intervals: OfficeHoursInterval[], notes: string | null) =>
-    tirekClient.psychologist.officeHours.upsert(date, intervals, notes),
+  getTemplate: () => tirekClient.psychologist.officeHours.getTemplate(),
+  upsertTemplateDay: (
+    dayOfWeek: OfficeHoursDayOfWeek,
+    intervals: OfficeHoursInterval[],
+    notes: string | null,
+  ) => tirekClient.psychologist.officeHours.upsertTemplateDay(dayOfWeek, intervals, notes),
+  getOverrides: (from: string, to: string) =>
+    tirekClient.psychologist.officeHours.getOverrides(from, to),
+  upsertOverrideDay: (
+    date: string,
+    intervals: OfficeHoursInterval[],
+    notes: string | null,
+  ) => tirekClient.psychologist.officeHours.upsertOverrideDay(date, intervals, notes),
+  deleteOverrideDay: (date: string) =>
+    tirekClient.psychologist.officeHours.deleteOverrideDay(date),
+  // Resolved view (shared endpoint).
+  resolve: (psychologistId: string, date: string) =>
+    tirekClient.officeHoursPublic.resolve(psychologistId, date),
 };

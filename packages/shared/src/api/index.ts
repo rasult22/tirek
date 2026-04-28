@@ -25,9 +25,12 @@ import type {
   MoodEntry,
   MoodInsights,
   MoodToday,
-  OfficeHoursEntry,
+  OfficeHoursDayOfWeek,
   OfficeHoursInfoBlock,
   OfficeHoursInterval,
+  OfficeHoursOverrideEntry,
+  OfficeHoursResolved,
+  OfficeHoursTemplateEntry,
   PaginatedResponse,
   PlantInfo,
   ProgressStats,
@@ -390,8 +393,7 @@ export interface TirekClient {
     infoBlock(): Promise<OfficeHoursInfoBlock>;
   };
   officeHoursPublic: {
-    getByDate(psychologistId: string, date: string): Promise<OfficeHoursEntry | null>;
-    getRange(psychologistId: string, from: string, to: string): Promise<OfficeHoursEntry[]>;
+    resolve(psychologistId: string, date: string): Promise<OfficeHoursResolved>;
   };
   // ── Psychologist-side ─────────────────────────────────────────────
   psychologist: {
@@ -457,11 +459,19 @@ export interface TirekClient {
       revoke(id: string): Promise<{ success: boolean }>;
     };
     officeHours: {
-      upsert(
+      getTemplate(): Promise<OfficeHoursTemplateEntry[]>;
+      upsertTemplateDay(
+        dayOfWeek: OfficeHoursDayOfWeek,
+        intervals: OfficeHoursInterval[],
+        notes: string | null,
+      ): Promise<OfficeHoursTemplateEntry>;
+      getOverrides(from: string, to: string): Promise<OfficeHoursOverrideEntry[]>;
+      upsertOverrideDay(
         date: string,
         intervals: OfficeHoursInterval[],
         notes: string | null,
-      ): Promise<OfficeHoursEntry>;
+      ): Promise<OfficeHoursOverrideEntry>;
+      deleteOverrideDay(date: string): Promise<{ success: boolean }>;
     };
     schools: {
       get(id: string): Promise<{ id: string; name: string }>;
@@ -642,10 +652,10 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
     },
 
     officeHoursPublic: {
-      getByDate: (psychologistId, date) =>
-        request(`/office-hours/${psychologistId}?date=${date}`),
-      getRange: (psychologistId, from, to) =>
-        request(`/office-hours/${psychologistId}?from=${from}&to=${to}`),
+      resolve: (psychologistId, date) =>
+        request(
+          `/office-hours/resolve?psychologistId=${encodeURIComponent(psychologistId)}&date=${encodeURIComponent(date)}`,
+        ),
     },
 
     psychologist: {
@@ -798,10 +808,24 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
       },
 
       officeHours: {
-        upsert: (date, intervals, notes) =>
-          request("/psychologist/office-hours", {
+        getTemplate: () => request("/psychologist/office-hours/template"),
+        upsertTemplateDay: (dayOfWeek, intervals, notes) =>
+          request(`/psychologist/office-hours/template/${dayOfWeek}`, {
             method: "PUT",
-            body: JSON.stringify({ date, intervals, notes }),
+            body: JSON.stringify({ intervals, notes }),
+          }),
+        getOverrides: (from, to) =>
+          request(
+            `/psychologist/office-hours/override?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+          ),
+        upsertOverrideDay: (date, intervals, notes) =>
+          request(`/psychologist/office-hours/override/${encodeURIComponent(date)}`, {
+            method: "PUT",
+            body: JSON.stringify({ intervals, notes }),
+          }),
+        deleteOverrideDay: (date) =>
+          request(`/psychologist/office-hours/override/${encodeURIComponent(date)}`, {
+            method: "DELETE",
           }),
       },
       schools: {

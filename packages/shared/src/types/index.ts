@@ -475,13 +475,31 @@ export interface OfficeHoursInterval {
   end: string; // HH:mm
 }
 
-export interface OfficeHoursEntry {
+// ISO 8601 day-of-week: 1=Mon … 7=Sun.
+export type OfficeHoursDayOfWeek = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface OfficeHoursTemplateEntry {
+  id: string;
+  psychologistId: string;
+  dayOfWeek: OfficeHoursDayOfWeek;
+  intervals: OfficeHoursInterval[];
+  notes: string | null;
+  updatedAt: string;
+}
+
+export interface OfficeHoursOverrideEntry {
   id: string;
   psychologistId: string;
   date: string; // YYYY-MM-DD
   intervals: OfficeHoursInterval[];
   notes: string | null;
   updatedAt: string;
+}
+
+export interface OfficeHoursResolved {
+  intervals: OfficeHoursInterval[];
+  notes: string | null;
+  source: "template" | "override" | "none";
 }
 
 export type OfficeHoursInfoBlock =
