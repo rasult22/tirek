@@ -36,6 +36,11 @@ export type OverrideRecord = {
 export type StudentPsychologistLink = {
   studentId: string;
   psychologistId: string;
+  psychologistName: string;
+};
+
+export type InfoBlockResponse = InfoBlock & {
+  psychologist: { id: string; name: string };
 };
 
 export type OfficeHoursDeps = {
@@ -188,7 +193,10 @@ export function createOfficeHoursService(deps: OfficeHoursDeps) {
       return resolveOfficeHours({ template, overrides, date });
     },
 
-    async infoBlockForStudent(studentId: string, now: Date = new Date()): Promise<InfoBlock> {
+    async infoBlockForStudent(
+      studentId: string,
+      now: Date = new Date(),
+    ): Promise<InfoBlockResponse> {
       const link = await deps.findStudentPsychologistLink(studentId);
       if (!link) throw new NotFoundError("No psychologist assigned");
 
@@ -216,7 +224,11 @@ export function createOfficeHoursService(deps: OfficeHoursDeps) {
           ? { date: tomorrow, intervals: tomorrowResolved.intervals, notes: tomorrowResolved.notes }
           : null;
 
-      return infoBlockFor(now, todayEntry, tomorrowEntry);
+      const block = infoBlockFor(now, todayEntry, tomorrowEntry);
+      return {
+        ...block,
+        psychologist: { id: link.psychologistId, name: link.psychologistName },
+      };
     },
   };
 }

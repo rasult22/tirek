@@ -77,7 +77,8 @@ test('T8: resolveForDate — студент к своему психологу �
   const { service } = makeService(
     {
       findStudentPsychologistLink: async (studentId) => {
-        if (studentId === 'stu-1') return { studentId, psychologistId: 'psy-1' };
+        if (studentId === 'stu-1')
+          return { studentId, psychologistId: 'psy-1', psychologistName: 'Анна' };
         return null;
       },
     },
@@ -320,6 +321,94 @@ test('T2: upsertTemplateDay создаёт строку если её нет, и
   assert.deepEqual(updated.intervals, [{ start: '10:00', end: '13:00' }]);
   assert.equal(updated.notes, null);
   assert.equal(fakes.templates.length, 1, 'количество не выросло');
+});
+
+// ── F-*: семантика info-block (issue #46) ────────────────────────────
+// Передаём `now` напрямую в infoBlockForStudent(), чтобы детерминированно
+// проверять переходы between available_now / available_later_today /
+// finished_today / day_off_today с учётом TZ Asia/Almaty.
+
+const linkAnna = {
+  studentId: 'stu-1',
+  psychologistId: 'psy-1',
+  psychologistName: 'Анна Петровна',
+};
+
+function workWeekTemplates(): TemplateRecord[] {
+  return ([1, 2, 3, 4, 5] as const).map((dow) => ({
+    id: `tpl-${dow}`,
+    psychologistId: 'psy-1',
+    dayOfWeek: dow,
+    intervals: [{ start: '09:00', end: '17:00' }],
+    notes: null,
+    updatedAt: new Date('2026-04-28T10:00:00.000Z'),
+  }));
+}
+
+test('F-1: будни 14:00 Almaty → available_now до 17:00 + psychologist {id, name}', async () => {
+  // 2026-04-29 — среда (ISO=3). 14:00 Almaty = 09:00 UTC.
+  const { service } = makeService(
+    { findStudentPsychologistLink: async () => linkAnna },
+    { templates: workWeekTemplates() },
+  );
+
+  const block = await service.infoBlockForStudent('stu-1', new Date('2026-04-29T09:00:00.000Z'));
+
+  assert.equal(block.kind, 'available_now');
+  assert.equal((block as { until: string }).until, '17:00');
+  assert.deepEqual(block.psychologist, { id: 'psy-1', name: 'Анна Петровна' });
+});
+
+test('F-2: суббота 14:00 Almaty с шаблоном пн-пт → day_off_today + tomorrow=null', async () => {
+  // 2026-05-02 — суббота (ISO=6). Воскресенье тоже выходной по шаблону.
+  const { service } = makeService(
+    { findStudentPsychologistLink: async () => linkAnna },
+    { templates: workWeekTemplates() },
+  );
+
+  const block = await service.infoBlockForStudent('stu-1', new Date('2026-05-02T09:00:00.000Z'));
+
+  assert.equal(block.kind, 'day_off_today');
+  assert.equal((block as { tomorrowFrom: string | null }).tomorrowFrom, null);
+  assert.equal((block as { tomorrowUntil: string | null }).tomorrowUntil, null);
+});
+
+test('F-3: будни 17:30 Almaty → finished_today (lastEnd=17:00) + tomorrow=09:00-17:00', async () => {
+  // 2026-04-29 (среда) 17:30 Almaty = 12:30 UTC. Завтра — четверг, рабочий.
+  const { service } = makeService(
+    { findStudentPsychologistLink: async () => linkAnna },
+    { templates: workWeekTemplates() },
+  );
+
+  const block = await service.infoBlockForStudent('stu-1', new Date('2026-04-29T12:30:00.000Z'));
+
+  assert.equal(block.kind, 'finished_today');
+  assert.equal((block as { lastEnd: string }).lastEnd, '17:00');
+  assert.equal((block as { tomorrowFrom: string }).tomorrowFrom, '09:00');
+  assert.equal((block as { tomorrowUntil: string }).tomorrowUntil, '17:00');
+});
+
+test('F-4: пятница 17:30 Almaty → finished_today + tomorrow=null (суббота выходная)', async () => {
+  // 2026-05-01 (пятница) 17:30 Almaty = 12:30 UTC.
+  const { service } = makeService(
+    { findStudentPsychologistLink: async () => linkAnna },
+    { templates: workWeekTemplates() },
+  );
+
+  const block = await service.infoBlockForStudent('stu-1', new Date('2026-05-01T12:30:00.000Z'));
+
+  assert.equal(block.kind, 'finished_today');
+  assert.equal((block as { tomorrowFrom: string | null }).tomorrowFrom, null);
+  assert.equal((block as { tomorrowUntil: string | null }).tomorrowUntil, null);
+});
+
+test('F-5: студент без линка → NotFoundError', async () => {
+  const { service } = makeService(); // findStudentPsychologistLink → null
+
+  await assert.rejects(
+    () => service.infoBlockForStudent('stu-orphan', new Date('2026-04-29T09:00:00.000Z')),
+    /No psychologist assigned/,
+  );
 });
 
 test('T1: getTemplate возвращает все строки шаблона текущего психолога', async () => {

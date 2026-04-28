@@ -4,6 +4,7 @@ import {
   officeHoursTemplate,
   officeHoursOverride,
   studentPsychologist,
+  users,
 } from "../../db/schema.js";
 import type { Interval } from "../../lib/office-hours/availability.js";
 import type { DayOfWeek } from "../../lib/office-hours/resolver.js";
@@ -143,8 +144,10 @@ export const officeHoursRepository = {
       .select({
         studentId: studentPsychologist.studentId,
         psychologistId: studentPsychologist.psychologistId,
+        psychologistName: users.name,
       })
       .from(studentPsychologist)
+      .innerJoin(users, eq(users.id, studentPsychologist.psychologistId))
       .where(eq(studentPsychologist.studentId, studentId))
       .limit(1);
     return link ?? null;

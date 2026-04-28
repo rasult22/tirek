@@ -397,7 +397,8 @@ test("T-R6a: GET /office-hours/resolve — студент к своему пси
     user: student("stu-1"),
     serviceOverrides: {
       findStudentPsychologistLink: async (studentId) => {
-        if (studentId === "stu-1") return { studentId, psychologistId: "psy-1" };
+        if (studentId === "stu-1")
+          return { studentId, psychologistId: "psy-1", psychologistName: "Анна Петровна" };
         return null;
       },
     },
@@ -433,7 +434,8 @@ test("T-R6b: GET /office-hours/resolve — студент к чужому пси
     user: student("stu-1"),
     serviceOverrides: {
       findStudentPsychologistLink: async (studentId) => {
-        if (studentId === "stu-1") return { studentId, psychologistId: "psy-1" };
+        if (studentId === "stu-1")
+          return { studentId, psychologistId: "psy-1", psychologistName: "Анна Петровна" };
         return null;
       },
     },
@@ -492,33 +494,35 @@ test("T-R6e: GET /office-hours/resolve — без обязательных query
 
 // ── T-R7: GET /office-hours/student/info-block ───────────────────────
 
-test("T-R7a: GET /office-hours/student/info-block — линкованный студент → 200 с InfoBlock", async () => {
+test("T-R7a: GET /office-hours/student/info-block — линкованный студент → 200 с InfoBlock и psychologist {id,name}", async () => {
   const { app } = makeApp({
     user: student("stu-1"),
     serviceOverrides: {
       findStudentPsychologistLink: async (studentId) => {
-        if (studentId === "stu-1") return { studentId, psychologistId: "psy-1" };
+        if (studentId === "stu-1")
+          return { studentId, psychologistId: "psy-1", psychologistName: "Анна Петровна" };
         return null;
       },
     },
-    // Без шаблона/оверрайдов — тогда info-block — unavailable_today.
+    // Без шаблона/оверрайдов — тогда info-block — day_off_today.
   });
 
   const res = await app.request("/office-hours/student/info-block");
 
   assert.equal(res.status, 200);
-  const body = (await res.json()) as { kind: string };
-  // Конкретный kind зависит от текущего времени; нам важно, что роут не падает,
-  // вернёт валидный discriminated union с известным kind'ом.
+  const body = (await res.json()) as {
+    kind: string;
+    psychologist: { id: string; name: string };
+  };
+  // Конкретный kind зависит от текущего времени; важно, что роут не падает
+  // и возвращает валидный discriminated union + блок данных психолога.
   assert.ok(
-    [
-      "available_now",
-      "available_later_today",
-      "available_tomorrow",
-      "unavailable_today",
-    ].includes(body.kind),
+    ["available_now", "available_later_today", "finished_today", "day_off_today"].includes(
+      body.kind,
+    ),
     `unexpected kind: ${body.kind}`,
   );
+  assert.deepEqual(body.psychologist, { id: "psy-1", name: "Анна Петровна" });
 });
 
 test("T-R7b: GET /office-hours/student/info-block — студент без линка → 404", async () => {

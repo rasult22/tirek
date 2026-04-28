@@ -502,11 +502,25 @@ export interface OfficeHoursResolved {
   source: "template" | "override" | "none";
 }
 
-export type OfficeHoursInfoBlock =
+export type OfficeHoursInfoBlockBody =
   | { kind: "available_now"; until: string; notes: string | null }
   | { kind: "available_later_today"; from: string; until: string; notes: string | null }
-  | { kind: "available_tomorrow"; from: string; until: string; notes: string | null }
-  | { kind: "unavailable_today"; nextDate: string | null };
+  | {
+      kind: "finished_today";
+      lastEnd: string;
+      notes: string | null;
+      tomorrowFrom: string | null;
+      tomorrowUntil: string | null;
+    }
+  | {
+      kind: "day_off_today";
+      tomorrowFrom: string | null;
+      tomorrowUntil: string | null;
+    };
+
+export type OfficeHoursInfoBlock = OfficeHoursInfoBlockBody & {
+  psychologist: { id: string; name: string };
+};
 
 export type AchievementCategory = "first_steps" | "streak" | "mastery" | "growth";
 
