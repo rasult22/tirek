@@ -16,6 +16,7 @@ export default defineConfig({
       "@tirek/shared/api": path.resolve(__dirname, "../shared/src/api/index.ts"),
       "@tirek/shared/mood-last-7-days": path.resolve(__dirname, "../shared/src/mood-last-7-days/index.ts"),
       "@tirek/shared/format-print-profile": path.resolve(__dirname, "../shared/src/format-print-profile/index.ts"),
+      "@tirek/shared/office-hours": path.resolve(__dirname, "../shared/src/office-hours/index.ts"),
       "@tirek/shared": path.resolve(__dirname, "../shared/src/index.ts"),
     },
   },
