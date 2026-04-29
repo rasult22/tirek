@@ -255,7 +255,6 @@ export default function StudentDetailScreen() {
             reason={reason}
             moodTrend={moodTrend}
             engagement={engagement}
-            latestMood={latestMood}
           />
 
           {/* Overview: Mood sparkline */}

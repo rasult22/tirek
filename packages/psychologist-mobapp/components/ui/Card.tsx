@@ -11,15 +11,15 @@ interface Props extends ViewProps {
   elevated?: boolean;
 }
 
-function ctaShadow(): ViewStyle {
+function floatingShadow(): ViewStyle {
   if (Platform.OS === "android") {
-    return { elevation: dsShadow.cta.elevation };
+    return { elevation: dsShadow.md.elevation };
   }
   return {
-    shadowColor: dsShadow.cta.color,
-    shadowOffset: dsShadow.cta.offset,
-    shadowOpacity: dsShadow.cta.opacity,
-    shadowRadius: dsShadow.cta.radius,
+    shadowColor: dsShadow.md.color,
+    shadowOffset: dsShadow.md.offset,
+    shadowOpacity: dsShadow.md.opacity,
+    shadowRadius: dsShadow.md.radius,
   };
 }
 
@@ -37,7 +37,7 @@ export function Card({ variant, elevated, style, children, ...props }: Props) {
           backgroundColor: c.surface,
           borderColor: resolved === "floating" ? c.border : c.borderLight,
         },
-        resolved === "floating" ? ctaShadow() : shadowFn(1),
+        resolved === "floating" ? floatingShadow() : shadowFn(1),
         style,
       ]}
       {...props}

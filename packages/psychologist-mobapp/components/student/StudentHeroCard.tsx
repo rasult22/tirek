@@ -1,7 +1,7 @@
 import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
-import { Card, StatusBadge, H2, Body, MoodScale, type MoodValue } from "../ui";
+import { Card, StatusBadge, H2, Body } from "../ui";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import {
   statusToRiskLevel,
@@ -10,7 +10,7 @@ import {
 } from "../../lib/utils/mood-analytics";
 import { formatRiskReason } from "@tirek/shared";
 import type { RiskReason } from "@tirek/shared/api";
-import type { User, MoodEntry } from "@tirek/shared";
+import type { User } from "@tirek/shared";
 
 interface StudentHeroCardProps {
   student: User;
@@ -18,7 +18,6 @@ interface StudentHeroCardProps {
   reason: RiskReason | null;
   moodTrend: MoodTrendResult;
   engagement: EngagementResult;
-  latestMood?: MoodEntry;
 }
 
 const trendIconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -51,7 +50,6 @@ export function StudentHeroCard({
   reason,
   moodTrend,
   engagement,
-  latestMood,
 }: StudentHeroCardProps) {
   const t = useT();
   const { language } = useLanguage();
@@ -109,9 +107,6 @@ export function StudentHeroCard({
               {student.name}
             </H2>
             <StatusBadge status={status} size="sm" />
-            {latestMood && (
-              <MoodScale value={latestMood.mood as MoodValue} />
-            )}
           </View>
           {reasonText && (
             <View style={styles.reasonRow}>
