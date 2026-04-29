@@ -20,7 +20,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text } from "../../components/ui";
+import { Text, H3, Body, Button, Card, Pill } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
@@ -194,7 +194,7 @@ export default function CrisisScreen() {
       edges={["top"]}
     >
       <View style={styles.headerRow}>
-        <Text variant="h1">{t.psychologist.crisis}</Text>
+        <H3>{t.psychologist.crisis}</H3>
       </View>
 
       <ScrollView
@@ -225,15 +225,14 @@ export default function CrisisScreen() {
                 { backgroundColor: isRed ? c.danger : `${c.danger}80` },
               ]}
             />
-            <Text
-              variant="body"
+            <Body
               style={{
-                fontFamily: "DMSans-Bold",
+                fontWeight: "700",
                 color: isRed ? c.text : c.textLight,
               }}
             >
               {t.psychologist.redFeed}
-            </Text>
+            </Body>
             {redSignals.length > 0 && (
               <View
                 style={[
@@ -246,7 +245,7 @@ export default function CrisisScreen() {
                 <Text
                   style={{
                     fontSize: 10,
-                    fontFamily: "DMSans-Bold",
+                    fontWeight: "700",
                     color: isRed ? "#FFF" : c.danger,
                   }}
                 >
@@ -272,15 +271,14 @@ export default function CrisisScreen() {
                 { backgroundColor: !isRed ? c.warning : `${c.warning}80` },
               ]}
             />
-            <Text
-              variant="body"
+            <Body
               style={{
-                fontFamily: "DMSans-Bold",
+                fontWeight: "700",
                 color: !isRed ? c.text : c.textLight,
               }}
             >
               {t.psychologist.yellowFeed}
-            </Text>
+            </Body>
             {yellowSignals.length > 0 && (
               <View
                 style={[
@@ -293,7 +291,7 @@ export default function CrisisScreen() {
                 <Text
                   style={{
                     fontSize: 10,
-                    fontFamily: "DMSans-Bold",
+                    fontWeight: "700",
                     color: !isRed ? "#FFF" : c.warning,
                   }}
                 >
@@ -310,19 +308,16 @@ export default function CrisisScreen() {
         ) : currentSignals.length > 0 ? (
           <View style={styles.cardsList}>
             {currentSignals.map((signal: CrisisSignal) => (
-              <View
+              <Card
                 key={signal.id}
-                style={[
-                  styles.signalCard,
-                  {
-                    backgroundColor: c.surface,
-                    borderColor:
-                      isRed && signal.severity === "high"
-                        ? c.danger
-                        : c.borderLight,
-                  },
-                  shadow(1),
-                ]}
+                style={{
+                  padding: 14,
+                  gap: 12,
+                  borderColor:
+                    isRed && signal.severity === "high"
+                      ? c.danger
+                      : c.borderLight,
+                }}
               >
                 <View style={styles.signalHeader}>
                   <View
@@ -337,7 +332,7 @@ export default function CrisisScreen() {
                   >
                     <Text
                       style={{
-                        fontFamily: "DMSans-Bold",
+                        fontWeight: "700",
                         color: isRed ? c.danger : c.warning,
                       }}
                     >
@@ -345,12 +340,12 @@ export default function CrisisScreen() {
                     </Text>
                   </View>
                   <View style={styles.signalInfo}>
-                    <Text
-                      style={{ fontFamily: "DMSans-Bold", color: c.text }}
+                    <Body
+                      style={{ fontWeight: "700", color: c.text }}
                       numberOfLines={1}
                     >
                       {signal.studentName}
-                    </Text>
+                    </Body>
                     <View style={styles.signalMetaRow}>
                       {signal.studentGrade !== null && (
                         <Text variant="caption">
@@ -368,31 +363,16 @@ export default function CrisisScreen() {
                       </Text>
                     </View>
                   </View>
-                  <View
-                    style={[
-                      styles.severityBadge,
-                      {
-                        backgroundColor:
-                          signal.severity === "high"
-                            ? isRed
-                              ? c.danger
-                              : c.warning
-                            : signal.severity === "medium"
-                              ? c.warning
-                              : c.surfaceSecondary,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 10,
-                        fontFamily: "DMSans-Bold",
-                        color: signal.severity === "low" ? c.textLight : "#FFF",
-                      }}
-                    >
-                      {severityLabel(signal.severity)}
-                    </Text>
-                  </View>
+                  <Pill
+                    label={severityLabel(signal.severity)}
+                    variant={
+                      signal.severity === "high"
+                        ? "danger"
+                        : signal.severity === "medium"
+                          ? "warning"
+                          : "brand"
+                    }
+                  />
                 </View>
 
                 {/* Signal Summary (психологу — БЕЗ цитат ученика) */}
@@ -430,7 +410,7 @@ export default function CrisisScreen() {
                     <Text
                       style={{
                         fontSize: 11,
-                        fontFamily: "DMSans-Medium",
+                        fontWeight: "500",
                         color: c.text,
                       }}
                     >
@@ -455,7 +435,7 @@ export default function CrisisScreen() {
                     <Text
                       style={{
                         fontSize: 11,
-                        fontFamily: "DMSans-Medium",
+                        fontWeight: "500",
                         color: c.text,
                       }}
                     >
@@ -476,7 +456,7 @@ export default function CrisisScreen() {
                     <Text
                       style={{
                         fontSize: 11,
-                        fontFamily: "DMSans-Medium",
+                        fontWeight: "500",
                         color: c.text,
                       }}
                     >
@@ -484,17 +464,11 @@ export default function CrisisScreen() {
                     </Text>
                   </Pressable>
                 </View>
-              </View>
+              </Card>
             ))}
           </View>
         ) : (
-          <View
-            style={[
-              styles.emptyCard,
-              { backgroundColor: c.surface, borderColor: c.borderLight },
-              shadow(1),
-            ]}
-          >
+          <Card style={styles.emptyCard}>
             <View
               style={[styles.emptyIcon, { backgroundColor: `${c.success}1A` }]}
             >
@@ -504,13 +478,13 @@ export default function CrisisScreen() {
                 color={c.success}
               />
             </View>
-            <Text style={{ fontFamily: "DMSans-Bold", color: c.text }}>
+            <Body style={{ fontWeight: "700", color: c.text }}>
               {isRed
                 ? t.psychologist.noRedFeedSignals
                 : t.psychologist.noYellowFeedSignals}
-            </Text>
+            </Body>
             <Text variant="caption">{t.psychologist.allCalm}</Text>
-          </View>
+          </Card>
         )}
 
         {/* History toggle */}
@@ -530,9 +504,9 @@ export default function CrisisScreen() {
             >
               <Ionicons name="checkmark-circle" size={14} color={c.success} />
             </View>
-            <Text style={{ fontFamily: "DMSans-Bold", color: c.text }}>
+            <Body style={{ fontWeight: "700", color: c.text }}>
               {t.psychologist.resolvedHistory}
-            </Text>
+            </Body>
           </View>
           <Ionicons
             name={historyOpen ? "chevron-up" : "chevron-down"}
@@ -569,12 +543,12 @@ export default function CrisisScreen() {
                         <Ionicons name="checkmark-circle" size={14} color={c.success} />
                       </View>
                       <View style={styles.historyInfo}>
-                        <Text
-                          style={{ fontFamily: "DMSans-Bold", color: c.text }}
+                        <Body
+                          style={{ fontWeight: "700", color: c.text }}
                           numberOfLines={1}
                         >
                           {signal.studentName}
-                        </Text>
+                        </Body>
                         {!isExpanded && (
                           <Text variant="caption" numberOfLines={1}>
                             {signal.summary}
@@ -582,32 +556,16 @@ export default function CrisisScreen() {
                         )}
                       </View>
                       <View style={styles.historyRight}>
-                        <View
-                          style={[
-                            styles.levelBadge,
-                            {
-                              backgroundColor:
-                                signal.type === "acute_crisis"
-                                  ? `${c.danger}1A`
-                                  : `${c.warning}26`,
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={{
-                              fontSize: 10,
-                              fontFamily: "DMSans-Bold",
-                              color:
-                                signal.type === "acute_crisis"
-                                  ? c.danger
-                                  : c.warning,
-                            }}
-                          >
-                            {signal.type === "acute_crisis"
+                        <Pill
+                          label={
+                            signal.type === "acute_crisis"
                               ? t.psychologist.redFeed
-                              : t.psychologist.yellowFeed}
-                          </Text>
-                        </View>
+                              : t.psychologist.yellowFeed
+                          }
+                          variant={
+                            signal.type === "acute_crisis" ? "danger" : "warning"
+                          }
+                        />
                       </View>
                     </View>
 
@@ -697,7 +655,7 @@ export default function CrisisScreen() {
                     >
                       <Text
                         style={{
-                          fontFamily: "DMSans-Bold",
+                          fontWeight: "700",
                           color:
                             resolveSignal.type === "acute_crisis"
                               ? c.danger
@@ -708,9 +666,9 @@ export default function CrisisScreen() {
                       </Text>
                     </View>
                     <View>
-                      <Text style={{ fontFamily: "DMSans-Bold", color: c.text }}>
+                      <Body style={{ fontWeight: "700", color: c.text }}>
                         {resolveSignal.studentName}
-                      </Text>
+                      </Body>
                       <Text variant="caption">
                         {t.psychologist.resolveSignalTitle}
                       </Text>
@@ -811,31 +769,18 @@ export default function CrisisScreen() {
                   ]}
                 />
 
-                <Pressable
+                <Button
+                  title={t.psychologist.resolveSignal}
+                  variant="primary"
                   onPress={() =>
                     resolveMutation.mutate({
                       id: resolveSignal.id,
                       data: getState(resolveSignal.id),
                     })
                   }
-                  disabled={resolveMutation.isPending}
-                  style={[
-                    styles.resolveBtn,
-                    {
-                      backgroundColor: c.success,
-                      opacity: resolveMutation.isPending ? 0.5 : 1,
-                    },
-                  ]}
-                >
-                  {resolveMutation.isPending ? (
-                    <ActivityIndicator size="small" color="#FFF" />
-                  ) : (
-                    <Ionicons name="checkmark-circle" size={18} color="#FFF" />
-                  )}
-                  <Text style={styles.resolveBtnText}>
-                    {t.psychologist.resolveSignal}
-                  </Text>
-                </Pressable>
+                  loading={resolveMutation.isPending}
+                  style={{ marginTop: 16 }}
+                />
               </View>
             </View>
           </KeyboardAvoidingView>
@@ -885,12 +830,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardsList: { gap: 10 },
-  signalCard: {
-    borderRadius: radius.lg,
-    padding: 14,
-    borderWidth: 1,
-    gap: 12,
-  },
   signalHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -908,11 +847,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-  },
-  severityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
   },
   summaryBox: {
     borderRadius: 12,
@@ -934,8 +868,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     padding: 24,
-    borderRadius: radius.lg,
-    borderWidth: 1,
   },
   emptyIcon: {
     width: 56,
@@ -964,11 +896,6 @@ const styles = StyleSheet.create({
   },
   historyInfo: { flex: 1, minWidth: 0 },
   historyRight: { alignItems: "flex-end" },
-  levelBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
   historyHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -1058,21 +985,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
+    fontFamily: "Inter_400Regular",
     minHeight: 72,
-  },
-  resolveBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
-  },
-  resolveBtnText: {
-    fontSize: 15,
-    fontFamily: "DMSans-Bold",
-    color: "#FFF",
   },
 });
