@@ -1,37 +1,50 @@
 @import "tailwindcss";
+@import "../../shared/src/design-system/tokens.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --color-primary: #0F766E;
-  --color-primary-dark: #0A5C56;
+  --color-primary: var(--brand);
+  --color-primary-dark: var(--brand-deep);
   --color-secondary: #2D6D8C;
-  --color-success: #16794A;
-  --color-warning: #8C6308;
-  --color-danger: #B33B3B;
-  --color-bg: #F8FAFB;
-  --color-text: #1A2E2E;
-  --color-text-light: #3D5553;
-  --color-surface: #FFFFFF;
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-bg: var(--bg);
+  --color-text: var(--ink);
+  --color-text-light: var(--ink-muted);
+  --color-surface: var(--surface);
   --color-surface-secondary: #F1F5F5;
   --color-surface-hover: #E8EEEE;
-  --color-border: #D4DEDE;
+  --color-border: var(--hairline);
   --color-border-light: #E4EAEA;
   --color-input-border: #B8C8C6;
 }
 
 @theme {
-  --color-primary: #0F766E;
-  --color-primary-dark: #0A5C56;
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-fg: var(--brand-fg);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-hairline: var(--hairline);
+  --color-surface-2: var(--surface-2);
+
+  --color-primary: var(--brand);
+  --color-primary-dark: var(--brand-deep);
   --color-secondary: #2D6D8C;
-  --color-success: #16794A;
-  --color-warning: #8C6308;
-  --color-danger: #B33B3B;
-  --color-bg: #F8FAFB;
-  --color-text-main: #1A2E2E;
-  --color-text-light: #3D5553;
-  --color-surface: #FFFFFF;
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-bg: var(--bg);
+  --color-text-main: var(--ink);
+  --color-text-light: var(--ink-muted);
+  --color-surface: var(--surface);
   --color-surface-secondary: #F1F5F5;
   --color-surface-hover: #E8EEEE;
-  --color-border: #D4DEDE;
+  --color-border: var(--hairline);
   --color-border-light: #E4EAEA;
   --color-input-border: #B8C8C6;
 }
@@ -43,7 +56,7 @@
 }
 
 body {
-  font-family: "DM Sans", "Inter", sans-serif;
+  font-family: var(--font-ui);
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
@@ -55,20 +68,20 @@ body {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(189, 212, 210, 0.5);
+  border: 1px solid var(--hairline);
   box-shadow:
-    0 1px 3px rgba(26, 46, 46, 0.04),
-    0 4px 12px rgba(26, 46, 46, 0.03);
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .glass-card-elevated {
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(189, 212, 210, 0.6);
+  border: 1px solid var(--hairline);
   box-shadow:
-    0 2px 8px rgba(26, 46, 46, 0.06),
-    0 8px 24px rgba(26, 46, 46, 0.04);
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 /* Smooth scrollbar */
@@ -132,7 +145,9 @@ body {
 
 /* Soft glow */
 .glow-primary {
-  box-shadow: 0 0 20px rgba(15, 118, 110, 0.15), 0 0 40px rgba(15, 118, 110, 0.05);
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--brand) 15%, transparent),
+    0 0 40px color-mix(in srgb, var(--brand) 5%, transparent);
 }
 
 /* Input focus ring */
@@ -140,8 +155,8 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
 }
 
 /* Table row hover */
@@ -160,7 +175,7 @@ select:focus {
 /* Focus-visible for accessibility */
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -168,12 +183,12 @@ a:focus-visible {
 /* Pulsing border for critical crisis alerts */
 @keyframes pulse-border {
   0%, 100% {
-    border-color: var(--color-danger);
-    box-shadow: 0 0 0 0 rgba(179, 59, 59, 0.4);
+    border-color: var(--danger);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 40%, transparent);
   }
   50% {
-    border-color: rgba(179, 59, 59, 0.6);
-    box-shadow: 0 0 8px 2px rgba(179, 59, 59, 0.25);
+    border-color: color-mix(in srgb, var(--danger) 60%, transparent);
+    box-shadow: 0 0 8px 2px color-mix(in srgb, var(--danger) 25%, transparent);
   }
 }
 

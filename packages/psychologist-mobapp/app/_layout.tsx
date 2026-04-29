@@ -3,9 +3,17 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as SplashScreen from "expo-splash-screen";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
 import queryClient, { asyncStoragePersister } from "../queries/index";
 import { LanguageProvider } from "../lib/hooks/useLanguage";
-import { ThemeProvider, useTheme } from "../lib/theme";
+import { ThemeProvider } from "../lib/theme";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { NetworkStatus } from "../components/NetworkStatus";
 import { OnlineManager } from "../lib/offline";
@@ -14,9 +22,9 @@ import { checkForUpdate } from "../lib/updates";
 import { useNotifications } from "../lib/notifications";
 
 initSentry();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function ThemedApp() {
-  const { isDark } = useTheme();
   useNotifications();
 
   useEffect(() => {
@@ -25,7 +33,7 @@ function ThemedApp() {
 
   return (
     <>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+      <StatusBar barStyle="dark-content" />
       <NetworkStatus />
       <OnlineManager />
       <Stack screenOptions={{ headerShown: false, animation: "fade" }} />
@@ -34,6 +42,21 @@ function ThemedApp() {
 }
 
 function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
   return (
     <PersistQueryClientProvider
       client={queryClient}

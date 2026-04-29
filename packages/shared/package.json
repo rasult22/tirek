@@ -15,6 +15,8 @@
     "./api": "./src/api/index.ts",
     "./mood-last-7-days": "./src/mood-last-7-days/index.ts",
     "./format-print-profile": "./src/format-print-profile/index.ts",
-    "./office-hours": "./src/office-hours/index.ts"
+    "./office-hours": "./src/office-hours/index.ts",
+    "./design-system": "./src/design-system/index.ts",
+    "./design-system/tokens.css": "./src/design-system/tokens.css"
   }
 }

@@ -66,7 +66,7 @@ export default function TabsLayout() {
           height: 56 + Math.max(insets.bottom - 4, 0),
         },
         tabBarLabelStyle: {
-          fontFamily: "DMSans-SemiBold",
+          fontFamily: "Inter_600SemiBold",
           fontSize: 11,
         },
       }}

@@ -1,0 +1,131 @@
+/* =====================================================================
+   Tirek Design System — generated tokens
+   Source of truth: packages/shared/src/design-system/tokens.ts
+   Keep this file in sync manually when tokens.ts changes.
+   ===================================================================== */
+
+:root {
+  /* Brand */
+  --brand: #0F766E;
+  --brand-soft: rgba(15, 118, 110, 0.12);
+  --brand-deep: #0A5C56;
+  --brand-fg: #FFFFFF;
+
+  /* Neutrals */
+  --bg: #F5F5F5;
+  --surface: #FFFFFF;
+  --surface-2: #F7F7FA;
+  --ink: #0A0A0A;
+  --ink-muted: #595D62;
+  --hairline: #E2E2E2;
+  --hover: rgba(0, 0, 0, 0.04);
+
+  /* Dark variants (splash, hero) */
+  --ink-dark: #0F0E1A;
+  --ink-darker: #0B0B0B;
+  --on-dark: #FFFFFF;
+  --on-dark-mute: rgba(255, 255, 255, 0.65);
+  --on-dark-line: rgba(255, 255, 255, 0.10);
+
+  /* Semantic */
+  --success: #16794A;
+  --success-soft: rgba(22, 121, 74, 0.10);
+  --warning: #FFB319;
+  --warning-soft: rgba(255, 179, 25, 0.10);
+  --danger: #FF4E64;
+  --danger-soft: rgba(255, 78, 100, 0.08);
+  --info: #8ACFDE;
+  --info-soft: rgba(138, 207, 222, 0.10);
+
+  /* Crisis aliases */
+  --crisis-low: var(--success);
+  --crisis-mid: var(--warning);
+  --crisis-high: var(--danger);
+
+  /* Typography */
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-paragraph: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --text-2xs: 10px;  --lh-2xs: 14px;
+  --text-xs:  12px;  --lh-xs:  16px;
+  --text-sm:  14px;  --lh-sm:  20px;
+  --text-md:  16px;  --lh-md:  24px;
+  --text-lg:  18px;  --lh-lg:  24px;
+  --text-xl:  20px;  --lh-xl:  28px;
+  --text-2xl: 24px;  --lh-2xl: 32px;
+  --text-3xl: 32px;  --lh-3xl: 40px;
+  --text-4xl: 48px;  --lh-4xl: 56px;
+  --text-5xl: 64px;  --lh-5xl: 72px;
+
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-semibold: 600;
+  --w-bold: 700;
+
+  --track-tight: -1px;
+  --track-tighter: -1.5px;
+  --track-display: -2.5px;
+  --track-eyebrow: 1.5px;
+
+  /* Radii */
+  --radius-xs:  4px;
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  14px;
+  --radius-xl:  16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 32px;
+  --radius-pill: 9999px;
+
+  /* Spacing */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  --screen-pad-x: 24px;
+  --screen-pad-top: 60px;
+  --screen-pad-bot: 40px;
+
+  /* Shadows */
+  --shadow-sm: 0 0 1px rgba(0,0,0,0.20), 0 8px 16px -4px rgba(0,0,0,0.04);
+  --shadow-md: 0 0 1px rgba(0,0,0,0.20), 0 0 32px -8px rgba(0,0,0,0.12), 0 32px 32px -8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 0 1px rgba(0,0,0,0.20), 0 0 48px -12px rgba(0,0,0,0.16), 0 32px 48px -12px rgba(0,0,0,0.12);
+  --shadow-cover: 0 64px 100px 0 rgba(118,114,128,0.16);
+  --shadow-cta: 0 8px 20px -8px var(--brand);
+  --ring: 0 0 0 4px var(--brand-soft);
+
+  /* Controls */
+  --control-h-sm:  44px;
+  --control-h-md:  50px;
+  --control-h-lg:  54px;
+  --control-h-xl:  56px;
+  --control-h-2xl: 60px;
+  --control-pad-x: 16px;
+
+  /* Motion */
+  --t-fast: 120ms;
+  --t-base: 200ms;
+  --t-slow: 320ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Alternate brand tones — escape hatch (ADR-005). Default surface unchanged. */
+[data-tone="slate"] {
+  --brand:      #3B4A66;
+  --brand-soft: rgba(59, 74, 102, 0.12);
+  --brand-deep: #1E2A40;
+}
+[data-tone="purple"] {
+  --brand:      #4E46B4;
+  --brand-soft: rgba(78, 70, 180, 0.12);
+  --brand-deep: #2D2773;
+}
