@@ -1,7 +1,10 @@
 export { Text } from "./Text";
+export { H1, H2, H3, H4, Body, Caption, Eyebrow, Label } from "./Typography";
 export { Button } from "./Button";
 export { Card } from "./Card";
+export { Pill } from "./Pill";
 export { Input } from "./Input";
+export { Sheet } from "./Sheet";
 export { Badge } from "./Badge";
 export { SeverityBadge } from "./SeverityBadge";
 export { StatusBadge } from "./StatusBadge";

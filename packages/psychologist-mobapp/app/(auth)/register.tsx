@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
-import { Text, Input, Button } from "../../components/ui";
+import { Text, Input, Button, Sheet, Body } from "../../components/ui";
 import { colors as ds, radius, spacing } from "@tirek/shared/design-system";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { authApi } from "../../lib/api/auth";
@@ -94,11 +94,11 @@ export default function RegisterScreen() {
 
       {/* Sheet */}
       <KeyboardAvoidingView
-        style={styles.sheetWrap}
+        style={styles.kavWrap}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
+        <Sheet variant="over-hero" overlap={SHEET_OVERLAP}>
         <ScrollView
-          style={styles.sheet}
           contentContainerStyle={styles.sheetContent}
           keyboardShouldPersistTaps="handled"
         >
@@ -232,15 +232,16 @@ export default function RegisterScreen() {
             />
 
             <View style={styles.linkRow}>
-              <Text variant="small" style={{ color: c.textLight }}>
+              <Body size="sm" style={{ color: c.textLight }}>
                 {t.auth.alreadyHaveAccount}{" "}
-              </Text>
+              </Body>
               <Pressable onPress={() => router.replace("/(auth)/login")}>
                 <Text style={styles.linkText}>{t.auth.login}</Text>
               </Pressable>
             </View>
           </View>
         </ScrollView>
+        </Sheet>
       </KeyboardAvoidingView>
     </View>
   );
@@ -301,15 +302,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 4,
   },
-  sheetWrap: {
+  kavWrap: {
     flex: 1,
-    marginTop: -SHEET_OVERLAP,
-  },
-  sheet: {
-    flex: 1,
-    backgroundColor: ds.surface,
-    borderTopLeftRadius: radius["3xl"],
-    borderTopRightRadius: radius["3xl"],
   },
   sheetContent: {
     flexGrow: 1,
