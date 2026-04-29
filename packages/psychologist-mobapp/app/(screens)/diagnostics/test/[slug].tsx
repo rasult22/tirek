@@ -3,9 +3,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { testDefinitions } from "@tirek/shared";
-import { Text } from "../../../../components/ui";
+import { Text, Button } from "../../../../components/ui";
 import { useT, useLanguage } from "../../../../lib/hooks/useLanguage";
 import { useThemeColors, radius } from "../../../../lib/theme";
+import { colors as ds } from "@tirek/shared/design-system";
 import { hapticLight } from "../../../../lib/haptics";
 
 export default function TestDetailScreen() {
@@ -58,7 +59,7 @@ export default function TestDetailScreen() {
     >
       <Stack.Screen options={{ title: t.psychologist.diagnostics }} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text variant="h2" style={{ fontFamily: "DMSans-Bold" }}>
+        <Text variant="h2" style={{ fontWeight: "700" }}>
           {name}
         </Text>
         <Text variant="body" style={{ marginTop: 6 }}>
@@ -111,14 +112,22 @@ export default function TestDetailScreen() {
         </View>
 
         {tips && (
-          <View style={styles.tipsCard}>
+          <View
+            style={[
+              styles.tipsCard,
+              {
+                backgroundColor: ds.warningSoft,
+                borderColor: `${c.warning}33`,
+              },
+            ]}
+          >
             <View style={styles.tipsHeader}>
-              <Ionicons name="bulb-outline" size={16} color="#B45309" />
+              <Ionicons name="bulb-outline" size={16} color={c.warning} />
               <Text
                 variant="body"
                 style={{
-                  fontFamily: "DMSans-Bold",
-                  color: "#92400E",
+                  fontWeight: "700",
+                  color: c.warning,
                 }}
               >
                 {t.psychologist.testWhenToAssign}
@@ -126,7 +135,7 @@ export default function TestDetailScreen() {
             </View>
             <Text
               variant="body"
-              style={{ color: "#92400E", marginTop: 6, lineHeight: 20 }}
+              style={{ color: c.text, marginTop: 6, lineHeight: 20 }}
             >
               {tips}
             </Text>
@@ -140,36 +149,22 @@ export default function TestDetailScreen() {
           { backgroundColor: c.bg, borderTopColor: c.borderLight },
         ]}
       >
-        <Pressable
-          onPress={() => goAssign("student")}
-          style={({ pressed }) => [
-            styles.primaryBtn,
-            { backgroundColor: c.primary },
-            pressed && { opacity: 0.9 },
-          ]}
-        >
-          <Text
-            variant="body"
-            style={{ color: "#FFF", fontFamily: "DMSans-SemiBold" }}
-          >
-            {t.psychologist.assignToStudentBtn}
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => goAssign("class")}
-          style={({ pressed }) => [
-            styles.secondaryBtn,
-            { borderColor: c.primary, backgroundColor: c.surface },
-            pressed && { opacity: 0.9 },
-          ]}
-        >
-          <Text
-            variant="body"
-            style={{ color: c.primary, fontFamily: "DMSans-SemiBold" }}
-          >
-            {t.psychologist.assignToClassBtn}
-          </Text>
-        </Pressable>
+        <View style={{ flex: 1 }}>
+          <Button
+            title={t.psychologist.assignToStudentBtn}
+            variant="primary"
+            size="md"
+            onPress={() => goAssign("student")}
+          />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Button
+            title={t.psychologist.assignToClassBtn}
+            variant="secondary"
+            size="md"
+            onPress={() => goAssign("class")}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -201,9 +196,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 14,
     borderRadius: radius.lg,
-    backgroundColor: "#FEF3C7",
     borderWidth: 1,
-    borderColor: "#FCD34D",
   },
   tipsHeader: {
     flexDirection: "row",
@@ -221,21 +214,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 16,
     borderTopWidth: 1,
-  },
-  primaryBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
   },
   empty: {
     flex: 1,

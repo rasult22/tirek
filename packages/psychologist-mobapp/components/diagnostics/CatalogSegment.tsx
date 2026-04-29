@@ -50,7 +50,7 @@ export function CatalogSegment() {
             ]}
           >
             <View style={{ flex: 1 }}>
-              <Text variant="body" style={styles.title} numberOfLines={2}>
+              <Text variant="body" style={{ fontWeight: "600" }} numberOfLines={2}>
                 {name}
               </Text>
               <Text variant="caption" numberOfLines={2} style={styles.desc}>
@@ -114,9 +114,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
-  },
-  title: {
-    fontFamily: "DMSans-SemiBold",
   },
   desc: {
     marginTop: 2,
