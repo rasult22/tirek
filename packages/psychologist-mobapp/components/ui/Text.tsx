@@ -4,6 +4,16 @@ import { typography, useThemeColors } from "../../lib/theme";
 type Variant = keyof typeof typography;
 
 const textColorVariants: Record<Variant, "text" | "textLight"> = {
+  display: "text",
+  dsH1: "text",
+  dsH2: "text",
+  dsH3: "text",
+  dsH4: "text",
+  bodyMd: "text",
+  bodySm: "text",
+  bodyXs: "text",
+  eyebrow: "textLight",
+  label: "textLight",
   h1: "text",
   h2: "text",
   h3: "text",

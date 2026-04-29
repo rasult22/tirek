@@ -18,25 +18,14 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { authApi } from "../../lib/api/auth";
-import { useThemeColors, useTheme, spacing, radius } from "../../lib/theme";
+import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { checkForUpdate } from "../../lib/updates";
 import { hapticLight } from "../../lib/haptics";
 import type { Language } from "@tirek/shared";
-import type { ThemeMode } from "../../lib/theme";
-
-const THEME_OPTIONS: {
-  value: ThemeMode;
-  icon: "phone-portrait-outline" | "sunny-outline" | "moon-outline";
-}[] = [
-  { value: "system", icon: "phone-portrait-outline" },
-  { value: "light", icon: "sunny-outline" },
-  { value: "dark", icon: "moon-outline" },
-];
 
 export default function ProfileScreen() {
   const t = useT();
   const { language, setLanguage } = useLanguage();
-  const { mode, setMode } = useTheme();
   const c = useThemeColors();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -66,12 +55,6 @@ export default function ProfileScreen() {
   const startEdit = () => {
     setEditName(user?.name ?? "");
     setEditing(true);
-  };
-
-  const themeLabels: Record<ThemeMode, string> = {
-    system: t.profile.themeSystem,
-    light: t.profile.themeLight,
-    dark: t.profile.themeDark,
   };
 
   return (
@@ -228,58 +211,6 @@ export default function ProfileScreen() {
             </View>
           </Card>
         </Pressable>
-
-        {/* Theme switcher */}
-        <Card style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View
-              style={[
-                styles.sectionIcon,
-                { backgroundColor: `${c.primary}14` },
-              ]}
-            >
-              <Ionicons
-                name="color-palette-outline"
-                size={18}
-                color={c.primaryDark}
-              />
-            </View>
-            <Text variant="body" style={{ fontWeight: "700", flex: 1 }}>
-              {t.profile.theme}
-            </Text>
-          </View>
-          <View style={styles.themeBtns}>
-            {THEME_OPTIONS.map((opt) => (
-              <Pressable
-                key={opt.value}
-                onPress={() => setMode(opt.value)}
-                style={[
-                  styles.themeBtn,
-                  {
-                    backgroundColor:
-                      mode === opt.value ? c.primary : c.surfaceSecondary,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={opt.icon}
-                  size={16}
-                  color={mode === opt.value ? "#FFFFFF" : c.textLight}
-                />
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: "700",
-                    color: mode === opt.value ? "#FFFFFF" : c.textLight,
-                    marginTop: 4,
-                  }}
-                >
-                  {themeLabels[opt.value]}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </Card>
 
         {/* Language switcher */}
         <Card style={styles.sectionCard}>
@@ -489,19 +420,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  // Theme
-  themeBtns: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 14,
-  },
-  themeBtn: {
-    flex: 1,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: "center",
   },
 
   // Language
