@@ -6,19 +6,21 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { Text, Input, Button } from "../../components/ui";
+import { colors as ds, radius, spacing } from "@tirek/shared/design-system";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { authApi } from "../../lib/api/auth";
 import { useAuthStore } from "../../lib/store/auth-store";
-import { useThemeColors, spacing, radius } from "../../lib/theme";
-import { shadow } from "../../lib/theme/shadows";
+import { useThemeColors } from "../../lib/theme";
 import type { Language } from "@tirek/shared";
+
+const HERO_HEIGHT = 240;
+const SHEET_OVERLAP = 32;
 
 export default function RegisterScreen() {
   const t = useT();
@@ -55,37 +57,25 @@ export default function RegisterScreen() {
     password === confirmPassword;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Language toggle */}
+    <View style={styles.root}>
+      {/* Hero */}
+      <SafeAreaView style={styles.hero} edges={["top"]}>
+        <View style={styles.heroInner}>
           <View style={styles.langRow}>
-            <View
-              style={[
-                styles.langSwitch,
-                { backgroundColor: c.surface, ...shadow(1) },
-              ]}
-            >
+            <View style={styles.langSwitch}>
               {(["ru", "kz"] as Language[]).map((lang) => (
                 <Pressable
                   key={lang}
                   onPress={() => setLanguage(lang)}
                   style={[
                     styles.langBtn,
-                    language === lang && { backgroundColor: c.primary },
+                    language === lang && styles.langBtnActive,
                   ]}
                 >
                   <Text
-                    variant="body"
                     style={[
-                      { fontWeight: "700", color: c.textLight },
-                      language === lang && { color: "#FFFFFF" },
+                      styles.langText,
+                      language === lang && styles.langTextActive,
                     ]}
                   >
                     {lang === "ru" ? "RU" : "KZ"}
@@ -95,22 +85,23 @@ export default function RegisterScreen() {
             </View>
           </View>
 
-          {/* Logo */}
-          <View style={styles.logoWrap}>
-            <Image
-              source={require("../../assets/images/logo.png")}
-              style={styles.logoImg}
-              resizeMode="contain"
-            />
-            <Text variant="h1" style={styles.appName}>
-              {t.common.appName}
-            </Text>
-            <Text variant="bodyLight" style={styles.subtitle}>
-              {t.psychologist.role}
-            </Text>
+          <View style={styles.wordmarkWrap}>
+            <Text style={styles.wordmark}>tirek.</Text>
+            <Text style={styles.wordmarkSub}>{t.psychologist.role}</Text>
           </View>
+        </View>
+      </SafeAreaView>
 
-          {/* Form */}
+      {/* Sheet */}
+      <KeyboardAvoidingView
+        style={styles.sheetWrap}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          style={styles.sheet}
+          contentContainerStyle={styles.sheetContent}
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.form}>
             <Input
               icon="person-outline"
@@ -140,7 +131,6 @@ export default function RegisterScreen() {
               autoComplete="email"
             />
 
-            {/* Password with eye toggle */}
             <View style={styles.passwordWrap}>
               <Input
                 icon="lock-closed-outline"
@@ -163,7 +153,6 @@ export default function RegisterScreen() {
               </Pressable>
             </View>
 
-            {/* Password strength indicator */}
             {password.length > 0 && (
               <View style={styles.strengthRow}>
                 <View style={styles.strengthBars}>
@@ -204,20 +193,13 @@ export default function RegisterScreen() {
                   />
                 </View>
                 {password.length < 6 && (
-                  <Text
-                    style={{
-                      color: c.danger,
-                      fontSize: 10,
-                      fontWeight: "500",
-                    }}
-                  >
+                  <Text style={styles.strengthHint}>
                     {t.auth.passwordTooShort}
                   </Text>
                 )}
               </View>
             )}
 
-            {/* Confirm password */}
             <Input
               icon="lock-closed-outline"
               placeholder={t.auth.confirmPassword}
@@ -227,28 +209,15 @@ export default function RegisterScreen() {
               autoCapitalize="none"
             />
 
-            {/* Password mismatch */}
             {confirmPassword.length > 0 && password !== confirmPassword && (
-              <Text
-                style={{
-                  color: c.danger,
-                  fontSize: 12,
-                  fontWeight: "500",
-                  marginTop: -8,
-                }}
-              >
+              <Text style={styles.mismatchText}>
                 {t.auth.passwordsDoNotMatch}
               </Text>
             )}
 
-            {/* Error */}
             {registerMutation.isError && (
-              <View
-                style={[styles.errorBox, { borderColor: `${c.danger}26` }]}
-              >
-                <Text
-                  style={{ color: c.danger, fontSize: 14, fontWeight: "500" }}
-                >
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>
                   {t.auth.invalidCredentials}
                 </Text>
               </View>
@@ -259,47 +228,45 @@ export default function RegisterScreen() {
               onPress={() => registerMutation.mutate()}
               loading={registerMutation.isPending}
               disabled={!isValid}
+              size="lg"
             />
 
-            {/* Link to login */}
             <View style={styles.linkRow}>
               <Text variant="small" style={{ color: c.textLight }}>
                 {t.auth.alreadyHaveAccount}{" "}
               </Text>
               <Pressable onPress={() => router.replace("/(auth)/login")}>
-                <Text
-                  style={{
-                    color: c.primary,
-                    fontWeight: "700",
-                    fontSize: 14,
-                  }}
-                >
-                  {t.auth.login}
-                </Text>
+                <Text style={styles.linkText}>{t.auth.login}</Text>
               </Pressable>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    backgroundColor: ds.inkDark,
   },
-  scroll: {
-    flexGrow: 1,
+  hero: {
+    minHeight: HERO_HEIGHT,
+    backgroundColor: ds.inkDark,
+  },
+  heroInner: {
     paddingHorizontal: 24,
-    paddingBottom: 32,
+    paddingTop: spacing[2],
+    paddingBottom: SHEET_OVERLAP + 24,
+    gap: spacing[8],
   },
   langRow: {
     alignItems: "flex-end",
-    paddingTop: spacing.sm,
   },
   langSwitch: {
     flexDirection: "row",
+    backgroundColor: ds.onDarkLine,
     borderRadius: radius.md,
     overflow: "hidden",
   },
@@ -307,22 +274,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  logoWrap: {
-    alignItems: "center",
-    marginTop: 32,
-    marginBottom: 28,
+  langBtnActive: {
+    backgroundColor: ds.brand,
   },
-  logoImg: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
+  langText: {
+    fontWeight: "700",
+    fontSize: 14,
+    color: ds.onDarkMute,
   },
-  appName: {
-    textAlign: "center",
+  langTextActive: {
+    color: ds.onDark,
   },
-  subtitle: {
-    textAlign: "center",
-    marginTop: 6,
+  wordmarkWrap: {
+    alignItems: "flex-start",
+  },
+  wordmark: {
+    color: ds.onDark,
+    fontFamily: "Inter_700Bold",
+    fontSize: 48,
+    lineHeight: 56,
+    letterSpacing: -1.5,
+  },
+  wordmarkSub: {
+    color: ds.onDarkMute,
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    marginTop: 4,
+  },
+  sheetWrap: {
+    flex: 1,
+    marginTop: -SHEET_OVERLAP,
+  },
+  sheet: {
+    flex: 1,
+    backgroundColor: ds.surface,
+    borderTopLeftRadius: radius["3xl"],
+    borderTopRightRadius: radius["3xl"],
+  },
+  sheetContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 36,
+    paddingBottom: 32,
   },
   form: {
     gap: 14,
@@ -353,18 +346,40 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 2,
   },
+  strengthHint: {
+    color: ds.danger,
+    fontSize: 10,
+    fontWeight: "500",
+  },
+  mismatchText: {
+    color: ds.danger,
+    fontSize: 12,
+    fontWeight: "500",
+    marginTop: -8,
+  },
   errorBox: {
-    backgroundColor: "rgba(179, 59, 59, 0.08)",
+    backgroundColor: ds.dangerSoft,
     borderWidth: 1,
+    borderColor: `${ds.danger}33`,
     borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 10,
     alignItems: "center",
+  },
+  errorText: {
+    color: ds.danger,
+    fontSize: 14,
+    fontWeight: "500",
   },
   linkRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 4,
+  },
+  linkText: {
+    color: ds.brand,
+    fontWeight: "700",
+    fontSize: 14,
   },
 });

@@ -264,12 +264,14 @@
 
 ---
 
-## ADR-012 · Mobapp layout: DS-компоненты в shared + StyleSheet для остального
+## ADR-012 · Mobapp layout: DS-компоненты локально в каждом app + StyleSheet для остального
+
+**⚠️ ОБНОВЛЕНО 2026-04-29 после smoke-теста (#51).** Изначально ADR требовал положить компоненты в `packages/shared/src/components/native/`. На smoke-тесте выяснилось, что это не работает без хаков: shared не имеет своего `node_modules`, и при импорте `react`/`react-native` из shared/components Metro/TS тянут зависимости через всплытие в monorepo, что либо ломает runtime (`react/compiler-runtime` не находится), либо требует Metro `extraNodeModules`/workspace-hoisting. Окончательное решение — UI-компоненты живут в каждом app отдельно. См. также `feedback_no_shared_components`.
 
 **Решение:** (D+A) — высокоуровневые DS-компоненты как готовые блоки, StyleSheet API для всего остального. Никаких `<Box>`/`<Stack>` обёрток, никакого Tamagui/Restyle/Unistyles.
 
 **Что делаем:**
-- В `packages/shared/src/components/native/` — пакет переиспользуемых компонентов:
+- В `packages/<app>/components/ui/` — переиспользуемые DS-компоненты **в каждом app отдельно** (psy-mobapp, stu-mobapp независимо):
   - `<Button>` (variants: primary, ghost, on-dark; sizes: sm/md/lg/xl)
   - `<Card>` (variants: default, floating)
   - `<Input>` (states: default, focus, error)
@@ -278,9 +280,10 @@
   - `<Sheet>` (bottom sheet, sheet-over-hero)
   - `<H1>/<H2>/<H3>/<H4>/<Body>/<Caption>/<Eyebrow>/<Label>` — типографические компоненты
 - Каждый компонент читает токены из `@tirek/shared/design-system` (ADR-010).
-- Stu-mobapp в перспективе использует те же компоненты, отличается только `--brand-*`.
+- Stu-mobapp **копирует** код компонентов из psy-mobapp, не импортирует. Отличается только `--brand-*` через токены.
 
 **Что НЕ делаем:**
+- Не выносим UI-компоненты в `packages/shared/`. Shared — только токены/типы/логика без UI (см. `feedback_no_shared_components`).
 - Не вводим `<Box bg p radius>` обёртки — это путь к собственному мини-фреймворку.
 - Не подключаем Tamagui/Restyle/Unistyles — новая dependency без явной потребности.
 - Не пишем NativeWind (см. `feedback_no_nativewind`).
@@ -298,6 +301,7 @@ const styles = StyleSheet.create({
 - StyleSheet нативен для RN, нет runtime overhead, не нужно учить новый API.
 - Компонентная абстракция = React-компонент, не CSS-класс. Это согласуется с web (ADR-011).
 - `lib/theme/` façade в mobapp (ADR-010) остаётся, но шире не разрастается.
+- Дублирование кода между psy-mobapp и stu-mobapp дешевле, чем кросс-package coupling и резолюционные хаки. Внешних консьюмеров shared нет — экономия от объединения нулевая.
 
 ---
 
@@ -390,14 +394,16 @@ DS фиксирует только размер (24×24 default) и stroke (2px)
 
 **Pipeline (mobapp):** Button → Typography pack (H1/H2/H3/H4/Body/Caption) → Card → Pill → Input → Sheet.
 
-**Smoke-test:** первый Button мигрируется через `LoginPage` (там CTA самый видимый). Если архитектура (`@tirek/shared/components/native/` + `lib/theme/` façade + Inter + StyleSheet) работает на Button — миграция принимается, продолжаем pipeline.
+**Smoke-test:** первый Button мигрируется через `LoginPage` (там CTA самый видимый). Если архитектура (DS-компоненты в `packages/<app>/components/ui/` + `lib/theme/` façade + Inter + StyleSheet) работает на Button — миграция принимается, продолжаем pipeline.
 
 **По одному PR на компонент.** Каждый PR =
-1. Компонент в `shared/components/native/`
+1. Компонент в `packages/<app>/components/ui/` (см. ADR-012, обновлено после smoke-теста #51)
 2. 1-2 экрана-потребителя мигрированы
 3. Façade в `lib/theme/` обновлён если требуется
 
 **Если на smoke-test что-то ломается** — лечим на месте, ADR-010..015 могут пересматриваться.
+
+**Результат smoke-теста (PR #63):** архитектура принята, но shared/components отброшен — компоненты живут в каждом app отдельно. ADR-012 обновлён.
 
 ---
 
@@ -487,7 +493,7 @@ DS фиксирует только размер (24×24 default) и stroke (2px)
 3. **PR 3 · mobapp façade refactor.** `lib/theme/colors.ts` переписывается под shared-tokens, `darkColors` удаляется, `ThemeProvider` упрощается, `typography.ts` → Inter, `(tabs)/_layout.tsx` font fix. ADR-010, 014, 015, 017.
 
 ### Components (PR 4-9)
-4. **PR 4 · `<Button>` + smoke-test.** Компонент в shared, мигрирован LoginPage (ADR-020). Это smoke-test всей архитектуры. ADR-018.
+4. **PR 4 · `<Button>` + smoke-test.** ✅ closed by #63. Компонент в `psychologist-mobapp/components/ui/` (изначально планировался в shared, отброшено по итогам smoke-теста — см. ADR-012, ADR-018), мигрированы LoginPage и RegisterPage (ADR-020).
 5. **PR 5 · Typography pack** (H1/H2/H3/H4/Body/Caption + Eyebrow/Label).
 6. **PR 6 · `<Card>`** (variants: default, floating).
 7. **PR 7 · `<Pill>`** (variants: brand, success, warning, danger).
@@ -507,7 +513,7 @@ DS фиксирует только размер (24×24 default) и stroke (2px)
 
 ### After (опционально)
 - **psy-app web страницы** — миграция точечно по мере встречи, не блокируется.
-- **stu-app / stu-mobapp** — отдельный проект, переиспользует foundation + другой `--brand-*`.
+- **stu-app / stu-mobapp** — отдельный проект, переиспользует foundation токены + другой `--brand-*`. UI-компоненты копируются из psy-mobapp, не импортируются (ADR-012).
 
 ---
 
@@ -517,7 +523,7 @@ DS фиксирует только размер (24×24 default) и stroke (2px)
 |---|---|
 | 010 | Источник правды токенов: `@tirek/shared/design-system`, façade в mobapp `lib/theme/`, `:root` в psy-app web |
 | 011 | Web psy-app: Tailwind v4 `@theme` маппит на DS-токены, не отдельный layer |
-| 012 | Mobapp: DS-компоненты в shared + StyleSheet для остального |
+| 012 | Mobapp: DS-компоненты локально в каждом app (не в shared) + StyleSheet — **обновлено после smoke-теста #51** |
 | 013 | Иконки — implementation detail, не часть DS |
 | 014 | Navigation: react-navigation bottom-tabs, минимальные правки |
 | 015 | Шрифт Inter в RN — `@expo-google-fonts/inter` |

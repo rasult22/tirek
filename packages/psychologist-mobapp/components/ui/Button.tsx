@@ -3,76 +3,136 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  Platform,
   type ViewStyle,
   type TextStyle,
+  type PressableStateCallbackType,
 } from "react-native";
-import { useThemeColors, radius, type ThemeColors } from "../../lib/theme";
-import { shadow } from "../../lib/theme/shadows";
+import {
+  colors,
+  radius,
+  control,
+  fontSize,
+  fontWeight,
+} from "@tirek/shared/design-system";
 import { hapticLight } from "../../lib/haptics";
 
-type Variant = "primary" | "secondary" | "danger" | "ghost";
+export type ButtonVariant = "primary" | "ghost" | "on-dark" | "secondary" | "danger";
+export type ButtonSize = "sm" | "md" | "lg" | "xl";
 
-interface Props {
+export interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: Variant;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   disabled?: boolean;
   loading?: boolean;
+  fullWidth?: boolean;
   style?: ViewStyle;
+  textStyle?: TextStyle;
 }
 
-function getVariantStyles(c: ThemeColors): Record<Variant, ViewStyle> {
-  return {
-    primary: { backgroundColor: c.primary, ...shadow(2) },
-    secondary: {
-      backgroundColor: c.surfaceSecondary,
-      borderWidth: 1,
-      borderColor: c.border,
-    },
-    danger: { backgroundColor: c.danger, ...shadow(2) },
-    ghost: { backgroundColor: "transparent" },
-  };
-}
+const variantStyles: Record<ButtonVariant, ViewStyle> = {
+  primary: {
+    backgroundColor: colors.brand,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.brand,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 20,
+      },
+      android: { elevation: 6 },
+      default: {},
+    }),
+  },
+  ghost: {
+    backgroundColor: "transparent",
+  },
+  "on-dark": {
+    backgroundColor: colors.onDark,
+  },
+  secondary: {
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  danger: {
+    backgroundColor: colors.danger,
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.danger,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+      },
+      android: { elevation: 6 },
+      default: {},
+    }),
+  },
+};
 
-function getVariantTextStyles(c: ThemeColors): Record<Variant, TextStyle> {
-  return {
-    primary: { color: "#FFFFFF" },
-    secondary: { color: c.text },
-    danger: { color: "#FFFFFF" },
-    ghost: { color: c.primary },
-  };
-}
+const variantTextStyles: Record<ButtonVariant, TextStyle> = {
+  primary: { color: colors.brandFg },
+  ghost: { color: colors.brand },
+  "on-dark": { color: colors.inkDark },
+  secondary: { color: colors.ink },
+  danger: { color: colors.brandFg },
+};
+
+const sizeStyles: Record<ButtonSize, ViewStyle> = {
+  sm: { height: control.height.sm, paddingHorizontal: 16, borderRadius: radius.md },
+  md: { height: control.height.md, paddingHorizontal: 18, borderRadius: radius.lg },
+  lg: { height: control.height.lg, paddingHorizontal: 20, borderRadius: radius.xl },
+  xl: { height: control.height.xl, paddingHorizontal: 24, borderRadius: radius.xl },
+};
+
+const sizeTextStyles: Record<ButtonSize, TextStyle> = {
+  sm: { fontSize: fontSize.sm },
+  md: { fontSize: fontSize.md },
+  lg: { fontSize: fontSize.md },
+  xl: { fontSize: fontSize.lg },
+};
 
 export function Button({
   title,
   onPress,
   variant = "primary",
+  size = "lg",
   disabled = false,
   loading = false,
+  fullWidth = true,
   style,
-}: Props) {
-  const c = useThemeColors();
+  textStyle,
+}: ButtonProps) {
   const isDisabled = disabled || loading;
 
   return (
     <Pressable
-      onPress={() => { hapticLight(); onPress(); }}
+      onPress={() => {
+        hapticLight();
+        onPress();
+      }}
       disabled={isDisabled}
-      style={({ pressed }) => [
+      style={({ pressed }: PressableStateCallbackType) => [
         styles.base,
-        getVariantStyles(c)[variant],
-        pressed && styles.pressed,
+        sizeStyles[size],
+        variantStyles[variant],
+        fullWidth && styles.fullWidth,
+        pressed && !isDisabled && styles.pressed,
         isDisabled && styles.disabled,
         style,
       ]}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === "primary" ? "#FFFFFF" : c.primary}
+          color={variantTextStyles[variant].color as string}
         />
       ) : (
-        <Text style={[styles.text, getVariantTextStyles(c)[variant]]}>
+        <Text style={[styles.text, sizeTextStyles[size], variantTextStyles[variant], textStyle]}>
           {title}
         </Text>
       )}
@@ -82,22 +142,23 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: radius.lg,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
   },
+  fullWidth: {
+    alignSelf: "stretch",
+  },
   pressed: {
-    transform: [{ scale: 0.97 }],
-    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+    opacity: 0.92,
   },
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   text: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
+    fontWeight: fontWeight.bold as TextStyle["fontWeight"],
+    letterSpacing: 0.2,
   },
 });
