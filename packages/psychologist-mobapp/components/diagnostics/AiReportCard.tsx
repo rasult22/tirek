@@ -9,8 +9,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Text } from "../ui";
 import { Skeleton } from "../Skeleton";
-import { useThemeColors, radius } from "../../lib/theme";
+import { useThemeColors, radius, type ThemeColors } from "../../lib/theme";
 import { diagnosticsApi } from "../../lib/api/diagnostics";
+import { colors as ds } from "@tirek/shared/design-system";
 import type {
   AiReportRecommendationType,
   DiagnosticAiReport,
@@ -20,50 +21,54 @@ interface AiReportCardProps {
   sessionId: string;
 }
 
-const RISK_STYLES: Record<
+function riskStyles(c: ThemeColors): Record<
   string,
   { bg: string; text: string; label: string }
-> = {
-  low: { bg: "#ECFDF5", text: "#047857", label: "Низкий" },
-  moderate: { bg: "#FFFBEB", text: "#B45309", label: "Средний" },
-  high: { bg: "#FEF2F2", text: "#B91C1C", label: "Высокий" },
-};
+> {
+  return {
+    low: { bg: ds.successSoft, text: c.success, label: "Низкий" },
+    moderate: { bg: ds.warningSoft, text: c.warning, label: "Средний" },
+    high: { bg: ds.dangerSoft, text: c.danger, label: "Высокий" },
+  };
+}
 
-const RECOMMENDATION_META: Record<
+function recommendationMeta(c: ThemeColors): Record<
   AiReportRecommendationType,
   { icon: keyof typeof Ionicons.glyphMap; label: string; bg: string; color: string }
-> = {
-  therapy: {
-    icon: "people",
-    label: "Индивидуальная беседа",
-    bg: "#EFF6FF",
-    color: "#1D4ED8",
-  },
-  exercise: {
-    icon: "leaf",
-    label: "Упражнение",
-    bg: "#F0FDFA",
-    color: "#0F766E",
-  },
-  referral: {
-    icon: "medkit",
-    label: "Направление",
-    bg: "#FAF5FF",
-    color: "#7C3AED",
-  },
-  monitoring: {
-    icon: "trending-up",
-    label: "Наблюдение",
-    bg: "#F8FAFC",
-    color: "#475569",
-  },
-  conversation: {
-    icon: "people",
-    label: "Разговор",
-    bg: "#EEF2FF",
-    color: "#4338CA",
-  },
-};
+> {
+  return {
+    therapy: {
+      icon: "people",
+      label: "Индивидуальная беседа",
+      bg: ds.infoSoft,
+      color: c.info,
+    },
+    exercise: {
+      icon: "leaf",
+      label: "Упражнение",
+      bg: ds.successSoft,
+      color: c.success,
+    },
+    referral: {
+      icon: "medkit",
+      label: "Направление",
+      bg: ds.dangerSoft,
+      color: c.danger,
+    },
+    monitoring: {
+      icon: "trending-up",
+      label: "Наблюдение",
+      bg: c.surfaceSecondary,
+      color: c.textLight,
+    },
+    conversation: {
+      icon: "people",
+      label: "Разговор",
+      bg: ds.brandSoft,
+      color: c.primary,
+    },
+  };
+}
 
 function isReadyReport(
   r: DiagnosticAiReport | { status: "pending" } | undefined,
@@ -81,6 +86,9 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
   const c = useThemeColors();
   const queryClient = useQueryClient();
   const [flaggedOpen, setFlaggedOpen] = useState(false);
+
+  const RISK_STYLES = riskStyles(c);
+  const RECOMMENDATION_META = recommendationMeta(c);
 
   const { data: report, isLoading } = useQuery({
     queryKey: ["diagnostics", "report", sessionId],
@@ -126,11 +134,11 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
     return (
       <View style={[styles.card, { borderColor: c.borderLight, backgroundColor: c.surface }]}>
         <View style={styles.headerRow}>
-          <View style={styles.headerIcon}>
-            <ActivityIndicator size="small" color="#4F46E5" />
+          <View style={[styles.headerIcon, { backgroundColor: ds.brandSoft }]}>
+            <ActivityIndicator size="small" color={c.primary} />
           </View>
           <View>
-            <Text style={styles.headerLabel}>AI-АНАЛИЗ РЕЗУЛЬТАТА</Text>
+            <Text style={[styles.headerLabel, { color: c.primary }]}>AI-АНАЛИЗ РЕЗУЛЬТАТА</Text>
             <Text style={[styles.headerSub, { color: c.textLight }]}>
               Генерируется…
             </Text>
@@ -155,17 +163,17 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
       <View
         style={[
           styles.card,
-          { borderColor: "#FECACA", backgroundColor: "#FEF2F2" },
+          { borderColor: `${c.danger}33`, backgroundColor: ds.dangerSoft },
         ]}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Ionicons name="alert-circle" size={18} color="#B91C1C" />
-          <Text style={{ fontSize: 13, fontFamily: "DMSans-Bold", color: "#B91C1C" }}>
+          <Ionicons name="alert-circle" size={18} color={c.danger} />
+          <Text style={{ fontSize: 13, fontWeight: "700", color: c.danger }}>
             Не удалось сгенерировать отчёт
           </Text>
         </View>
         {report.errorMessage && (
-          <Text style={{ fontSize: 12, color: "#DC2626", marginTop: 8 }}>
+          <Text style={{ fontSize: 12, color: c.danger, marginTop: 8 }}>
             {report.errorMessage}
           </Text>
         )}
@@ -174,6 +182,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
           disabled={regenerate.isPending}
           style={({ pressed }) => [
             styles.retryBtn,
+            { backgroundColor: c.danger },
             pressed && { opacity: 0.8 },
             regenerate.isPending && { opacity: 0.6 },
           ]}
@@ -183,7 +192,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
           ) : (
             <Ionicons name="refresh" size={14} color="#FFF" />
           )}
-          <Text style={{ fontSize: 12, fontFamily: "DMSans-Bold", color: "#FFF" }}>
+          <Text style={{ fontSize: 12, fontWeight: "700", color: "#FFF" }}>
             Перегенерировать
           </Text>
         </Pressable>
@@ -196,11 +205,11 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
     <View style={[styles.card, { borderColor: c.borderLight, backgroundColor: c.surface }]}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <View style={styles.headerIcon}>
-          <Ionicons name="hardware-chip-outline" size={18} color="#4F46E5" />
+        <View style={[styles.headerIcon, { backgroundColor: ds.brandSoft }]}>
+          <Ionicons name="hardware-chip-outline" size={18} color={c.primary} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerLabel}>AI-АНАЛИЗ РЕЗУЛЬТАТА</Text>
+          <Text style={[styles.headerLabel, { color: c.primary }]}>AI-АНАЛИЗ РЕЗУЛЬТАТА</Text>
           {report.generatedAt && (
             <Text style={[styles.headerSub, { color: c.textLight }]}>
               Сформировано{" "}
@@ -228,7 +237,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
           ) : (
             <Ionicons name="refresh" size={12} color={c.textLight} />
           )}
-          <Text style={{ fontSize: 11, fontFamily: "DMSans-SemiBold", color: c.textLight }}>
+          <Text style={{ fontSize: 11, fontWeight: "600", color: c.textLight }}>
             Обновить
           </Text>
         </Pressable>
@@ -295,7 +304,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
                     <Text
                       style={{
                         fontSize: 10,
-                        fontFamily: "DMSans-Bold",
+                        fontWeight: "700",
                         color: meta.text,
                       }}
                     >
@@ -306,7 +315,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
                     <Text
                       style={{
                         fontSize: 13,
-                        fontFamily: "DMSans-SemiBold",
+                        fontWeight: "600",
                         color: c.text,
                       }}
                     >
@@ -359,7 +368,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
                     <Text
                       style={{
                         fontSize: 10,
-                        fontFamily: "DMSans-Bold",
+                        fontWeight: "700",
                         textTransform: "uppercase",
                         letterSpacing: 0.5,
                         color: meta.color,
@@ -386,17 +395,25 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
 
       {/* Flagged items */}
       {flaggedWithText.length > 0 && (
-        <View style={styles.flaggedSection}>
+        <View
+          style={[
+            styles.flaggedSection,
+            {
+              borderColor: `${c.warning}33`,
+              backgroundColor: ds.warningSoft,
+            },
+          ]}
+        >
           <Pressable
             onPress={() => setFlaggedOpen(!flaggedOpen)}
             style={styles.flaggedHeader}
           >
-            <Ionicons name="warning" size={14} color="#92400E" />
+            <Ionicons name="warning" size={14} color={c.warning} />
             <Text
               style={{
                 fontSize: 13,
-                fontFamily: "DMSans-Bold",
-                color: "#92400E",
+                fontWeight: "700",
+                color: c.warning,
                 flex: 1,
               }}
             >
@@ -405,7 +422,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
             <Ionicons
               name="chevron-down"
               size={14}
-              color="#92400E"
+              color={c.warning}
               style={{
                 transform: [{ rotate: flaggedOpen ? "180deg" : "0deg" }],
               }}
@@ -416,13 +433,19 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
               {flaggedWithText.map((f, idx) => (
                 <View
                   key={idx}
-                  style={styles.flaggedItem}
+                  style={[
+                    styles.flaggedItem,
+                    {
+                      borderColor: `${c.warning}33`,
+                      backgroundColor: c.surface,
+                    },
+                  ]}
                 >
                   {f.questionText && (
                     <Text
                       style={{
                         fontSize: 12,
-                        fontFamily: "DMSans-SemiBold",
+                        fontWeight: "600",
                         color: c.text,
                       }}
                     >
@@ -434,8 +457,8 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
                       Ответ:{" "}
                       <Text
                         style={{
-                          fontFamily: "DMSans-Bold",
-                          color: "#B45309",
+                          fontWeight: "700",
+                          color: c.warning,
                         }}
                       >
                         {f.answerLabel ?? `значение ${f.answerValue}`}
@@ -488,7 +511,7 @@ function SectionTitle({
       <Text
         style={{
           fontSize: 11,
-          fontFamily: "DMSans-Bold",
+          fontWeight: "700",
           textTransform: "uppercase",
           letterSpacing: 0.5,
           color,
@@ -515,16 +538,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: "#EDE9FE",
     alignItems: "center",
     justifyContent: "center",
   },
   headerLabel: {
     fontSize: 11,
-    fontFamily: "DMSans-Bold",
+    fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    color: "#4338CA",
   },
   headerSub: {
     fontSize: 11,
@@ -541,7 +562,7 @@ const styles = StyleSheet.create({
   },
   summary: {
     fontSize: 14,
-    fontFamily: "DMSans-Bold",
+    fontWeight: "700",
     lineHeight: 20,
     marginTop: 12,
   },
@@ -552,7 +573,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 11,
-    fontFamily: "DMSans-Bold",
+    fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -586,8 +607,6 @@ const styles = StyleSheet.create({
   flaggedSection: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#FDE68A",
-    backgroundColor: "#FFFBEB",
     padding: 12,
     marginTop: 12,
   },
@@ -599,15 +618,12 @@ const styles = StyleSheet.create({
   flaggedItem: {
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#FDE68A",
-    backgroundColor: "#FFFFFF",
     padding: 10,
   },
   retryBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#DC2626",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,

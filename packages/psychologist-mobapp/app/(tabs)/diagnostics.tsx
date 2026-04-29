@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../components/ui";
 import { useT } from "../../lib/hooks/useLanguage";
 import { useThemeColors, radius } from "../../lib/theme";
+import { shadow } from "../../lib/theme/shadows";
 import { hapticLight } from "../../lib/haptics";
 import { CatalogSegment } from "../../components/diagnostics/CatalogSegment";
 import { AssignmentsSegment } from "../../components/diagnostics/AssignmentsSegment";
@@ -48,7 +49,7 @@ export default function DiagnosticsScreen() {
             ]}
           >
             <Ionicons name="filter-outline" size={14} color={c.text} />
-            <Text variant="small" style={{ fontFamily: "DMSans-SemiBold" }}>
+            <Text variant="small" style={{ fontWeight: "600", color: c.text }}>
               {t.psychologist.filtersTitle}
             </Text>
             {isFilterActive(filters) && (
@@ -124,20 +125,13 @@ function SegmentBtn({ label, active, onPress, c }: SegmentBtnProps) {
       }}
       style={[
         styles.segmentBtn,
-        active && {
-          backgroundColor: c.surface,
-          shadowColor: "#000",
-          shadowOpacity: 0.05,
-          shadowOffset: { width: 0, height: 1 },
-          shadowRadius: 2,
-          elevation: 1,
-        },
+        active && [{ backgroundColor: c.surface }, shadow(1)],
       ]}
     >
       <Text
         variant="small"
         style={{
-          fontFamily: "DMSans-SemiBold",
+          fontWeight: "600",
           color: active ? c.text : c.textLight,
         }}
         numberOfLines={1}

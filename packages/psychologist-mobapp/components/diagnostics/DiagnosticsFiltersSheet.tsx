@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { testDefinitions, type Severity } from "@tirek/shared";
-import { Text } from "../ui";
+import { Text, Button } from "../ui";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useThemeColors, radius } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
@@ -90,7 +90,7 @@ export function DiagnosticsFiltersSheet({
             <View style={[styles.dragBar, { backgroundColor: c.border }]} />
           </View>
           <View style={styles.header}>
-            <Text variant="h3" style={{ fontFamily: "DMSans-Bold" }}>
+            <Text variant="h3" style={{ fontWeight: "700" }}>
               {t.psychologist.filtersTitle}
             </Text>
             <Pressable
@@ -166,31 +166,22 @@ export function DiagnosticsFiltersSheet({
               </View>
             </View>
             <View style={styles.actions}>
-              <Pressable
-                onPress={reset}
-                style={[
-                  styles.resetBtn,
-                  { borderColor: c.borderLight },
-                ]}
-              >
-                <Text
-                  variant="body"
-                  style={{ fontFamily: "DMSans-SemiBold", color: c.textLight }}
-                >
-                  {t.psychologist.filtersReset}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={apply}
-                style={[styles.applyBtn, { backgroundColor: c.primary }]}
-              >
-                <Text
-                  variant="body"
-                  style={{ fontFamily: "DMSans-SemiBold", color: "#FFF" }}
-                >
-                  {t.psychologist.filtersApply}
-                </Text>
-              </Pressable>
+              <View style={{ flex: 1 }}>
+                <Button
+                  title={t.psychologist.filtersReset}
+                  variant="secondary"
+                  size="md"
+                  onPress={reset}
+                />
+              </View>
+              <View style={{ flex: 2 }}>
+                <Button
+                  title={t.psychologist.filtersApply}
+                  variant="primary"
+                  size="md"
+                  onPress={apply}
+                />
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -230,7 +221,7 @@ function Section({ title, c, t, value, setValue, options }: SectionProps) {
           <Text
             variant="small"
             style={{
-              fontFamily: "DMSans-SemiBold",
+              fontWeight: "600",
               color: value === "" ? "#FFF" : c.textLight,
             }}
           >
@@ -256,7 +247,7 @@ function Section({ title, c, t, value, setValue, options }: SectionProps) {
               <Text
                 variant="small"
                 style={{
-                  fontFamily: "DMSans-SemiBold",
+                  fontWeight: "600",
                   color: active ? "#FFF" : c.textLight,
                 }}
                 numberOfLines={1}
@@ -315,7 +306,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   label: {
-    fontFamily: "DMSans-SemiBold",
+    fontWeight: "600",
     marginBottom: 4,
   },
   chips: {
@@ -337,27 +328,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: radius.sm,
     paddingHorizontal: 10,
-    fontFamily: "DMSans-Regular",
+    fontFamily: "Inter_400Regular",
     fontSize: 13,
   },
   actions: {
     flexDirection: "row",
     gap: 8,
     marginTop: 8,
-  },
-  resetBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  applyBtn: {
-    flex: 2,
-    height: 44,
-    borderRadius: radius.lg,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

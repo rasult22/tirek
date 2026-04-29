@@ -11,7 +11,7 @@ import {
   type TestAssignmentStatus,
 } from "../../lib/api/diagnostics";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
-import { useThemeColors, radius } from "../../lib/theme";
+import { useThemeColors, radius, type ThemeColors } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { hapticLight } from "../../lib/haptics";
 
@@ -38,18 +38,18 @@ function statusKey(s: TestAssignmentStatus) {
   }
 }
 
-function statusColors(s: TestAssignmentStatus) {
+function statusColors(s: TestAssignmentStatus, c: ThemeColors) {
   switch (s) {
     case "pending":
-      return { bg: "#FEF3C7", fg: "#B45309", border: "#FCD34D" };
+      return { bg: `${c.warning}1A`, fg: c.warning, border: `${c.warning}33` };
     case "in_progress":
-      return { bg: "#DBEAFE", fg: "#1D4ED8", border: "#93C5FD" };
+      return { bg: `${c.primary}1A`, fg: c.primary, border: `${c.primary}33` };
     case "completed":
-      return { bg: "#D1FAE5", fg: "#047857", border: "#6EE7B7" };
+      return { bg: `${c.success}1A`, fg: c.success, border: `${c.success}33` };
     case "expired":
-      return { bg: "#F3F4F6", fg: "#6B7280", border: "#D1D5DB" };
+      return { bg: c.surfaceSecondary, fg: c.textLight, border: c.borderLight };
     case "cancelled":
-      return { bg: "#F3F4F6", fg: "#9CA3AF", border: "#D1D5DB" };
+      return { bg: c.surfaceSecondary, fg: c.textLight, border: c.borderLight };
   }
 }
 
@@ -134,7 +134,7 @@ export function AssignmentsSegment() {
           <Text
             variant="small"
             style={{
-              fontFamily: "DMSans-SemiBold",
+              fontWeight: "600",
               color: statusFilter === null ? "#FFF" : c.textLight,
             }}
           >
@@ -160,7 +160,7 @@ export function AssignmentsSegment() {
               <Text
                 variant="small"
                 style={{
-                  fontFamily: "DMSans-SemiBold",
+                  fontWeight: "600",
                   color: active ? "#FFF" : c.textLight,
                 }}
               >
@@ -194,7 +194,7 @@ export function AssignmentsSegment() {
           {data.map((row) => {
             const canCancel =
               row.status === "pending" || row.status === "in_progress";
-            const sc = statusColors(row.status);
+            const sc = statusColors(row.status, c);
             return (
               <View
                 key={row.id}
@@ -212,7 +212,7 @@ export function AssignmentsSegment() {
                     <Text
                       variant="body"
                       style={{
-                        fontFamily: "DMSans-SemiBold",
+                        fontWeight: "600",
                         flexShrink: 1,
                       }}
                       numberOfLines={1}
@@ -232,7 +232,6 @@ export function AssignmentsSegment() {
                         variant="caption"
                         style={{
                           color: sc.fg,
-                          fontFamily: "DMSans-Bold",
                           fontSize: 10,
                           textDecorationLine:
                             row.status === "cancelled"
@@ -287,7 +286,7 @@ export function AssignmentsSegment() {
                   >
                     <Text
                       variant="caption"
-                      style={{ fontFamily: "DMSans-SemiBold" }}
+                      style={{ fontWeight: "600" }}
                     >
                       {t.psychologist.cancelAssignment}
                     </Text>

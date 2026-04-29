@@ -22,6 +22,7 @@ import { useT } from "../../lib/hooks/useLanguage";
 import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { hapticLight } from "../../lib/haptics";
+import { colors as ds } from "@tirek/shared/design-system";
 
 interface Props {
   filters: DiagnosticsFilters;
@@ -103,7 +104,7 @@ export function ResultsSegment({ filters }: Props) {
               <Text
                 style={{
                   fontSize: 14,
-                  fontFamily: "DMSans-SemiBold",
+                  fontWeight: "600",
                   color: c.primary,
                 }}
               >
@@ -114,7 +115,7 @@ export function ResultsSegment({ filters }: Props) {
               <View style={styles.nameRow}>
                 <Text
                   variant="body"
-                  style={{ fontFamily: "DMSans-SemiBold", flexShrink: 1 }}
+                  style={{ fontWeight: "600", flexShrink: 1 }}
                   numberOfLines={1}
                 >
                   {row.studentName ?? "Student"}
@@ -144,7 +145,7 @@ export function ResultsSegment({ filters }: Props) {
             </View>
             <View style={styles.scoreCol}>
               {row.totalScore != null && (
-                <Text variant="small" style={{ fontFamily: "DMSans-Bold" }}>
+                <Text variant="small" style={{ fontWeight: "700", color: c.text }}>
                   {row.totalScore}/{row.maxScore ?? "?"}
                 </Text>
               )}
@@ -162,10 +163,11 @@ export function ResultsSegment({ filters }: Props) {
               }}
               style={({ pressed }) => [
                 styles.aiBtn,
+                { backgroundColor: ds.brandSoft },
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <Ionicons name="sparkles" size={12} color="#4338CA" />
+              <Ionicons name="sparkles" size={12} color={c.primary} />
             </Pressable>
             <Ionicons
               name="chevron-forward"
@@ -193,7 +195,7 @@ export function ResultsSegment({ filters }: Props) {
             </View>
             <View style={styles.sheetHeader}>
               <View style={{ flex: 1 }}>
-                <Text variant="h3" style={{ fontFamily: "DMSans-Bold" }}>
+                <Text variant="h3" style={{ fontWeight: "700" }}>
                   AI-анализ
                 </Text>
                 {reportSession?.studentName && (
@@ -262,7 +264,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: "#EEF2FF",
     alignItems: "center",
     justifyContent: "center",
   },

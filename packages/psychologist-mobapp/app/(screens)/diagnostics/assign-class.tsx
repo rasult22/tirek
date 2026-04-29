@@ -13,7 +13,7 @@ import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
 import { testDefinitions } from "@tirek/shared";
 import { useT, useLanguage } from "../../../lib/hooks/useLanguage";
-import { Text } from "../../../components/ui";
+import { Text, Button } from "../../../components/ui";
 import { useThemeColors, radius } from "../../../lib/theme";
 import { diagnosticsApi } from "../../../lib/api/diagnostics";
 import { hapticLight } from "../../../lib/haptics";
@@ -144,7 +144,7 @@ export default function AssignToClassScreen() {
                   <Text
                     variant="small"
                     style={{
-                      fontFamily: "DMSans-SemiBold",
+                      fontWeight: "600",
                       color: active ? "#FFF" : c.textLight,
                     }}
                   >
@@ -179,7 +179,7 @@ export default function AssignToClassScreen() {
               <Text
                 variant="small"
                 style={{
-                  fontFamily: "DMSans-SemiBold",
+                  fontWeight: "600",
                   color: classLetter === "" ? "#FFF" : c.textLight,
                 }}
               >
@@ -205,7 +205,7 @@ export default function AssignToClassScreen() {
                   <Text
                     variant="small"
                     style={{
-                      fontFamily: "DMSans-SemiBold",
+                      fontWeight: "600",
                       color: active ? "#FFF" : c.textLight,
                     }}
                   >
@@ -298,25 +298,15 @@ export default function AssignToClassScreen() {
             </View>
           )}
 
-          <Pressable
-            onPress={() => {
-              hapticLight();
-              mutation.mutate();
-            }}
+          <Button
+            title={submitLabel}
+            variant="primary"
+            size="lg"
+            onPress={() => mutation.mutate()}
             disabled={!canSubmit}
-            style={[
-              styles.submitBtn,
-              { backgroundColor: canSubmit ? c.primary : `${c.primary}60` },
-            ]}
-          >
-            {mutation.isPending && (
-              <Ionicons name="reload-outline" size={16} color="#FFF" />
-            )}
-            <Ionicons name="clipboard-outline" size={16} color="#FFF" />
-            <Text style={styles.submitText} numberOfLines={1}>
-              {submitLabel}
-            </Text>
-          </Pressable>
+            loading={mutation.isPending}
+            style={{ marginTop: 16 }}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </>
@@ -333,7 +323,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fieldLabel: {
-    fontFamily: "DMSans-SemiBold",
+    fontWeight: "600",
     marginBottom: 4,
     marginTop: 8,
   },
@@ -368,7 +358,7 @@ const styles = StyleSheet.create({
   dateText: {
     flex: 1,
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
+    fontFamily: "Inter_400Regular",
     padding: 0,
   },
   clearBtn: {
@@ -387,28 +377,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
+    fontFamily: "Inter_400Regular",
     textAlignVertical: "top",
   },
   errorBanner: {
     padding: 12,
     borderRadius: radius.sm,
     marginTop: 8,
-  },
-  submitBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: radius.md,
-    marginTop: 16,
-  },
-  submitText: {
-    color: "#FFF",
-    fontSize: 14,
-    fontFamily: "DMSans-SemiBold",
   },
   successContainer: {
     flex: 1,
