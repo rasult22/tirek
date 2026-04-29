@@ -6,19 +6,21 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import { Text, Input, Button } from "../../components/ui";
+import { colors as ds, radius, spacing } from "@tirek/shared/design-system";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { authApi } from "../../lib/api/auth";
 import { useAuthStore } from "../../lib/store/auth-store";
-import { useThemeColors, spacing, radius } from "../../lib/theme";
-import { shadow } from "../../lib/theme/shadows";
+import { useThemeColors } from "../../lib/theme";
 import type { Language } from "@tirek/shared";
+
+const HERO_HEIGHT = 280;
+const SHEET_OVERLAP = 32;
 
 export default function LoginScreen() {
   const t = useT();
@@ -51,151 +53,138 @@ export default function LoginScreen() {
   const hasError = loginMutation.isError || roleError;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-      >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Language toggle */}
-        <View style={styles.langRow}>
-          <View
-            style={[
-              styles.langSwitch,
-              { backgroundColor: c.surface, ...shadow(1) },
-            ]}
-          >
-            {(["ru", "kz"] as Language[]).map((lang) => (
-              <Pressable
-                key={lang}
-                onPress={() => setLanguage(lang)}
-                style={[
-                  styles.langBtn,
-                  language === lang && { backgroundColor: c.primary },
-                ]}
-              >
-                <Text
-                  variant="body"
+    <View style={styles.root}>
+      {/* Hero */}
+      <SafeAreaView style={styles.hero} edges={["top"]}>
+        <View style={styles.heroInner}>
+          <View style={styles.langRow}>
+            <View style={styles.langSwitch}>
+              {(["ru", "kz"] as Language[]).map((lang) => (
+                <Pressable
+                  key={lang}
+                  onPress={() => setLanguage(lang)}
                   style={[
-                    { fontWeight: "700", color: c.textLight },
-                    language === lang && { color: "#FFFFFF" },
+                    styles.langBtn,
+                    language === lang && styles.langBtnActive,
                   ]}
                 >
-                  {lang === "ru" ? "RU" : "KZ"}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Logo */}
-        <View style={styles.logoWrap}>
-          <Image
-            source={require("../../assets/images/logo.png")}
-            style={styles.logoImg}
-            resizeMode="contain"
-          />
-          <Text variant="h1" style={styles.appName}>
-            {t.common.appName}
-          </Text>
-          <Text variant="bodyLight" style={styles.subtitle}>
-            {t.psychologist.role}
-          </Text>
-        </View>
-
-        {/* Form */}
-        <View style={styles.form}>
-          <Input
-            icon="mail-outline"
-            placeholder={t.auth.email}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-          />
-
-          <View style={styles.passwordWrap}>
-            <Input
-              icon="lock-closed-outline"
-              placeholder={t.auth.password}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
-            <Pressable
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeBtn}
-              hitSlop={8}
-            >
-              <Ionicons
-                name={showPassword ? "eye-off-outline" : "eye-outline"}
-                size={20}
-                color={c.textLight}
-              />
-            </Pressable>
-          </View>
-
-          <Text variant="small" style={styles.forgot}>
-            {t.auth.forgotPassword}
-          </Text>
-
-          {hasError && (
-            <View style={[styles.errorBox, { borderColor: `${c.danger}26` }]}>
-              <Text style={{ color: c.danger, fontSize: 14, fontWeight: "500" }}>
-                {t.auth.invalidCredentials}
-              </Text>
+                  <Text
+                    style={[
+                      styles.langText,
+                      language === lang && styles.langTextActive,
+                    ]}
+                  >
+                    {lang === "ru" ? "RU" : "KZ"}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-          )}
+          </View>
 
-          <Button
-            title={t.auth.login}
-            onPress={() => loginMutation.mutate()}
-            loading={loginMutation.isPending}
-            disabled={!email.trim() || !password.trim()}
-          />
-
-          <View style={styles.linkRow}>
-            <Text variant="small" style={{ color: c.textLight }}>
-              {t.auth.noAccount}{" "}
-            </Text>
-            <Pressable onPress={() => router.push("/(auth)/register")}>
-              <Text
-                style={{
-                  color: c.primary,
-                  fontWeight: "700",
-                  fontSize: 14,
-                }}
-              >
-                {t.auth.register}
-              </Text>
-            </Pressable>
+          <View style={styles.wordmarkWrap}>
+            <Text style={styles.wordmark}>tirek.</Text>
+            <Text style={styles.wordmarkSub}>{t.psychologist.role}</Text>
           </View>
         </View>
-      </ScrollView>
+      </SafeAreaView>
+
+      {/* Sheet */}
+      <KeyboardAvoidingView
+        style={styles.sheetWrap}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          style={styles.sheet}
+          contentContainerStyle={styles.sheetContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.form}>
+            <Input
+              icon="mail-outline"
+              placeholder={t.auth.email}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+            />
+
+            <View style={styles.passwordWrap}>
+              <Input
+                icon="lock-closed-outline"
+                placeholder={t.auth.password}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <Pressable
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeBtn}
+                hitSlop={8}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  size={20}
+                  color={c.textLight}
+                />
+              </Pressable>
+            </View>
+
+            <Text style={styles.forgot}>{t.auth.forgotPassword}</Text>
+
+            {hasError && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>
+                  {t.auth.invalidCredentials}
+                </Text>
+              </View>
+            )}
+
+            <Button
+              title={t.auth.login}
+              onPress={() => loginMutation.mutate()}
+              loading={loginMutation.isPending}
+              disabled={!email.trim() || !password.trim()}
+              size="lg"
+            />
+
+            <View style={styles.linkRow}>
+              <Text variant="small" style={{ color: c.textLight }}>
+                {t.auth.noAccount}{" "}
+              </Text>
+              <Pressable onPress={() => router.push("/(auth)/register")}>
+                <Text style={styles.linkText}>{t.auth.register}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
+    backgroundColor: ds.inkDark,
   },
-  scroll: {
-    flexGrow: 1,
+  hero: {
+    minHeight: HERO_HEIGHT,
+    backgroundColor: ds.inkDark,
+  },
+  heroInner: {
     paddingHorizontal: 24,
+    paddingTop: spacing[2],
+    paddingBottom: SHEET_OVERLAP + 24,
+    gap: spacing[10],
   },
   langRow: {
     alignItems: "flex-end",
-    paddingTop: spacing.sm,
   },
   langSwitch: {
     flexDirection: "row",
+    backgroundColor: ds.onDarkLine,
     borderRadius: radius.md,
     overflow: "hidden",
   },
@@ -203,22 +192,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  logoWrap: {
-    alignItems: "center",
-    marginTop: 48,
-    marginBottom: 36,
+  langBtnActive: {
+    backgroundColor: ds.brand,
   },
-  logoImg: {
-    width: 80,
-    height: 80,
-    marginBottom: 16,
+  langText: {
+    fontWeight: "700",
+    fontSize: 14,
+    color: ds.onDarkMute,
   },
-  appName: {
-    textAlign: "center",
+  langTextActive: {
+    color: ds.onDark,
   },
-  subtitle: {
-    textAlign: "center",
-    marginTop: 6,
+  wordmarkWrap: {
+    alignItems: "flex-start",
+  },
+  wordmark: {
+    color: ds.onDark,
+    fontFamily: "Inter_700Bold",
+    fontSize: 56,
+    lineHeight: 64,
+    letterSpacing: -2,
+  },
+  wordmarkSub: {
+    color: ds.onDarkMute,
+    fontFamily: "Inter_400Regular",
+    fontSize: 16,
+    marginTop: 4,
+  },
+  sheetWrap: {
+    flex: 1,
+    marginTop: -SHEET_OVERLAP,
+  },
+  sheet: {
+    flex: 1,
+    backgroundColor: ds.surface,
+    borderTopLeftRadius: radius["3xl"],
+    borderTopRightRadius: radius["3xl"],
+  },
+  sheetContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 36,
+    paddingBottom: 32,
   },
   form: {
     gap: 14,
@@ -235,20 +250,32 @@ const styles = StyleSheet.create({
   },
   forgot: {
     textAlign: "right",
-    opacity: 0.6,
+    fontSize: 12,
+    color: ds.inkMuted,
   },
   errorBox: {
-    backgroundColor: "rgba(179, 59, 59, 0.08)",
+    backgroundColor: ds.dangerSoft,
     borderWidth: 1,
+    borderColor: `${ds.danger}33`,
     borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 10,
     alignItems: "center",
+  },
+  errorText: {
+    color: ds.danger,
+    fontSize: 14,
+    fontWeight: "500",
   },
   linkRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 4,
+  },
+  linkText: {
+    color: ds.brand,
+    fontWeight: "700",
+    fontSize: 14,
   },
 });
