@@ -20,7 +20,7 @@ import {
   renderPrintProfileHtml,
 } from "@tirek/shared/format-print-profile";
 import { useT, useLanguage } from "../../../lib/hooks/useLanguage";
-import { Text, Button, Card, SeverityBadge } from "../../../components/ui";
+import { Text, Button, Card, SeverityBadge, H3, Body } from "../../../components/ui";
 import { SkeletonList } from "../../../components/Skeleton";
 import { ErrorState } from "../../../components/ErrorState";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
@@ -267,7 +267,7 @@ export default function StudentDetailScreen() {
           {/* Overview: Recent tests */}
           <Card>
             <View style={styles.sectionHeader}>
-              <Text variant="h3">{d.recentTests}</Text>
+              <H3>{d.recentTests}</H3>
             </View>
             {recentTests.length === 0 ? (
               <View style={styles.emptyRow}>
@@ -297,12 +297,9 @@ export default function StudentDetailScreen() {
                     </View>
                     <View style={styles.testRight}>
                       {result.totalScore != null && (
-                        <Text
-                          variant="body"
-                          style={{ fontFamily: "DMSans-Bold", color: c.text }}
-                        >
+                        <Body style={{ fontWeight: "700", color: c.text }}>
                           {result.totalScore}/{result.maxScore ?? "?"}
-                        </Text>
+                        </Body>
                       )}
                       {result.severity && (
                         <SeverityBadge severity={result.severity} />
@@ -317,18 +314,18 @@ export default function StudentDetailScreen() {
           {/* Overview: Achievements compact */}
           <Card>
             <View style={styles.sectionHeader}>
-              <Text variant="h3">{t.achievements.title}</Text>
+              <H3>{t.achievements.title}</H3>
               {studentAchievements && (
-                <Text
+                <Body
+                  size="xs"
                   style={{
-                    fontSize: 12,
-                    fontFamily: "DMSans-Bold",
-                    color: "#D97706",
+                    fontWeight: "700",
+                    color: c.warning,
                   }}
                 >
                   {studentAchievements.earnedCount}/
                   {studentAchievements.totalCount}
-                </Text>
+                </Body>
               )}
             </View>
             {achievementsLoading ? (
@@ -352,19 +349,19 @@ export default function StudentDetailScreen() {
                     style={[
                       styles.achievementCard,
                       {
-                        borderColor: "#FDE68A",
-                        backgroundColor: "#FFFBEB",
+                        borderColor: `${c.warning}33`,
+                        backgroundColor: `${c.warning}14`,
                       },
                     ]}
                   >
                     <Text style={styles.achievementEmoji}>
                       {item.achievement.emoji}
                     </Text>
-                    <Text style={styles.achievementName} numberOfLines={2}>
+                    <Body style={styles.achievementName} numberOfLines={2}>
                       {language === "kz" && item.achievement.nameKz
                         ? item.achievement.nameKz
                         : item.achievement.nameRu}
-                    </Text>
+                    </Body>
                   </View>
                 ))}
               </View>
@@ -373,7 +370,7 @@ export default function StudentDetailScreen() {
 
           {/* Timeline */}
           <View style={styles.timelineSection}>
-            <Text variant="h3">{d.timeline}</Text>
+            <H3>{d.timeline}</H3>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -393,15 +390,15 @@ export default function StudentDetailScreen() {
                       },
                     ]}
                   >
-                    <Text
-                      variant="small"
+                    <Body
+                      size="sm"
                       style={{
-                        fontFamily: "DMSans-SemiBold",
+                        fontWeight: "600",
                         color: active ? "#fff" : c.text,
                       }}
                     >
                       {f.label}
-                    </Text>
+                    </Body>
                   </Pressable>
                 );
               })}
@@ -428,17 +425,17 @@ export default function StudentDetailScreen() {
 
           {/* Danger Zone */}
           <View style={styles.dangerZone}>
-            <Text
-              variant="small"
+            <Body
+              size="sm"
               style={{
-                fontFamily: "DMSans-SemiBold",
+                fontWeight: "600",
                 color: c.textLight,
                 textTransform: "uppercase",
                 letterSpacing: 0.5,
               }}
             >
               {d.dangerZone}
-            </Text>
+            </Body>
             <Button
               variant="secondary"
               title={t.psychologist.printProfile}
@@ -507,7 +504,7 @@ function TimelineRow({ event }: { event: TimelineEvent }) {
     icon = "alert-circle-outline";
     title = d.eventCrisis;
     subtitle = event.payload.summary;
-    accent = event.payload.severity === "high" ? "#DC2626" : "#D97706";
+    accent = event.payload.severity === "high" ? c.danger : c.warning;
   }
 
   return (
@@ -604,7 +601,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textAlign: "center",
     fontSize: 9,
-    fontFamily: "DMSans-SemiBold",
+    fontWeight: "600",
     lineHeight: 12,
   },
   timelineSection: {

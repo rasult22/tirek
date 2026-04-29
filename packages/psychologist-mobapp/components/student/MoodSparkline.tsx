@@ -149,14 +149,14 @@ export function MoodSparkline({
           </Text>
           <View style={styles.detailsWrap}>
             <Text variant="small">
-              <Text variant="small" style={{ fontFamily: "DMSans-SemiBold", color: c.text }}>
+              <Text variant="small" style={{ fontWeight: "600", color: c.text }}>
                 {d.currentMood}:
               </Text>{" "}
               {latestEntry.mood}/5
             </Text>
             {latestEntry.energy != null && (
               <Text variant="small">
-                <Text variant="small" style={{ fontFamily: "DMSans-SemiBold", color: c.text }}>
+                <Text variant="small" style={{ fontWeight: "600", color: c.text }}>
                   {d.energy}:
                 </Text>{" "}
                 {latestEntry.energy}/5
@@ -164,7 +164,7 @@ export function MoodSparkline({
             )}
             {latestEntry.stressLevel != null && (
               <Text variant="small">
-                <Text variant="small" style={{ fontFamily: "DMSans-SemiBold", color: c.text }}>
+                <Text variant="small" style={{ fontWeight: "600", color: c.text }}>
                   {d.stress}:
                 </Text>{" "}
                 {latestEntry.stressLevel}/5
@@ -172,7 +172,7 @@ export function MoodSparkline({
             )}
             {latestEntry.sleepQuality != null && (
               <Text variant="small">
-                <Text variant="small" style={{ fontFamily: "DMSans-SemiBold", color: c.text }}>
+                <Text variant="small" style={{ fontWeight: "600", color: c.text }}>
                   {d.sleep}:
                 </Text>{" "}
                 {latestEntry.sleepQuality}/5
