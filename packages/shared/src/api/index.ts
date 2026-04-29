@@ -474,7 +474,11 @@ export interface TirekClient {
       deleteOverrideDay(date: string): Promise<{ success: boolean }>;
     };
     schools: {
-      get(id: string): Promise<{ id: string; name: string }>;
+      get(id: string): Promise<{ id: string; name: string; city: string | null }>;
+      create(input: {
+        name: string;
+        city?: string | null;
+      }): Promise<{ id: string; name: string; city: string | null }>;
     };
     pushToken: {
       register(input: { token: string; platform: string }): Promise<{ ok: boolean }>;
@@ -833,6 +837,11 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
       },
       schools: {
         get: (id) => request(`/psychologist/schools/${id}`),
+        create: (data) =>
+          request("/psychologist/schools", {
+            method: "POST",
+            body: JSON.stringify(data),
+          }),
       },
       pushToken: {
         register: (data) =>

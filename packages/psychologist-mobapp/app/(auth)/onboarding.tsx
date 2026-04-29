@@ -1,251 +1,501 @@
-import { useState, useCallback, type ComponentProps } from "react";
+import { useMemo, useState } from "react";
 import {
-  View,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
-  Dimensions,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Text } from "../../components/ui";
+import { useMutation } from "@tanstack/react-query";
+import {
+  Body,
+  Button,
+  Caption,
+  Eyebrow,
+  H1,
+  H3,
+  Input,
+  Text,
+} from "../../components/ui";
 import { useT } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
-import { useThemeColors, spacing, radius } from "../../lib/theme";
+import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
+import { schoolsApi } from "../../lib/api/schools";
+import { authApi } from "../../lib/api/auth";
+import { officeHoursApi } from "../../lib/api/office-hours";
+import { validateIntervals } from "@tirek/shared/office-hours";
+import type {
+  OfficeHoursDayOfWeek,
+  OfficeHoursInterval,
+} from "@tirek/shared";
 
-type IoniconsName = ComponentProps<typeof Ionicons>["name"];
+type Step = "welcome" | "school" | "schedule";
 
-interface StepStyle {
-  icon: IoniconsName;
-  color: string;
-}
+const TOTAL_STEPS = 3;
+const STEP_INDEX: Record<Exclude<Step, "welcome">, number> = {
+  school: 1,
+  schedule: 2,
+};
 
-const STEP_STYLES: StepStyle[] = [
-  { icon: "grid",          color: "#14B8A6" },
-  { icon: "people",        color: "#3B82F6" },
-  { icon: "alert-circle",  color: "#EF4444" },
-  { icon: "chatbubbles",   color: "#8B5CF6" },
-  { icon: "clipboard",     color: "#F59E0B" },
-  { icon: "calendar",      color: "#10B981" },
-  { icon: "key",           color: "#EC4899" },
-  { icon: "bar-chart",     color: "#6366F1" },
+const ALL_DAYS: { dow: OfficeHoursDayOfWeek; key: keyof DayLabels }[] = [
+  { dow: 1, key: "mon" },
+  { dow: 2, key: "tue" },
+  { dow: 3, key: "wed" },
+  { dow: 4, key: "thu" },
+  { dow: 5, key: "fri" },
+  { dow: 6, key: "sat" },
+  { dow: 7, key: "sun" },
 ];
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+interface DayLabels {
+  mon: string;
+  tue: string;
+  wed: string;
+  thu: string;
+  fri: string;
+  sat: string;
+  sun: string;
+}
+
+const DEFAULT_WORKDAYS = new Set<OfficeHoursDayOfWeek>([1, 2, 3, 4, 5]);
+const DEFAULT_START = "09:00";
+const DEFAULT_END = "17:00";
 
 export default function OnboardingScreen() {
   const t = useT();
   const c = useThemeColors();
   const router = useRouter();
   const completeOnboarding = useAuthStore((s) => s.completeOnboarding);
-
-  const [currentStep, setCurrentStep] = useState(-1);
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   const ob = t.psychologist.onboarding;
 
-  const steps = [
-    { title: ob.step1Title, desc: ob.step1Desc },
-    { title: ob.step2Title, desc: ob.step2Desc },
-    { title: ob.step3Title, desc: ob.step3Desc },
-    { title: ob.step4Title, desc: ob.step4Desc },
-    { title: ob.step5Title, desc: ob.step5Desc },
-    { title: ob.step6Title, desc: ob.step6Desc },
-    { title: ob.step7Title, desc: ob.step7Desc },
-    { title: ob.step8Title, desc: ob.step8Desc },
-  ];
+  const dayLabels: DayLabels = {
+    mon: "Пн",
+    tue: "Вт",
+    wed: "Ср",
+    thu: "Чт",
+    fri: "Пт",
+    sat: "Сб",
+    sun: "Вс",
+  };
 
-  const totalSteps = steps.length;
-  const isWelcome = currentStep === -1;
-  const isLastStep = currentStep === totalSteps - 1;
+  const [step, setStep] = useState<Step>("welcome");
 
-  const handleNext = useCallback(() => {
-    hapticLight();
-    if (isLastStep) {
+  const [schoolName, setSchoolName] = useState("");
+  const [schoolCity, setSchoolCity] = useState("");
+
+  const [workdays, setWorkdays] = useState<Set<OfficeHoursDayOfWeek>>(
+    new Set(DEFAULT_WORKDAYS),
+  );
+  const [startTime, setStartTime] = useState(DEFAULT_START);
+  const [endTime, setEndTime] = useState(DEFAULT_END);
+
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const finishMutation = useMutation({
+    mutationFn: async () => {
+      const school = await schoolsApi.create({
+        name: schoolName.trim(),
+        city: schoolCity.trim() || null,
+      });
+      const user = await authApi.updateProfile({ schoolId: school.id });
+
+      const intervals: OfficeHoursInterval[] = [
+        { start: startTime, end: endTime },
+      ];
+      const selectedDays = Array.from(workdays).sort(
+        (a, b) => a - b,
+      ) as OfficeHoursDayOfWeek[];
+      const allDays: OfficeHoursDayOfWeek[] = [1, 2, 3, 4, 5, 6, 7];
+      await Promise.all(
+        allDays.map((dow) =>
+          officeHoursApi.upsertTemplateDay(
+            dow,
+            selectedDays.includes(dow) ? intervals : [],
+            null,
+          ),
+        ),
+      );
+
+      return user;
+    },
+    onSuccess: (user) => {
+      updateUser({ schoolId: (user as { schoolId?: string | null }).schoolId ?? null });
       completeOnboarding();
       router.replace("/(tabs)");
-    } else {
-      setCurrentStep((s) => s + 1);
-    }
-  }, [isLastStep, completeOnboarding, router]);
+    },
+    onError: () => {
+      setSubmitError(ob.wizardErrorGeneric);
+    },
+  });
 
-  const handleBack = useCallback(() => {
+  const isSchoolValid = schoolName.trim().length > 0;
+
+  const scheduleError = useMemo(() => {
+    if (workdays.size === 0) return ob.wizardScheduleAtLeastOneDay;
+    const result = validateIntervals([{ start: startTime, end: endTime }]);
+    if (!result.ok) return ob.wizardScheduleInvalidRange;
+    return null;
+  }, [
+    workdays,
+    startTime,
+    endTime,
+    ob.wizardScheduleAtLeastOneDay,
+    ob.wizardScheduleInvalidRange,
+  ]);
+
+  const isScheduleValid = scheduleError === null;
+
+  function handleStart() {
     hapticLight();
-    setCurrentStep((s) => Math.max(-1, s - 1));
-  }, []);
+    setStep("school");
+  }
 
-  const handleSkip = useCallback(() => {
+  function handleBack() {
     hapticLight();
-    completeOnboarding();
-    router.replace("/(tabs)");
-  }, [completeOnboarding, router]);
+    setSubmitError(null);
+    if (step === "schedule") setStep("school");
+    else if (step === "school") setStep("welcome");
+  }
 
-  // ── WELCOME SCREEN ──
-  if (isWelcome) {
+  function handleNextFromSchool() {
+    if (!isSchoolValid) return;
+    hapticLight();
+    setStep("schedule");
+  }
+
+  function toggleDay(dow: OfficeHoursDayOfWeek) {
+    hapticLight();
+    setWorkdays((prev) => {
+      const next = new Set(prev);
+      if (next.has(dow)) next.delete(dow);
+      else next.add(dow);
+      return next;
+    });
+  }
+
+  function handleFinish() {
+    if (!isScheduleValid || finishMutation.isPending) return;
+    setSubmitError(null);
+    finishMutation.mutate();
+  }
+
+  // ── Welcome ───────────────────────────────────────────────────────
+  if (step === "welcome") {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
         <View style={styles.welcomeContent}>
-          {/* Logo */}
-          <View
-            style={[styles.welcomeLogo, { backgroundColor: STEP_STYLES[0].color }]}
-          >
+          <View style={[styles.welcomeLogo, { backgroundColor: c.primary }]}>
             <Ionicons name="sparkles" size={36} color="#FFFFFF" />
           </View>
 
-          {/* Title */}
-          <Text variant="h1" style={styles.welcomeTitle}>
-            {ob.welcome}
-          </Text>
-          <Text variant="bodyLight" style={styles.welcomeSubtitle}>
-            {ob.welcomeSubtitle}
-          </Text>
+          <H1 style={styles.welcomeTitle}>{ob.wizardWelcomeTitle}</H1>
+          <Body style={[styles.welcomeSubtitle, { color: c.textLight }]}>
+            {ob.wizardWelcomeSubtitle}
+          </Body>
 
-          {/* Feature grid */}
-          <View style={styles.grid}>
-            {STEP_STYLES.map((style, i) => (
-              <View key={i} style={styles.gridItem}>
-                <View
-                  style={[styles.gridIcon, { backgroundColor: style.color }]}
-                >
-                  <Ionicons name={style.icon} size={20} color="#FFFFFF" />
-                </View>
-                <Text style={[styles.gridLabel, { color: c.textLight }]}>
-                  {steps[i].title}
-                </Text>
-              </View>
-            ))}
+          <View style={styles.welcomeBullets}>
+            <WelcomeBullet
+              icon="business-outline"
+              text={ob.wizardSchoolTitle}
+            />
+            <WelcomeBullet
+              icon="time-outline"
+              text={ob.wizardScheduleTitle}
+            />
           </View>
+        </View>
 
-          {/* Start button */}
-          <Pressable
-            onPress={handleNext}
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              { backgroundColor: c.primary },
-              pressed && styles.btnPressed,
-            ]}
-          >
-            <Text style={styles.primaryBtnText}>{t.common.next}</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-          </Pressable>
-
-          {/* Skip */}
-          <Pressable onPress={handleSkip} style={styles.skipBtn}>
-            <Text style={[styles.skipText, { color: c.textLight }]}>
-              {ob.skip}
-            </Text>
-          </Pressable>
+        <View style={styles.bottomBar}>
+          <Button title={ob.wizardWelcomeCta} onPress={handleStart} />
         </View>
       </SafeAreaView>
     );
   }
 
-  // ── STEP SCREENS ──
-  const style = STEP_STYLES[currentStep];
-  const step = steps[currentStep];
+  // ── School / Schedule shared chrome ──────────────────────────────
+  const stepIndex = STEP_INDEX[step];
+  const progress = stepIndex / TOTAL_STEPS;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable
-          onPress={handleBack}
-          style={[styles.backBtn, { backgroundColor: c.surfaceSecondary }]}
-        >
-          <Ionicons name="arrow-back" size={16} color={c.text} />
-        </Pressable>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.header}>
+          <Pressable
+            onPress={handleBack}
+            style={[styles.backBtn, { backgroundColor: c.surfaceSecondary }]}
+            hitSlop={8}
+          >
+            <Ionicons name="arrow-back" size={18} color={c.text} />
+          </Pressable>
+          <Caption style={{ color: c.textLight }}>
+            {stepIndex + 1} {ob.stepOf} {TOTAL_STEPS}
+          </Caption>
+          <View style={styles.backBtn} />
+        </View>
 
-        <Text
-          variant="body"
-          style={{ fontWeight: "700", color: c.textLight }}
-        >
-          {currentStep + 1} {ob.stepOf} {totalSteps}
-        </Text>
-
-        <Pressable onPress={handleSkip} hitSlop={8}>
-          <Text style={{ fontSize: 13, fontWeight: "600", color: c.textLight }}>
-            {ob.skip}
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Progress bar */}
-      <View style={styles.progressWrap}>
-        <View
-          style={[
-            styles.progressTrack,
-            { backgroundColor: c.surfaceSecondary },
-          ]}
-        >
+        <View style={styles.progressWrap}>
           <View
-            style={[
-              styles.progressFill,
-              {
-                backgroundColor: style.color,
-                width: `${((currentStep + 1) / totalSteps) * 100}%`,
-              },
-            ]}
-          />
-        </View>
-      </View>
-
-      {/* Content */}
-      <View style={styles.stepContent}>
-        <View style={[styles.stepIcon, { backgroundColor: style.color }]}>
-          <Ionicons name={style.icon} size={48} color="#FFFFFF" />
+            style={[styles.progressTrack, { backgroundColor: c.surfaceSecondary }]}
+          >
+            <View
+              style={[
+                styles.progressFill,
+                { backgroundColor: c.primary, width: `${progress * 100}%` },
+              ]}
+            />
+          </View>
         </View>
 
-        <Text variant="h1" style={styles.stepTitle}>
-          {step.title}
-        </Text>
-        <Text variant="bodyLight" style={styles.stepDesc}>
-          {step.desc}
-        </Text>
-      </View>
-
-      {/* Bottom controls */}
-      <View style={styles.bottomControls}>
-        {/* Dots */}
-        <View style={styles.dots}>
-          {steps.map((_, i) => (
-            <Pressable
-              key={i}
-              onPress={() => {
-                hapticLight();
-                setCurrentStep(i);
-              }}
-              hitSlop={4}
-            >
-              <View
-                style={[
-                  styles.dot,
-                  i === currentStep
-                    ? { width: 24, backgroundColor: style.color }
-                    : i < currentStep
-                      ? { width: 6, backgroundColor: `${c.textLight}50` }
-                      : { width: 6, backgroundColor: `${c.textLight}25` },
-                ]}
-              />
-            </Pressable>
-          ))}
-        </View>
-
-        {/* Next / Finish button */}
-        <Pressable
-          onPress={handleNext}
-          style={({ pressed }) => [
-            styles.primaryBtn,
-            { backgroundColor: style.color },
-            pressed && styles.btnPressed,
-          ]}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.primaryBtnText}>
-            {isLastStep ? ob.letsStart : t.common.next}
-          </Text>
-          <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
-        </Pressable>
-      </View>
+          {step === "school" ? (
+            <>
+              <H1 style={styles.stepTitle}>{ob.wizardSchoolTitle}</H1>
+              <Body style={[styles.stepSubtitle, { color: c.textLight }]}>
+                {ob.wizardSchoolSubtitle}
+              </Body>
+
+              <View style={styles.field}>
+                <Eyebrow style={[styles.label, { color: c.textLight }]}>
+                  {ob.wizardSchoolNameLabel}
+                </Eyebrow>
+                <Input
+                  icon="business-outline"
+                  placeholder={ob.wizardSchoolNamePlaceholder}
+                  value={schoolName}
+                  onChangeText={setSchoolName}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                />
+              </View>
+
+              <View style={styles.field}>
+                <Eyebrow style={[styles.label, { color: c.textLight }]}>
+                  {ob.wizardSchoolCityLabel}{" "}
+                  <Eyebrow style={{ color: c.textLight, opacity: 0.7 }}>
+                    · {ob.wizardSchoolCityOptional}
+                  </Eyebrow>
+                </Eyebrow>
+                <Input
+                  icon="location-outline"
+                  placeholder={ob.wizardSchoolCityPlaceholder}
+                  value={schoolCity}
+                  onChangeText={setSchoolCity}
+                  autoCapitalize="words"
+                  returnKeyType="done"
+                />
+              </View>
+            </>
+          ) : (
+            <>
+              <H1 style={styles.stepTitle}>{ob.wizardScheduleTitle}</H1>
+              <Body style={[styles.stepSubtitle, { color: c.textLight }]}>
+                {ob.wizardScheduleSubtitle}
+              </Body>
+
+              <View style={styles.field}>
+                <Eyebrow style={[styles.label, { color: c.textLight }]}>
+                  {ob.wizardScheduleWorkdays}
+                </Eyebrow>
+                <View style={styles.daysRow}>
+                  {ALL_DAYS.map(({ dow, key }) => {
+                    const active = workdays.has(dow);
+                    return (
+                      <Pressable
+                        key={dow}
+                        onPress={() => toggleDay(dow)}
+                        style={[
+                          styles.dayChip,
+                          {
+                            backgroundColor: active
+                              ? c.primary
+                              : c.surfaceSecondary,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            color: active ? "#FFFFFF" : c.text,
+                            fontWeight: "700",
+                            fontSize: 13,
+                          }}
+                        >
+                          {dayLabels[key]}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              <View style={styles.field}>
+                <Eyebrow style={[styles.label, { color: c.textLight }]}>
+                  {ob.wizardScheduleHours}
+                </Eyebrow>
+                <View style={styles.timeRow}>
+                  <TimeInput
+                    label={ob.wizardScheduleStart}
+                    value={startTime}
+                    onChange={setStartTime}
+                  />
+                  <View style={styles.timeDash}>
+                    <Text style={{ color: c.textLight, fontSize: 18 }}>—</Text>
+                  </View>
+                  <TimeInput
+                    label={ob.wizardScheduleEnd}
+                    value={endTime}
+                    onChange={setEndTime}
+                  />
+                </View>
+              </View>
+
+              {scheduleError ? (
+                <View
+                  style={[
+                    styles.hint,
+                    { backgroundColor: `${c.danger}14`, borderColor: c.danger },
+                  ]}
+                >
+                  <Ionicons
+                    name="alert-circle-outline"
+                    size={16}
+                    color={c.danger}
+                  />
+                  <Body size="sm" style={{ color: c.danger, flex: 1 }}>
+                    {scheduleError}
+                  </Body>
+                </View>
+              ) : (
+                <View
+                  style={[
+                    styles.hint,
+                    {
+                      backgroundColor: `${c.primary}10`,
+                      borderColor: `${c.primary}30`,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={16}
+                    color={c.primary}
+                  />
+                  <Body size="sm" style={{ color: c.text, flex: 1 }}>
+                    {ob.wizardScheduleHint}
+                  </Body>
+                </View>
+              )}
+            </>
+          )}
+
+          {submitError ? (
+            <View
+              style={[
+                styles.hint,
+                { backgroundColor: `${c.danger}14`, borderColor: c.danger },
+              ]}
+            >
+              <Ionicons name="alert-circle-outline" size={16} color={c.danger} />
+              <Body size="sm" style={{ color: c.danger, flex: 1 }}>
+                {submitError}
+              </Body>
+            </View>
+          ) : null}
+        </ScrollView>
+
+        <View style={styles.bottomBar}>
+          {step === "school" ? (
+            <Button
+              title={t.common.next}
+              onPress={handleNextFromSchool}
+              disabled={!isSchoolValid}
+            />
+          ) : (
+            <Button
+              title={
+                finishMutation.isPending ? ob.wizardSaving : ob.wizardFinish
+              }
+              onPress={handleFinish}
+              loading={finishMutation.isPending}
+              disabled={!isScheduleValid}
+            />
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+function WelcomeBullet({
+  icon,
+  text,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  text: string;
+}) {
+  const c = useThemeColors();
+  return (
+    <View style={styles.bulletRow}>
+      <View
+        style={[
+          styles.bulletIcon,
+          { backgroundColor: `${c.primary}14` },
+        ]}
+      >
+        <Ionicons name={icon} size={18} color={c.primary} />
+      </View>
+      <H3 style={{ flex: 1 }}>{text}</H3>
+    </View>
+  );
+}
+
+function TimeInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const c = useThemeColors();
+  return (
+    <View style={styles.timeBox}>
+      <Caption style={[styles.timeLabel, { color: c.textLight }]}>
+        {label}
+      </Caption>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder="00:00"
+        placeholderTextColor={c.textLight}
+        keyboardType="numbers-and-punctuation"
+        maxLength={5}
+        style={[
+          styles.timeInput,
+          {
+            color: c.text,
+            backgroundColor: c.surface,
+            borderColor: c.borderLight,
+          },
+        ]}
+      />
+    </View>
   );
 }
 
@@ -254,7 +504,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // ── Welcome ──
+  // Welcome
   welcomeContent: {
     flex: 1,
     justifyContent: "center",
@@ -276,67 +526,27 @@ const styles = StyleSheet.create({
   welcomeSubtitle: {
     textAlign: "center",
     marginBottom: 32,
-    lineHeight: 22,
+    paddingHorizontal: 16,
   },
-
-  // ── Grid ──
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    marginBottom: 32,
+  welcomeBullets: {
     width: "100%",
+    gap: spacing.md,
+    paddingHorizontal: 8,
   },
-  gridItem: {
-    width: "25%",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  gridIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  gridLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    textAlign: "center",
-    lineHeight: 14,
-    paddingHorizontal: 2,
-  },
-
-  // ── Buttons ──
-  primaryBtn: {
+  bulletRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: spacing.md,
+  },
+  bulletIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    width: "100%",
-    paddingVertical: 16,
-    borderRadius: radius.lg,
-  },
-  primaryBtnText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  btnPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.97 }],
-  },
-  skipBtn: {
-    marginTop: 12,
-    paddingVertical: 8,
-  },
-  skipText: {
-    fontSize: 14,
-    fontWeight: "500",
   },
 
-  // ── Header ──
+  // Header / progress
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -352,11 +562,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
-  // ── Progress ──
   progressWrap: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: spacing.lg,
   },
   progressTrack: {
     height: 4,
@@ -368,45 +576,81 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
 
-  // ── Step content ──
-  stepContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  stepIcon: {
-    width: 112,
-    height: 112,
-    borderRadius: 32,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 32,
+  // Step content
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: spacing.lg,
+    gap: spacing.lg,
   },
   stepTitle: {
-    textAlign: "center",
-    marginBottom: 12,
+    marginBottom: 4,
   },
-  stepDesc: {
-    textAlign: "center",
-    lineHeight: 22,
-    maxWidth: 300,
+  stepSubtitle: {
+    marginBottom: spacing.md,
+  },
+  field: {
+    gap: spacing.sm,
+  },
+  label: {
+    marginLeft: 2,
   },
 
-  // ── Bottom ──
-  bottomControls: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-  },
-  dots: {
+  // Days
+  daysRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 20,
+    gap: spacing.xs,
+    flexWrap: "wrap",
   },
-  dot: {
-    height: 6,
-    borderRadius: 3,
+  dayChip: {
+    minWidth: 44,
+    height: 44,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+
+  // Time
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: spacing.sm,
+  },
+  timeBox: {
+    flex: 1,
+    gap: 6,
+  },
+  timeLabel: {
+    marginLeft: 2,
+    textTransform: "uppercase",
+  },
+  timeInput: {
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  timeDash: {
+    paddingBottom: 14,
+  },
+
+  // Hint
+  hint: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+  },
+
+  // Bottom bar
+  bottomBar: {
+    paddingHorizontal: 20,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
 });

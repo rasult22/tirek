@@ -34,6 +34,7 @@ export type UpdateUserProfileInput = {
   name?: string;
   language?: string;
   avatarId?: string | null;
+  schoolId?: string | null;
 };
 
 export type PersistedInviteCodeForAuth = {
@@ -81,6 +82,7 @@ function publicUser(user: PersistedUser) {
     avatarId: user.avatarId,
     grade: user.grade,
     classLetter: user.classLetter,
+    schoolId: user.schoolId,
   };
 }
 
@@ -219,6 +221,7 @@ export function createAuthService(deps: AuthServiceDeps) {
         avatarId: user.avatarId,
         grade: user.grade,
         classLetter: user.classLetter,
+        schoolId: user.schoolId,
         createdAt: user.createdAt,
       };
     },
