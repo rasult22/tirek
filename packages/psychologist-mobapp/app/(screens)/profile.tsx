@@ -4,21 +4,20 @@ import {
   ScrollView,
   StyleSheet,
   Pressable,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
-import { Text, Card } from "../../components/ui";
+import { Text, Card, Button, Input, Body, H2, H3 } from "../../components/ui";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { authApi } from "../../lib/api/auth";
-import { useThemeColors, spacing, radius } from "../../lib/theme";
+import { useThemeColors, radius } from "../../lib/theme";
+import { colors as ds } from "@tirek/shared/design-system";
 import { checkForUpdate } from "../../lib/updates";
 import { hapticLight } from "../../lib/haptics";
 import type { Language } from "@tirek/shared";
@@ -72,32 +71,14 @@ export default function ProfileScreen() {
       >
         {/* User card */}
         {!editing ? (
-          <Card elevated style={styles.userCard}>
-            <View
-              style={[
-                styles.avatarWrap,
-                { backgroundColor: `${c.primary}14` },
-              ]}
-            >
+          <Card variant="floating" style={styles.userCard}>
+            <View style={[styles.avatarWrap, { backgroundColor: ds.brandSoft }]}>
               <Ionicons name="person" size={36} color={c.primaryDark} />
             </View>
-            <Text variant="h2" style={styles.userName}>
-              {user?.name}
-            </Text>
-            <Text variant="bodyLight">{user?.email}</Text>
-            <View
-              style={[
-                styles.roleBadge,
-                { backgroundColor: `${c.primary}14` },
-              ]}
-            >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontWeight: "700",
-                  color: c.primaryDark,
-                }}
-              >
+            <H2 style={styles.userName}>{user?.name}</H2>
+            <Body style={{ color: c.textLight }}>{user?.email}</Body>
+            <View style={[styles.roleBadge, { backgroundColor: ds.brandSoft }]}>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: c.primaryDark }}>
                 {t.psychologist.role}
               </Text>
             </View>
@@ -105,75 +86,42 @@ export default function ProfileScreen() {
               onPress={startEdit}
               style={({ pressed }) => [
                 styles.editBtn,
-                { backgroundColor: `${c.primary}14` },
+                { backgroundColor: ds.brandSoft },
                 pressed && { opacity: 0.8 },
               ]}
             >
               <Ionicons name="pencil" size={14} color={c.primaryDark} />
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "700",
-                  color: c.primaryDark,
-                }}
-              >
+              <Text style={{ fontSize: 14, fontWeight: "700", color: c.primaryDark }}>
                 {t.common.edit}
               </Text>
             </Pressable>
           </Card>
         ) : (
-          <Card elevated style={styles.editCard}>
-            <Text variant="h3" style={{ marginBottom: 16 }}>
-              {t.common.edit}
-            </Text>
+          <Card variant="floating" style={styles.editCard}>
+            <H3 style={{ marginBottom: 16 }}>{t.common.edit}</H3>
 
             <Text variant="caption" style={{ marginBottom: 6 }}>
               {t.auth.name}
             </Text>
-            <TextInput
-              value={editName}
-              onChangeText={setEditName}
-              style={[
-                styles.editInput,
-                {
-                  borderColor: c.borderLight,
-                  backgroundColor: c.surfaceSecondary,
-                  color: c.text,
-                },
-              ]}
-              placeholderTextColor={c.textLight}
-            />
+            <Input value={editName} onChangeText={setEditName} />
 
             <View style={styles.editActions}>
-              <Pressable
+              <Button
+                title={t.common.cancel}
+                variant="secondary"
                 onPress={() => setEditing(false)}
-                style={[styles.cancelBtn, { borderColor: c.borderLight }]}
-              >
-                <Ionicons name="close" size={14} color={c.textLight} />
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "700",
-                    color: c.textLight,
-                  }}
-                >
-                  {t.common.cancel}
-                </Text>
-              </Pressable>
-              <Pressable
+                size="md"
+                style={{ flex: 1 }}
+              />
+              <Button
+                title={t.common.save}
+                variant="primary"
                 onPress={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending || !editName.trim()}
-                style={[
-                  styles.saveBtn,
-                  { backgroundColor: c.primary },
-                  (saveMutation.isPending || !editName.trim()) && {
-                    opacity: 0.5,
-                  },
-                ]}
-              >
-                <Ionicons name="checkmark" size={14} color="#FFFFFF" />
-                <Text style={styles.saveText}>{t.common.save}</Text>
-              </Pressable>
+                loading={saveMutation.isPending}
+                size="md"
+                style={{ flex: 1 }}
+              />
             </View>
           </Card>
         )}
@@ -188,26 +136,13 @@ export default function ProfileScreen() {
         >
           <Card style={styles.sectionCard}>
             <View style={styles.scheduleRow}>
-              <View
-                style={[
-                  styles.sectionIcon,
-                  { backgroundColor: `${c.primary}14` },
-                ]}
-              >
-                <Ionicons
-                  name="calendar-outline"
-                  size={18}
-                  color={c.primaryDark}
-                />
+              <View style={[styles.sectionIcon, { backgroundColor: ds.brandSoft }]}>
+                <Ionicons name="calendar-outline" size={18} color={c.primaryDark} />
               </View>
-              <Text variant="body" style={{ fontWeight: "700", flex: 1 }}>
+              <Body style={{ fontWeight: "700", flex: 1 }}>
                 {t.officeHours.pageTitle}
-              </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={c.textLight}
-              />
+              </Body>
+              <Ionicons name="chevron-forward" size={18} color={c.textLight} />
             </View>
           </Card>
         </Pressable>
@@ -215,21 +150,12 @@ export default function ProfileScreen() {
         {/* Language switcher */}
         <Card style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <View
-              style={[
-                styles.sectionIcon,
-                { backgroundColor: `${c.primary}14` },
-              ]}
-            >
-              <Ionicons
-                name="globe-outline"
-                size={18}
-                color={c.primaryDark}
-              />
+            <View style={[styles.sectionIcon, { backgroundColor: ds.brandSoft }]}>
+              <Ionicons name="globe-outline" size={18} color={c.primaryDark} />
             </View>
-            <Text variant="body" style={{ fontWeight: "700", flex: 1 }}>
+            <Body style={{ fontWeight: "700", flex: 1 }}>
               {t.profile.language}
-            </Text>
+            </Body>
           </View>
           <View style={styles.langBtns}>
             {(["ru", "kz"] as Language[]).map((lang) => (
@@ -262,10 +188,8 @@ export default function ProfileScreen() {
         <Card style={styles.sectionCard}>
           <View style={styles.versionRow}>
             <View style={{ flex: 1 }}>
-              <Text variant="body" style={{ fontWeight: "600" }}>
-                {t.common.appName}
-              </Text>
-              <Text variant="small" style={{ color: c.textLight, marginTop: 2 }}>
+              <Body style={{ fontWeight: "600" }}>{t.common.appName}</Body>
+              <Text variant="bodyXs" style={{ color: c.textLight, marginTop: 2 }}>
                 v{Constants.expoConfig?.version ?? "1.0.0"}
               </Text>
             </View>
@@ -276,12 +200,12 @@ export default function ProfileScreen() {
               }}
               style={({ pressed }) => [
                 styles.updateBtn,
-                { backgroundColor: `${c.primary}1A` },
+                { backgroundColor: ds.brandSoft },
                 pressed && { opacity: 0.7 },
               ]}
             >
               <Ionicons name="cloud-download-outline" size={16} color={c.primary} />
-              <Text variant="small" style={{ color: c.primary, fontWeight: "600" }}>
+              <Text variant="bodyXs" style={{ color: c.primary, fontWeight: "600" }}>
                 {t.profile.update}
               </Text>
             </Pressable>
@@ -289,22 +213,12 @@ export default function ProfileScreen() {
         </Card>
 
         {/* Logout */}
-        <Pressable
+        <Button
+          title={t.auth.logout}
+          variant="danger"
           onPress={() => setShowLogout(true)}
-          style={({ pressed }) => [
-            styles.logoutBtn,
-            {
-              borderColor: `${c.danger}33`,
-              backgroundColor: `${c.danger}0A`,
-            },
-            pressed && { opacity: 0.85 },
-          ]}
-        >
-          <Ionicons name="log-out-outline" size={18} color={c.danger} />
-          <Text style={{ fontSize: 14, fontWeight: "700", color: c.danger }}>
-            {t.auth.logout}
-          </Text>
-        </Pressable>
+          style={styles.logoutBtn}
+        />
       </ScrollView>
       </KeyboardAvoidingView>
 
@@ -363,41 +277,10 @@ const styles = StyleSheet.create({
   editCard: {
     marginBottom: 0,
   },
-  editInput: {
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-  },
   editActions: {
     flexDirection: "row",
     gap: 12,
     marginTop: 24,
-  },
-  cancelBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-  },
-  saveBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-  },
-  saveText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
 
   // Sections
@@ -452,13 +335,6 @@ const styles = StyleSheet.create({
 
   // Logout
   logoutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
     marginTop: 16,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    paddingVertical: 14,
   },
 });

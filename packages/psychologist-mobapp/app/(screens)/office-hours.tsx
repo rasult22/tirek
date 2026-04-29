@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Text, Card, Button } from "../../components/ui";
+import { Text, Card, Button, Body, H4 } from "../../components/ui";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { officeHoursApi } from "../../lib/api/office-hours";
 import { useAuthStore } from "../../lib/store/auth-store";
@@ -155,9 +155,9 @@ export default function OfficeHoursScreen() {
       <Stack.Screen options={{ title: "Расписание" }} />
       <ScrollView contentContainerStyle={styles.container}>
         {/* ── Шаблон недели ───────────────────────────────────────── */}
-        <Text variant="h3">Шаблон недели</Text>
+        <H4>Шаблон недели</H4>
         {loadingTemplate ? (
-          <Text style={{ color: c.textLight }}>Загрузка…</Text>
+          <Body style={{ color: c.textLight }}>Загрузка…</Body>
         ) : (
           <Card style={styles.templateCard}>
             {([1, 2, 3, 4, 5, 6, 7] as OfficeHoursDayOfWeek[]).map((dow, i) => {
@@ -176,7 +176,7 @@ export default function OfficeHoursScreen() {
                     pressed && { opacity: 0.6 },
                   ]}
                 >
-                  <Text style={styles.dowLabel}>{DOW_LABELS[dow]}</Text>
+                  <Body style={styles.dowLabel}>{DOW_LABELS[dow]}</Body>
                   <Text
                     style={[
                       styles.dowValue,
@@ -193,14 +193,12 @@ export default function OfficeHoursScreen() {
         )}
 
         {/* ── Исключения ──────────────────────────────────────────── */}
-        <Text variant="h3" style={{ marginTop: spacing.md }}>
-          Исключения
-        </Text>
+        <H4 style={{ marginTop: spacing.md }}>Исключения</H4>
         <Text variant="caption" style={{ color: c.textLight }}>
           Ближайшие 4 недели
         </Text>
         {sortedOverrides.length === 0 ? (
-          <Text style={{ color: c.textLight }}>Исключений нет.</Text>
+          <Body style={{ color: c.textLight }}>Исключений нет.</Body>
         ) : (
           <Card style={styles.overridesCard}>
             {sortedOverrides.map((ov: OfficeHoursOverrideEntry, i) => (
@@ -226,7 +224,7 @@ export default function OfficeHoursScreen() {
                     });
                   }}
                 >
-                  <Text style={styles.overrideDate}>{formatHumanDate(ov.date)}</Text>
+                  <Body style={styles.overrideDate}>{formatHumanDate(ov.date)}</Body>
                   <Text style={{ color: c.textLight }}>
                     {formatIntervals(ov.intervals)}
                     {ov.notes ? ` · ${ov.notes}` : ""}
@@ -256,9 +254,7 @@ export default function OfficeHoursScreen() {
         />
 
         {/* ── Превью ──────────────────────────────────────────────── */}
-        <Text variant="h3" style={{ marginTop: spacing.md }}>
-          Превью
-        </Text>
+        <H4 style={{ marginTop: spacing.md }}>Превью</H4>
         <Card style={styles.previewCard}>
           <PreviewLine label="Сегодня" resolved={todayResolved} colors={c} />
           <View style={{ height: 1, backgroundColor: c.borderLight, marginVertical: 8 }} />
@@ -318,11 +314,11 @@ function PreviewLine({
   return (
     <View>
       <Text style={{ color: colors.textLight }}>
-        <Text style={{ color: colors.text, fontFamily: "DMSans-SemiBold" }}>{label}: </Text>
+        <Text style={{ color: colors.text, fontWeight: "600" }}>{label}: </Text>
         {offDay ? "выходной" : `работает ${formatIntervals(resolved.intervals)}`}
       </Text>
       {resolved.notes ? (
-        <Text variant="small" style={{ color: colors.textLight, marginTop: 2 }}>
+        <Text variant="bodyXs" style={{ color: colors.textLight, marginTop: 2 }}>
           {resolved.notes}
         </Text>
       ) : null}
@@ -349,7 +345,7 @@ const styles = StyleSheet.create({
   },
   dowLabel: {
     width: 28,
-    fontFamily: "DMSans-SemiBold",
+    fontWeight: "600",
   },
   dowValue: {
     flex: 1,
@@ -368,7 +364,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   overrideDate: {
-    fontFamily: "DMSans-SemiBold",
+    fontWeight: "600",
   },
   previewCard: {
     padding: spacing.md,
