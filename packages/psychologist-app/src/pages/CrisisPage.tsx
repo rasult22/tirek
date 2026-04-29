@@ -216,7 +216,7 @@ export function CrisisPage() {
             <span
               className={clsx(
                 "w-2 h-2 rounded-full",
-                !isRed ? "bg-yellow-400" : "bg-yellow-400/50",
+                !isRed ? "bg-warning" : "bg-warning/50",
               )}
             />
             {t.psychologist.yellowFeed}
@@ -225,8 +225,8 @@ export function CrisisPage() {
                 className={clsx(
                   "px-1.5 py-0.5 text-[10px] font-bold rounded-full",
                   !isRed
-                    ? "bg-yellow-400 text-white"
-                    : "bg-yellow-400/10 text-yellow-600",
+                    ? "bg-warning text-white"
+                    : "bg-warning/10 text-warning",
                 )}
               >
                 {yellowSignals.length}
@@ -264,7 +264,7 @@ export function CrisisPage() {
                           "w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold",
                           isRed
                             ? "bg-danger/10 text-danger"
-                            : "bg-yellow-400/10 text-yellow-600",
+                            : "bg-warning/10 text-warning",
                         )}
                       >
                         {signal.studentName.charAt(0).toUpperCase()}
@@ -297,7 +297,7 @@ export function CrisisPage() {
                               ? "bg-danger text-white"
                               : "bg-warning text-white"),
                           signal.severity === "medium" &&
-                            "bg-yellow-400 text-white",
+                            "bg-warning text-white",
                           signal.severity === "low" &&
                             "bg-surface-secondary text-text-light",
                         )}
@@ -312,7 +312,7 @@ export function CrisisPage() {
                         "mb-3 rounded-xl px-3 py-2.5 border",
                         isRed
                           ? "bg-danger/5 border-danger/10"
-                          : "bg-yellow-400/5 border-yellow-400/15",
+                          : "bg-warning/5 border-warning/15",
                       )}
                     >
                       <p className="text-[13px] text-text-main leading-relaxed">
@@ -464,7 +464,7 @@ export function CrisisPage() {
                                 "px-1.5 py-0.5 text-[10px] font-bold rounded-md",
                                 signal.type === "acute_crisis"
                                   ? "bg-danger/10 text-danger"
-                                  : "bg-yellow-400/10 text-yellow-600",
+                                  : "bg-warning/10 text-warning",
                               )}
                             >
                               {signal.type === "acute_crisis"
@@ -611,7 +611,7 @@ export function CrisisPage() {
                       "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
                       resolveSignal.type === "acute_crisis"
                         ? "bg-danger/10 text-danger"
-                        : "bg-yellow-400/10 text-yellow-600",
+                        : "bg-warning/10 text-warning",
                     )}
                   >
                     {resolveSignal.studentName.charAt(0).toUpperCase()}

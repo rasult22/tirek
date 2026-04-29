@@ -139,7 +139,7 @@ export function AssignToStudentPage() {
                 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </div>
-          <div className="max-h-72 overflow-y-auto border border-border rounded-lg divide-y divide-gray-50">
+          <div className="max-h-72 overflow-y-auto border border-border rounded-lg divide-y divide-border-light">
             {filteredStudents.map((s) => (
               <button
                 key={s.id}

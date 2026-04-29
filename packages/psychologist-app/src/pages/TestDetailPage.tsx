@@ -75,14 +75,14 @@ export function TestDetailPage() {
       </div>
 
       {tips && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <div className="rounded-xl border border-warning/30 bg-warning/10 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Lightbulb size={16} className="text-amber-600" />
-            <span className="text-sm font-bold text-amber-900">
+            <Lightbulb size={16} className="text-warning" />
+            <span className="text-sm font-bold text-text-main">
               {t.psychologist.testWhenToAssign}
             </span>
           </div>
-          <p className="text-sm leading-relaxed text-amber-900">{tips}</p>
+          <p className="text-sm leading-relaxed text-text-main">{tips}</p>
         </div>
       )}
 
