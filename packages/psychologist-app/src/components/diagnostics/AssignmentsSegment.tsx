@@ -31,15 +31,15 @@ type Translations = {
 function statusColor(status: TestAssignmentStatus): string {
   switch (status) {
     case "pending":
-      return "bg-amber-50 text-amber-700 border-amber-200";
+      return "bg-warning/10 text-warning border-warning/30";
     case "in_progress":
-      return "bg-blue-50 text-blue-700 border-blue-200";
+      return "bg-info/15 text-info border-info/40";
     case "completed":
-      return "bg-green-50 text-green-700 border-green-200";
+      return "bg-success/15 text-success border-success/30";
     case "expired":
-      return "bg-gray-50 text-gray-500 border-gray-200";
+      return "bg-surface-secondary text-text-light border-border";
     case "cancelled":
-      return "bg-gray-50 text-gray-400 border-gray-200 line-through";
+      return "bg-surface-secondary text-text-light/70 border-border line-through";
   }
 }
 

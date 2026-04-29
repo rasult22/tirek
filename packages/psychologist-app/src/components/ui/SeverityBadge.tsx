@@ -9,7 +9,7 @@ interface SeverityBadgeProps {
 const styles: Record<string, { bg: string; text: string }> = {
   minimal: { bg: "bg-success/15", text: "text-success" },
   mild: { bg: "bg-warning/15", text: "text-warning" },
-  moderate: { bg: "bg-orange-100", text: "text-orange-600" },
+  moderate: { bg: "bg-warning/15", text: "text-warning" },
   severe: { bg: "bg-danger/15", text: "text-danger" },
 };
 

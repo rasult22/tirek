@@ -168,7 +168,7 @@ export function ProfilePage() {
                 "flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-colors",
                 language === lang.code
                   ? "border-primary bg-primary/5 text-primary"
-                  : "border-border text-text-light hover:border-gray-300",
+                  : "border-border text-text-light hover:border-text-light/40",
               )}
             >
               {language === lang.code && <Check size={14} />}

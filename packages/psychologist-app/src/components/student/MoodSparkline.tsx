@@ -10,11 +10,11 @@ const moodEmojis: Record<number, string> = {
 };
 
 const dotColors: Record<number, string> = {
-  1: "#B33B3B",
-  2: "#8C6308",
-  3: "#CA8A04",
-  4: "#16794A",
-  5: "#059669",
+  1: "var(--danger)",
+  2: "var(--warning)",
+  3: "var(--warning)",
+  4: "var(--success)",
+  5: "var(--success)",
 };
 
 interface MoodSparklineProps {
@@ -78,8 +78,8 @@ export function MoodSparkline({ data, average, latestEntry }: MoodSparklineProps
       >
         <defs>
           <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#0F766E" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#0F766E" stopOpacity="0.02" />
+            <stop offset="0%" stopColor="var(--brand)" stopOpacity="0.15" />
+            <stop offset="100%" stopColor="var(--brand)" stopOpacity="0.02" />
           </linearGradient>
         </defs>
 
@@ -93,7 +93,7 @@ export function MoodSparkline({ data, average, latestEntry }: MoodSparklineProps
               x2={width - padX}
               y1={y}
               y2={y}
-              stroke="#D4DEDE"
+              stroke="var(--hairline)"
               strokeWidth="0.5"
               strokeDasharray="3,3"
             />
@@ -107,7 +107,7 @@ export function MoodSparkline({ data, average, latestEntry }: MoodSparklineProps
         <polyline
           points={polyline}
           fill="none"
-          stroke="#0F766E"
+          stroke="var(--brand)"
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -120,8 +120,8 @@ export function MoodSparkline({ data, average, latestEntry }: MoodSparklineProps
             cx={p.x}
             cy={p.y}
             r="3.5"
-            fill={dotColors[p.mood] ?? "#0F766E"}
-            stroke="#FFFFFF"
+            fill={dotColors[p.mood] ?? "var(--brand)"}
+            stroke="var(--surface)"
             strokeWidth="1.5"
           />
         ))}

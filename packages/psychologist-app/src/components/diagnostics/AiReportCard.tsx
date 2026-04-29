@@ -31,9 +31,9 @@ interface AiReportCardProps {
 }
 
 const RISK_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  low: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Низкий" },
-  moderate: { bg: "bg-amber-50", text: "text-amber-700", label: "Средний" },
-  high: { bg: "bg-red-50", text: "text-red-700", label: "Высокий" },
+  low: { bg: "bg-success/15", text: "text-success", label: "Низкий" },
+  moderate: { bg: "bg-warning/15", text: "text-warning", label: "Средний" },
+  high: { bg: "bg-danger/15", text: "text-danger", label: "Высокий" },
 };
 
 const RECOMMENDATION_META: Record<
@@ -137,19 +137,19 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
 
   if (isErrorReport(report)) {
     return (
-      <div className="rounded-2xl border border-red-200 bg-red-50/50 p-5">
-        <div className="flex items-center gap-2 text-red-700">
+      <div className="rounded-2xl border border-danger/30 bg-danger/10 p-5">
+        <div className="flex items-center gap-2 text-danger">
           <AlertCircle size={18} />
           <p className="text-sm font-bold">Не удалось сгенерировать отчёт</p>
         </div>
         {report.errorMessage && (
-          <p className="mt-2 text-xs text-red-600">{report.errorMessage}</p>
+          <p className="mt-2 text-xs text-danger">{report.errorMessage}</p>
         )}
         <button
           type="button"
           onClick={() => regenerate.mutate()}
           disabled={regenerate.isPending}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-60"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 disabled:opacity-60"
         >
           {regenerate.isPending ? (
             <Loader2 size={14} className="animate-spin" />
@@ -200,7 +200,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
           type="button"
           onClick={() => regenerate.mutate()}
           disabled={regenerate.isPending}
-          className="inline-flex items-center gap-1 rounded-lg border border-border-light px-2 py-1 text-[11px] font-semibold text-text-light hover:bg-gray-50 disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-lg border border-border-light px-2 py-1 text-[11px] font-semibold text-text-light hover:bg-surface-hover disabled:opacity-60"
           title="Перегенерировать"
         >
           {regenerate.isPending ? (
@@ -231,7 +231,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
 
       {/* Trend */}
       {report.trend && (
-        <div className="rounded-xl border border-border-light bg-gray-50 p-3">
+        <div className="rounded-xl border border-border-light bg-surface-secondary p-3">
           <div className="flex items-center gap-2">
             <LineChart size={14} className="text-text-light" />
             <p className="text-[11px] font-bold uppercase tracking-wider text-text-light">
@@ -322,8 +322,8 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
 
       {/* Flagged items */}
       {flaggedWithText.length > 0 && (
-        <details className="rounded-xl border border-amber-200 bg-amber-50/50 p-3">
-          <summary className="flex cursor-pointer items-center gap-2 text-sm font-bold text-amber-800">
+        <details className="rounded-xl border border-warning/30 bg-warning/10 p-3">
+          <summary className="flex cursor-pointer items-center gap-2 text-sm font-bold text-warning">
             <AlertTriangle size={14} />
             Тревожные ответы ({flaggedWithText.length})
           </summary>
@@ -331,7 +331,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
             {flaggedWithText.map((f, idx) => (
               <li
                 key={idx}
-                className="rounded-lg border border-amber-100 bg-white p-2.5"
+                className="rounded-lg border border-warning/20 bg-surface p-2.5"
               >
                 {f.questionText && (
                   <p className="text-xs font-semibold text-text-main">
@@ -341,7 +341,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
                 {(f.answerLabel || f.answerValue !== null) && (
                   <p className="mt-1 text-xs text-text-light">
                     Ответ:{" "}
-                    <span className="font-bold text-amber-700">
+                    <span className="font-bold text-warning">
                       {f.answerLabel ?? `значение ${f.answerValue}`}
                     </span>
                   </p>
@@ -358,7 +358,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
       )}
 
       {/* Disclaimer */}
-      <div className="flex items-start gap-2 rounded-lg bg-gray-50 p-2.5 text-[11px] text-text-light">
+      <div className="flex items-start gap-2 rounded-lg bg-surface-secondary p-2.5 text-[11px] text-text-light">
         <Info size={12} className="mt-0.5 shrink-0" />
         <p>
           Отчёт сформирован ИИ на основе ответов ученика и требует
@@ -401,13 +401,13 @@ function SkeletonReport() {
         </div>
       </div>
       <div className="space-y-2">
-        <div className="h-3 w-3/4 animate-pulse rounded bg-gray-200" />
-        <div className="h-3 w-full animate-pulse rounded bg-gray-200" />
-        <div className="h-3 w-5/6 animate-pulse rounded bg-gray-200" />
+        <div className="h-3 w-3/4 animate-pulse rounded bg-surface-hover" />
+        <div className="h-3 w-full animate-pulse rounded bg-surface-hover" />
+        <div className="h-3 w-5/6 animate-pulse rounded bg-surface-hover" />
       </div>
       <div className="space-y-2 pt-2">
-        <div className="h-10 animate-pulse rounded-xl bg-gray-100" />
-        <div className="h-10 animate-pulse rounded-xl bg-gray-100" />
+        <div className="h-10 animate-pulse rounded-xl bg-surface-secondary" />
+        <div className="h-10 animate-pulse rounded-xl bg-surface-secondary" />
       </div>
     </div>
   );

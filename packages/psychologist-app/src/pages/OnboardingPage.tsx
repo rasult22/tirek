@@ -25,64 +25,25 @@ interface OnboardingStep {
   accentColor: string;
 }
 
+const BRAND_GRADIENT = "from-primary to-primary-dark";
+const BRAND_ACCENT = "bg-primary";
+
 const STEP_STYLES: OnboardingStep[] = [
-  {
-    icon: LayoutDashboard,
-    gradient: "from-teal-500 to-emerald-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-teal-500",
-  },
-  {
-    icon: Users,
-    gradient: "from-blue-500 to-cyan-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-blue-500",
-  },
-  {
-    icon: AlertTriangle,
-    gradient: "from-red-500 to-rose-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-red-500",
-  },
-  {
-    icon: MessageSquare,
-    gradient: "from-violet-500 to-purple-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-violet-500",
-  },
-  {
-    icon: ClipboardList,
-    gradient: "from-amber-500 to-orange-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-amber-500",
-  },
-  {
-    icon: Calendar,
-    gradient: "from-emerald-500 to-green-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-emerald-500",
-  },
-  {
-    icon: KeyRound,
-    gradient: "from-pink-500 to-fuchsia-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-pink-500",
-  },
-  {
-    icon: BarChart3,
-    gradient: "from-indigo-500 to-blue-500",
-    iconBg: "bg-white/20",
-    iconColor: "text-white",
-    accentColor: "bg-indigo-500",
-  },
-];
+  LayoutDashboard,
+  Users,
+  AlertTriangle,
+  MessageSquare,
+  ClipboardList,
+  Calendar,
+  KeyRound,
+  BarChart3,
+].map((icon) => ({
+  icon,
+  gradient: BRAND_GRADIENT,
+  iconBg: "bg-white/20",
+  iconColor: "text-white",
+  accentColor: BRAND_ACCENT,
+}));
 
 export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
   const t = useT();
@@ -131,7 +92,7 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
         <div className="w-full max-w-sm animate-fade-in-up">
           {/* Logo area */}
           <div className="flex justify-center mb-8">
-            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg glow-primary">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-lg glow-primary">
               <Sparkles size={36} className="text-white" />
             </div>
           </div>
