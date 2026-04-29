@@ -37,7 +37,12 @@ export const authRepository = {
 
   async updateProfile(
     userId: string,
-    data: { name?: string; language?: string; avatarId?: string | null },
+    data: {
+      name?: string;
+      language?: string;
+      avatarId?: string | null;
+      schoolId?: string | null;
+    },
   ) {
     const [user] = await db
       .update(users)
