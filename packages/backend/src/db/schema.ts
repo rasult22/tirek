@@ -435,6 +435,24 @@ export const officeHoursOverride = pgTable(
   }),
 );
 
+// ── 22. push_tokens (issue #47) ────────────────────────────────────
+// Expo push token, привязанный к user. Token — primary key (один токен = одно устройство).
+// При logout/login другого юзера на том же девайсе — upsert по token, user_id меняется.
+
+export const pushTokens = pgTable("push_tokens", {
+  token: text("token").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  platform: text("platform").notNull(), // "ios" | "android" | "web"
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // ── 25. cbt_entries ────────────────────────────────────────────────
 export const cbtEntries = pgTable("cbt_entries", {
   id: text("id").primaryKey(),

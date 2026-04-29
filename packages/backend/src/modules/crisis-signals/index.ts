@@ -96,6 +96,12 @@ export type CrisisSignalInput =
       flaggedItems: FlaggedItem[];
     };
 
+export type DispatchPushFn = (input: {
+  recipientPsychologistId: string;
+  signal: PersistedCrisisSignal;
+  studentName: string;
+}) => Promise<void>;
+
 export type CrisisSignalsModuleDeps = {
   saveSignal: (signal: PersistedCrisisSignal) => Promise<string>;
   findPsychologistIdsForStudent: (studentId: string) => Promise<string[]>;
@@ -106,6 +112,8 @@ export type CrisisSignalsModuleDeps = {
   findHistoryByPsychologist: (psychologistId: string) => Promise<CrisisSignalRow[]>;
   findById: (id: string, psychologistId: string) => Promise<CrisisSignalRow | null>;
   resolveSignal: (id: string, input: ResolveInput) => Promise<CrisisSignalRow>;
+  findStudentName?: (studentId: string) => Promise<string | null>;
+  dispatchPush?: DispatchPushFn;
   logger: { warn: (msg: string, ctx?: Record<string, unknown>) => void };
   now: () => Date;
   newId: () => string;
@@ -152,9 +160,11 @@ function normalize(input: CrisisSignalInput): NormalizedSignal {
       const summary = flaggedReasons
         ? `Test "${input.testSlug}": severity=${input.testSeverity}, flagged: ${flaggedReasons}`
         : `Test "${input.testSlug}": severity=${input.testSeverity}`;
+      // testSeverity="severe" — критический результат (suicidal флаг и т.п.).
+      // Высшая severity → red crisis_signal → push 24/7 (issue #47).
       return {
         type: "acute_crisis",
-        severity: "medium",
+        severity: "high",
         source: "test_session",
         summary,
         metadata: {
@@ -186,6 +196,23 @@ export function createCrisisSignalsModule(deps: CrisisSignalsModuleDeps) {
           "Crisis signal created but student has no linked psychologist",
           { studentId: input.userId, signalId: signal.id, source: signal.source },
         );
+      } else if (deps.dispatchPush) {
+        const studentName =
+          (await deps.findStudentName?.(input.userId)) ?? "ученик";
+        for (const psychologistId of psychologistIds) {
+          try {
+            await deps.dispatchPush({
+              recipientPsychologistId: psychologistId,
+              signal,
+              studentName,
+            });
+          } catch (err) {
+            deps.logger.warn(
+              `Push dispatch failed: ${(err as Error).message}`,
+              { signalId: signal.id, psychologistId },
+            );
+          }
+        }
       }
 
       return signal;

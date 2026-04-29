@@ -104,6 +104,29 @@ export const crisisSignalsRepository = {
     return rows.map((r) => r.psychologistId);
   },
 
+  async findStudentName(studentId: string): Promise<string | null> {
+    const [row] = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, studentId))
+      .limit(1);
+    return row?.name ?? null;
+  },
+
+  async hasActiveAcuteCrisisForStudent(studentId: string): Promise<boolean> {
+    const [row] = await db
+      .select({ value: dbCount() })
+      .from(crisisSignals)
+      .where(
+        and(
+          eq(crisisSignals.studentId, studentId),
+          eq(crisisSignals.type, "acute_crisis"),
+          isNull(crisisSignals.resolvedAt),
+        ),
+      );
+    return Number(row?.value ?? 0) > 0;
+  },
+
   async findActiveByPsychologistAndType(
     psychologistId: string,
     type: CrisisSignalType,

@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { directChatRepository } from "./direct-chat.repository.js";
+import { crisisSignalsRepository } from "../crisis-signals/crisis-signals.repository.js";
+import { pushDispatcher } from "../push-dispatcher/push-dispatcher.module.js";
 import {
   ForbiddenError,
   NotFoundError,
@@ -9,6 +11,55 @@ import {
   paginated,
   type PaginationParams,
 } from "../../shared/pagination.js";
+
+async function dispatchMessagePush(input: {
+  senderId: string;
+  senderName: string;
+  senderRole: "student" | "psychologist";
+  studentId: string;
+  recipientId: string;
+  contentPreview: string;
+  conversationId: string;
+}): Promise<void> {
+  try {
+    let kind: "message_from_psychologist"
+      | "message_from_crisis_student"
+      | "message_from_normal_student";
+    if (input.senderRole === "psychologist") {
+      kind = "message_from_psychologist";
+    } else {
+      const isCrisisStudent =
+        await crisisSignalsRepository.hasActiveAcuteCrisisForStudent(
+          input.studentId,
+        );
+      kind = isCrisisStudent
+        ? "message_from_crisis_student"
+        : "message_from_normal_student";
+    }
+
+    const title =
+      input.senderRole === "psychologist"
+        ? `Психолог ${input.senderName}`
+        : input.senderName;
+
+    await pushDispatcher.dispatch({
+      kind,
+      recipientUserId: input.recipientId,
+      title,
+      body: input.contentPreview,
+      data: {
+        type: "direct_message",
+        conversationId: input.conversationId,
+      },
+      currentTime: new Date(),
+    });
+  } catch (err) {
+    console.warn(
+      `[direct-chat] push dispatch failed: ${(err as Error).message}`,
+      { conversationId: input.conversationId },
+    );
+  }
+}
 
 async function verifyAccess(conversationId: string, userId: string) {
   const conv = await directChatRepository.findConversationById(conversationId);
@@ -122,7 +173,7 @@ export const directChatService = {
       throw new ValidationError("Message content is required");
     }
 
-    await verifyAccess(conversationId, userId);
+    const conv = await verifyAccess(conversationId, userId);
 
     const message = await directChatRepository.createMessage({
       conversationId,
@@ -131,6 +182,27 @@ export const directChatService = {
     });
 
     await directChatRepository.updateConversationLastMessage(conversationId);
+
+    // Push получателю. role здесь — роль отправителя.
+    const senderRole = role === "psychologist" ? "psychologist" : "student";
+    const recipientId =
+      senderRole === "psychologist" ? conv.studentId : conv.psychologistId;
+    const senderName =
+      (await crisisSignalsRepository.findStudentName(userId)) ?? "Сообщение";
+    const preview =
+      message.content.length > 100
+        ? message.content.slice(0, 100) + "…"
+        : message.content;
+
+    void dispatchMessagePush({
+      senderId: userId,
+      senderName,
+      senderRole,
+      studentId: conv.studentId,
+      recipientId,
+      contentPreview: preview,
+      conversationId,
+    });
 
     return message;
   },

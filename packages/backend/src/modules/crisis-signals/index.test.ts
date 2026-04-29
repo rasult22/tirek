@@ -119,6 +119,76 @@ function makeModule(overrides: ModuleOverrides = {}) {
   return { module: createCrisisSignalsModule(deps), fakes };
 }
 
+test("report → dispatchPush вызывается для каждого linked психолога", async () => {
+  const dispatched: Array<{
+    recipientPsychologistId: string;
+    severity: string;
+    type: string;
+  }> = [];
+
+  const { module } = makeModule({
+    studentLinks: { "stu-1": ["psy-1", "psy-2"] },
+    dispatchPush: async ({ recipientPsychologistId, signal }) => {
+      dispatched.push({
+        recipientPsychologistId,
+        severity: signal.severity,
+        type: signal.type,
+      });
+    },
+    findStudentName: async () => "Иван Иванов",
+  });
+
+  await module.report({
+    source: "urgent_help",
+    userId: "stu-1",
+    metadata: { sosEventId: "sos-1" },
+  });
+
+  assert.equal(dispatched.length, 2);
+  assert.deepEqual(
+    dispatched.map((d) => d.recipientPsychologistId).sort(),
+    ["psy-1", "psy-2"],
+  );
+  assert.equal(dispatched[0]!.severity, "high");
+  assert.equal(dispatched[0]!.type, "acute_crisis");
+});
+
+test("report без linked психологов → dispatchPush НЕ вызывается, логируется warn", async () => {
+  let dispatchCalled = false;
+  const { module, fakes } = makeModule({
+    studentLinks: { "stu-orphan": [] },
+    dispatchPush: async () => {
+      dispatchCalled = true;
+    },
+  });
+
+  await module.report({
+    source: "urgent_help",
+    userId: "stu-orphan",
+  });
+
+  assert.equal(dispatchCalled, false);
+  assert.ok(fakes.warnings.some((w) => /no linked psychologist/i.test(w.msg)));
+});
+
+test("report → если dispatchPush бросает ошибку, signal всё равно создан", async () => {
+  const { module, fakes } = makeModule({
+    studentLinks: { "stu-1": ["psy-1"] },
+    dispatchPush: async () => {
+      throw new Error("expo down");
+    },
+  });
+
+  const signal = await module.report({
+    source: "urgent_help",
+    userId: "stu-1",
+  });
+
+  assert.equal(fakes.signals.length, 1);
+  assert.equal(fakes.signals[0]!.id, signal.id);
+  assert.ok(fakes.warnings.some((w) => /Push dispatch failed/i.test(w.msg)));
+});
+
 test("report ai_friend acute_crisis → persists signal", async () => {
   const { module, fakes } = makeModule();
 
@@ -414,7 +484,7 @@ test("report urgent_help preserves provided metadata verbatim on signal", async 
   assert.deepEqual(fakes.signals[0].metadata, metadata);
 });
 
-test("report test_session severe → type=acute_crisis severity=medium with test metadata", async () => {
+test("report test_session severe → type=acute_crisis severity=high with test metadata", async () => {
   const { module } = makeModule();
 
   const signal = await module.report({
@@ -429,7 +499,7 @@ test("report test_session severe → type=acute_crisis severity=medium with test
   });
 
   assert.equal(signal.type, "acute_crisis");
-  assert.equal(signal.severity, "medium");
+  assert.equal(signal.severity, "high");
   assert.equal(signal.source, "test_session");
   assert.deepEqual(signal.metadata, {
     testSessionId: "sess-42",

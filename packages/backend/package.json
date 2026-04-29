@@ -20,6 +20,7 @@
     "@tirek/shared": "file:../shared",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
+    "expo-server-sdk": "^6.1.0",
     "hono": "^4.7.0",
     "jsonwebtoken": "^9.0.3",
     "openai": "^6.33.0",

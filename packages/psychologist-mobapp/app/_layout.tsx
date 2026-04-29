@@ -11,11 +11,13 @@ import { NetworkStatus } from "../components/NetworkStatus";
 import { OnlineManager } from "../lib/offline";
 import { initSentry, Sentry } from "../lib/sentry";
 import { checkForUpdate } from "../lib/updates";
+import { useNotifications } from "../lib/notifications";
 
 initSentry();
 
 function ThemedApp() {
   const { isDark } = useTheme();
+  useNotifications();
 
   useEffect(() => {
     checkForUpdate();

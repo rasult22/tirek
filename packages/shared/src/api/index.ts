@@ -476,6 +476,9 @@ export interface TirekClient {
     schools: {
       get(id: string): Promise<{ id: string; name: string }>;
     };
+    pushToken: {
+      register(input: { token: string; platform: string }): Promise<{ ok: boolean }>;
+    };
   };
 }
 
@@ -830,6 +833,13 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
       },
       schools: {
         get: (id) => request(`/psychologist/schools/${id}`),
+      },
+      pushToken: {
+        register: (data) =>
+          request("/psychologist/push-token", {
+            method: "POST",
+            body: JSON.stringify(data),
+          }),
       },
     },
   };
