@@ -10,7 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ionicons } from "@expo/vector-icons";
-import { Text, Card } from "../../components/ui";
+import { Text, Card, H3, Body, Pill } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
@@ -127,13 +127,13 @@ export default function DashboardScreen() {
         {/* Greeting */}
         <View style={styles.greetingRow}>
           <View style={{ flex: 1 }}>
-            <Text variant="h1">
+            <H3>
               {t.dashboard.greeting},{" "}
               {user?.name?.split(" ")[0] ?? ""}!
-            </Text>
-            <Text variant="bodyLight" style={{ marginTop: 4 }}>
+            </H3>
+            <Body size="sm" style={{ marginTop: 4, color: c.textLight }}>
               {t.psychologist.role}
-            </Text>
+            </Body>
           </View>
           <Pressable
             accessibilityLabel={t.profile.title}
@@ -154,7 +154,7 @@ export default function DashboardScreen() {
         </View>
 
         {showAllCalm ? (
-          <Card elevated style={styles.allCalmCard}>
+          <Card variant="floating" style={styles.allCalmCard}>
             <View
               style={[
                 styles.allCalmIcon,
@@ -174,7 +174,7 @@ export default function DashboardScreen() {
           <>
             {/* Crisis alerts — показываем только если идёт загрузка или есть сигналы */}
             {(alertsLoading || redSignals.length > 0) && (
-              <Card elevated style={styles.crisisSection}>
+              <Card variant="floating" style={styles.crisisSection}>
                 <View style={styles.crisisHeader}>
                   <View style={styles.crisisHeaderLeft}>
                     <View
@@ -191,16 +191,10 @@ export default function DashboardScreen() {
                     </View>
                     <Text variant="h3">{t.psychologist.redFeedFull}</Text>
                     {redSignals.length > 0 && (
-                      <View
-                        style={[
-                          styles.alertCountBadge,
-                          { backgroundColor: c.danger },
-                        ]}
-                      >
-                        <Text style={styles.alertCountText}>
-                          {redSignals.length}
-                        </Text>
-                      </View>
+                      <Pill
+                        variant="danger"
+                        label={String(redSignals.length)}
+                      />
                     )}
                   </View>
                   <Pressable
@@ -286,7 +280,7 @@ export default function DashboardScreen() {
 
             {/* Attention block — yellow signals + at-risk students */}
             {!attentionEmpty && (
-              <Card elevated style={styles.inactiveSection}>
+              <Card variant="floating" style={styles.inactiveSection}>
                 <View style={styles.inactiveHeader}>
                   <View style={styles.inactiveHeaderLeft}>
                     <View
@@ -302,16 +296,10 @@ export default function DashboardScreen() {
                       />
                     </View>
                     <Text variant="h3">{t.psychologist.needsAttention}</Text>
-                    <View
-                      style={[
-                        styles.alertCountBadge,
-                        { backgroundColor: c.warning },
-                      ]}
-                    >
-                      <Text style={styles.alertCountText}>
-                        {yellowSignals.length + atRiskStudents.length}
-                      </Text>
-                    </View>
+                    <Pill
+                      variant="warning"
+                      label={String(yellowSignals.length + atRiskStudents.length)}
+                    />
                   </View>
                 </View>
 
@@ -418,7 +406,7 @@ export default function DashboardScreen() {
 
             {/* Inactive students — показываем только если идёт загрузка или есть ученики */}
             {(inactiveLoading || inactiveStudents.length > 0) && (
-              <Card elevated style={styles.inactiveSection}>
+              <Card variant="floating" style={styles.inactiveSection}>
                 <View style={styles.inactiveHeader}>
                   <View style={styles.inactiveHeaderLeft}>
                     <View
@@ -437,16 +425,10 @@ export default function DashboardScreen() {
                       {t.psychologist.inactiveStudentsTitle}
                     </Text>
                     {inactiveStudents.length > 0 && (
-                      <View
-                        style={[
-                          styles.alertCountBadge,
-                          { backgroundColor: c.warning },
-                        ]}
-                      >
-                        <Text style={styles.alertCountText}>
-                          {inactiveStudents.length}
-                        </Text>
-                      </View>
+                      <Pill
+                        variant="warning"
+                        label={String(inactiveStudents.length)}
+                      />
                     )}
                   </View>
                   {inactiveStudents.length > 5 && (
@@ -586,19 +568,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     alignItems: "center",
     justifyContent: "center",
-  },
-  alertCountBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 6,
-  },
-  alertCountText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#FFFFFF",
   },
   viewAllRow: {
     flexDirection: "row",
