@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
-import { Text, Input, Button } from "../../components/ui";
+import { Text, Input, Button, Sheet, Body } from "../../components/ui";
 import { colors as ds, radius, spacing } from "@tirek/shared/design-system";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { authApi } from "../../lib/api/auth";
@@ -90,75 +90,78 @@ export default function LoginScreen() {
 
       {/* Sheet */}
       <KeyboardAvoidingView
-        style={styles.sheetWrap}
+        style={styles.kavWrap}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView
-          style={styles.sheet}
-          contentContainerStyle={styles.sheetContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.form}>
-            <Input
-              icon="mail-outline"
-              placeholder={t.auth.email}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-
-            <View style={styles.passwordWrap}>
+        <Sheet variant="over-hero" overlap={SHEET_OVERLAP}>
+          <ScrollView
+            contentContainerStyle={styles.sheetContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.form}>
               <Input
-                icon="lock-closed-outline"
-                placeholder={t.auth.password}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
+                icon="mail-outline"
+                placeholder={t.auth.email}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="email"
+                error={hasError}
               />
-              <Pressable
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeBtn}
-                hitSlop={8}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
-                  size={20}
-                  color={c.textLight}
+
+              <View style={styles.passwordWrap}>
+                <Input
+                  icon="lock-closed-outline"
+                  placeholder={t.auth.password}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  error={hasError}
                 />
-              </Pressable>
-            </View>
-
-            <Text style={styles.forgot}>{t.auth.forgotPassword}</Text>
-
-            {hasError && (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>
-                  {t.auth.invalidCredentials}
-                </Text>
+                <Pressable
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeBtn}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color={c.textLight}
+                  />
+                </Pressable>
               </View>
-            )}
 
-            <Button
-              title={t.auth.login}
-              onPress={() => loginMutation.mutate()}
-              loading={loginMutation.isPending}
-              disabled={!email.trim() || !password.trim()}
-              size="lg"
-            />
+              <Text style={styles.forgot}>{t.auth.forgotPassword}</Text>
 
-            <View style={styles.linkRow}>
-              <Text variant="small" style={{ color: c.textLight }}>
-                {t.auth.noAccount}{" "}
-              </Text>
-              <Pressable onPress={() => router.push("/(auth)/register")}>
-                <Text style={styles.linkText}>{t.auth.register}</Text>
-              </Pressable>
+              {hasError && (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorText}>
+                    {t.auth.invalidCredentials}
+                  </Text>
+                </View>
+              )}
+
+              <Button
+                title={t.auth.login}
+                onPress={() => loginMutation.mutate()}
+                loading={loginMutation.isPending}
+                disabled={!email.trim() || !password.trim()}
+                size="lg"
+              />
+
+              <View style={styles.linkRow}>
+                <Body size="sm" style={{ color: c.textLight }}>
+                  {t.auth.noAccount}{" "}
+                </Body>
+                <Pressable onPress={() => router.push("/(auth)/register")}>
+                  <Text style={styles.linkText}>{t.auth.register}</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </Sheet>
       </KeyboardAvoidingView>
     </View>
   );
@@ -219,15 +222,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 4,
   },
-  sheetWrap: {
+  kavWrap: {
     flex: 1,
-    marginTop: -SHEET_OVERLAP,
-  },
-  sheet: {
-    flex: 1,
-    backgroundColor: ds.surface,
-    borderTopLeftRadius: radius["3xl"],
-    borderTopRightRadius: radius["3xl"],
   },
   sheetContent: {
     flexGrow: 1,

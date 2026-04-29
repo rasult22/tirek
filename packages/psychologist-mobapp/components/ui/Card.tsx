@@ -1,25 +1,43 @@
-import { View, type ViewProps } from "react-native";
+import { View, Platform, type ViewProps, type ViewStyle } from "react-native";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
-import { shadow } from "../../lib/theme/shadows";
+import { shadow as shadowFn } from "../../lib/theme/shadows";
+import { shadow as dsShadow } from "@tirek/shared/design-system";
+
+export type CardVariant = "default" | "floating";
 
 interface Props extends ViewProps {
+  variant?: CardVariant;
+  /** @deprecated Use variant="floating" instead. */
   elevated?: boolean;
 }
 
-export function Card({ elevated = false, style, children, ...props }: Props) {
+function ctaShadow(): ViewStyle {
+  if (Platform.OS === "android") {
+    return { elevation: dsShadow.cta.elevation };
+  }
+  return {
+    shadowColor: dsShadow.cta.color,
+    shadowOffset: dsShadow.cta.offset,
+    shadowOpacity: dsShadow.cta.opacity,
+    shadowRadius: dsShadow.cta.radius,
+  };
+}
+
+export function Card({ variant, elevated, style, children, ...props }: Props) {
   const c = useThemeColors();
+  const resolved: CardVariant = variant ?? (elevated ? "floating" : "default");
 
   return (
     <View
       style={[
         {
-          borderRadius: radius.lg,
+          borderRadius: radius.md,
           padding: spacing.lg,
           borderWidth: 1,
           backgroundColor: c.surface,
-          borderColor: elevated ? c.border : c.borderLight,
+          borderColor: resolved === "floating" ? c.border : c.borderLight,
         },
-        elevated ? shadow(2) : shadow(1),
+        resolved === "floating" ? ctaShadow() : shadowFn(1),
         style,
       ]}
       {...props}
