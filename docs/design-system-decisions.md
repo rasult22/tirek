@@ -449,7 +449,11 @@ DS фиксирует только размер (24×24 default) и stroke (2px)
 - StudentDetail (`(screens)/students/[id].tsx`): в кратком header — шкала. **MoodSparkline (график за 7 дней) остаётся как есть** — это другая визуализация для другого контекста (см. `feedback_mood_visualization`).
 - В web psy-app (по `feedback_mobapp_in_visualization_scope` — UI/visualization issues включают и web): аналогичная шкала в `StudentsListPage`.
 
-**Компонент в shared:** `<MoodScale value={1-5} />` — кладём в `@tirek/shared/components` как универсальную шкалу 1-5. Может переиспользоваться, например, для оценки риска и других уровневых индикаторов.
+**Компонент в каждом app (не в shared, см. ADR-012 и `feedback_no_shared_components`):** `<MoodScale value={1-5} />` — две копии:
+- `packages/psychologist-mobapp/components/ui/MoodScale.tsx` (RN/StyleSheet, через `useThemeColors`).
+- `packages/psychologist-app/src/components/ui/MoodScale.tsx` (Tailwind: `bg-primary` / `bg-hairline`).
+
+Дублирование 30 строк дешевле resolution-хаков для cross-platform shared component. Если шкала понадобится в stu-app/stu-mobapp — копируется ещё раз.
 
 **Что трогаем у emoji:** удаляем `moodEmojis` map из `(tabs)/students.tsx` и `[id].tsx`, заменяем на `<MoodScale>`. **Это исключение из правила ADR-019** — мы перекрашиваем, а не вырезаем фичу. Mood **остаётся** в UI, меняется только его визуальное представление. Согласовано.
 

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { useT } from "../hooks/useLanguage.js";
 import { getStudents } from "../api/students.js";
 import { StatusBadge } from "../components/ui/StatusBadge.js";
+import { MoodScale } from "../components/ui/MoodScale.js";
 import { Search, Filter, Users, Loader2, ChevronRight, Plus } from "lucide-react";
 import { clsx } from "clsx";
 import { ErrorState } from "../components/ui/ErrorState.js";
@@ -16,14 +17,6 @@ import {
 type SortField = "name" | "class" | "status" | "lastActive";
 type SortDir = "asc" | "desc";
 type Segment = "active" | "pending";
-
-const moodEmojis: Record<number, string> = {
-  1: "\u{1F622}",
-  2: "\u{1F61F}",
-  3: "\u{1F610}",
-  4: "\u{1F60A}",
-  5: "\u{1F929}",
-};
 
 export function StudentsListPage() {
   const t = useT();
@@ -234,11 +227,13 @@ export function StudentsListPage() {
                           : "—"}
                       </span>
                       <span className="text-xs text-text-light">&middot;</span>
-                      <span className="text-xs text-text-light">
-                        {student.lastMood != null
-                          ? moodEmojis[student.lastMood] ?? "—"
-                          : "—"}
-                      </span>
+                      {student.lastMood != null ? (
+                        <MoodScale
+                          value={student.lastMood as 1 | 2 | 3 | 4 | 5}
+                        />
+                      ) : (
+                        <span className="text-xs text-text-light">—</span>
+                      )}
                       <span className="text-xs text-text-light">&middot;</span>
                       <span className="text-xs text-text-light">
                         {formatDate(student.lastActive)}
