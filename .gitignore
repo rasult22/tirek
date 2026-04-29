@@ -13,3 +13,8 @@ output/
 .DS_Store
 *.log
 .claude/worktrees/
+
+# Design System handoffs from Claude Design (local-only reference)
+# See memory/project_design_system.md for download URLs
+.handoff/
+.handoff-moon/
