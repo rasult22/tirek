@@ -11,11 +11,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text, Input } from "../../components/ui";
+import { Text, Input, H3, Body, Card, Badge } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
-import { useThemeColors, spacing, radius } from "../../lib/theme";
-import { shadow } from "../../lib/theme/shadows";
+import { useThemeColors } from "../../lib/theme";
+import { colors as ds } from "@tirek/shared/design-system";
 import { directChatApi } from "../../lib/api/direct-chat";
 import { hapticLight } from "../../lib/haptics";
 import type { Conversation } from "@tirek/shared";
@@ -80,7 +80,7 @@ export default function MessagesScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
       <View style={styles.header}>
-        <Text variant="h1">{t.directChat.title}</Text>
+        <H3>{t.directChat.title}</H3>
       </View>
 
       <View style={styles.searchRow}>
@@ -96,10 +96,10 @@ export default function MessagesScreen() {
         <SkeletonList count={4} />
       ) : filtered.length === 0 ? (
         <View style={styles.emptyState}>
-          <View style={[styles.emptyIcon, { backgroundColor: `${c.primary}1A` }]}>
+          <View style={[styles.emptyIcon, { backgroundColor: ds.brandSoft }]}>
             <Ionicons name="chatbubbles-outline" size={32} color={c.primary} />
           </View>
-          <Text variant="bodyLight">{t.directChat.noConversations}</Text>
+          <Body style={{ color: c.textLight }}>{t.directChat.noConversations}</Body>
         </View>
       ) : (
         <ScrollView
@@ -120,64 +120,47 @@ export default function MessagesScreen() {
                 router.push(`/(screens)/messages/${conv.id}`);
               }}
               style={({ pressed }) => [
-                styles.convCard,
-                {
-                  backgroundColor: c.surface,
-                  borderColor: c.borderLight,
-                },
-                shadow(1),
                 pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
               ]}
             >
-              <View style={[styles.avatar, { backgroundColor: `${c.primary}1A` }]}>
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontFamily: "DMSans-SemiBold",
-                    color: c.primary,
-                  }}
-                >
-                  {conv.otherUser.name.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-
-              <View style={styles.cardInfo}>
-                <View style={styles.nameRow}>
+              <Card style={styles.convCard}>
+                <View style={[styles.avatar, { backgroundColor: ds.brandSoft }]}>
                   <Text
-                    variant="body"
-                    style={{ fontFamily: "DMSans-SemiBold", flexShrink: 1 }}
-                    numberOfLines={1}
+                    style={{
+                      fontSize: 15,
+                      fontWeight: "600",
+                      color: c.primary,
+                    }}
                   >
-                    {conv.otherUser.name}
+                    {conv.otherUser.name.charAt(0).toUpperCase()}
                   </Text>
+                </View>
+
+                <View style={styles.cardInfo}>
+                  <View style={styles.nameRow}>
+                    <Body
+                      style={{ fontWeight: "600", flexShrink: 1 }}
+                      numberOfLines={1}
+                    >
+                      {conv.otherUser.name}
+                    </Body>
+                    {conv.lastMessage && (
+                      <Text variant="caption" style={{ flexShrink: 0 }}>
+                        {formatTime(conv.lastMessage.createdAt as string, t)}
+                      </Text>
+                    )}
+                  </View>
                   {conv.lastMessage && (
-                    <Text variant="caption" style={{ flexShrink: 0 }}>
-                      {formatTime(conv.lastMessage.createdAt as string, t)}
+                    <Text variant="bodyXs" numberOfLines={1} style={{ marginTop: 2, color: c.textLight }}>
+                      {conv.lastMessage.content}
                     </Text>
                   )}
                 </View>
-                {conv.lastMessage && (
-                  <Text variant="caption" numberOfLines={1} style={{ marginTop: 2 }}>
-                    {conv.lastMessage.content}
-                  </Text>
-                )}
-              </View>
 
-              {conv.unreadCount > 0 && (
-                <View style={[styles.unreadBadge, { backgroundColor: c.primary }]}>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontFamily: "DMSans-Bold",
-                      color: "#FFF",
-                    }}
-                  >
-                    {conv.unreadCount}
-                  </Text>
-                </View>
-              )}
+                <Badge count={conv.unreadCount} variant="primary" />
 
-              <Ionicons name="chevron-forward" size={16} color={`${c.textLight}60`} />
+                <Ionicons name="chevron-forward" size={16} color={`${c.textLight}60`} />
+              </Card>
             </Pressable>
           ))}
         </ScrollView>
@@ -209,8 +192,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 12,
-    borderRadius: radius.lg,
-    borderWidth: 1,
   },
   avatar: {
     width: 44,
@@ -228,14 +209,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-  },
-  unreadBadge: {
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    alignItems: "center",
-    justifyContent: "center",
   },
   emptyState: {
     flex: 1,

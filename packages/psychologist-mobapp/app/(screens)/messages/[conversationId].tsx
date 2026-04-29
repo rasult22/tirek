@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import {
   View,
   FlatList,
-  TextInput,
   Pressable,
   KeyboardAvoidingView,
   Keyboard,
@@ -14,10 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../../lib/hooks/useLanguage";
-import { Text } from "../../../components/ui";
+import { Text, Body, Input, Button } from "../../../components/ui";
 import { SkeletonList } from "../../../components/Skeleton";
-import { useThemeColors, spacing, radius } from "../../../lib/theme";
-import { shadow } from "../../../lib/theme/shadows";
+import { useThemeColors } from "../../../lib/theme";
+import { colors as ds } from "@tirek/shared/design-system";
 import { directChatApi } from "../../../lib/api/direct-chat";
 import { useAuthStore } from "../../../lib/store/auth-store";
 import { hapticLight } from "../../../lib/haptics";
@@ -121,7 +120,7 @@ export default function ChatScreen() {
           style={[
             styles.bubble,
             isMine
-              ? [styles.bubbleMine, { backgroundColor: c.primary }]
+              ? [styles.bubbleMine, { backgroundColor: ds.brandSoft }]
               : [
                   styles.bubbleOther,
                   { backgroundColor: c.surface, borderColor: c.borderLight },
@@ -132,7 +131,7 @@ export default function ChatScreen() {
             style={{
               fontSize: 14,
               lineHeight: 20,
-              color: isMine ? "#FFF" : c.text,
+              color: c.text,
             }}
           >
             {msg.content}
@@ -149,7 +148,7 @@ export default function ChatScreen() {
             <Text
               style={{
                 fontSize: 10,
-                color: isMine ? "rgba(255,255,255,0.6)" : c.textLight,
+                color: c.textLight,
               }}
             >
               {formatMessageTime(msg.createdAt)}
@@ -158,7 +157,7 @@ export default function ChatScreen() {
               <Ionicons
                 name={msg.readAt ? "checkmark-done" : "checkmark"}
                 size={12}
-                color={msg.readAt ? "#FFF" : "rgba(255,255,255,0.6)"}
+                color={msg.readAt ? c.primary : c.textLight}
               />
             )}
           </View>
@@ -184,14 +183,14 @@ export default function ChatScreen() {
           >
             <Ionicons name="arrow-back" size={22} color={c.text} />
           </Pressable>
-          <View style={[styles.headerAvatar, { backgroundColor: `${c.primary}1A` }]}>
-            <Text style={{ fontSize: 13, fontFamily: "DMSans-SemiBold", color: c.primary }}>
+          <View style={[styles.headerAvatar, { backgroundColor: ds.brandSoft }]}>
+            <Text style={{ fontSize: 13, fontWeight: "600", color: c.primary }}>
               {conversation?.otherUser?.name?.charAt(0)?.toUpperCase() ?? "?"}
             </Text>
           </View>
-          <Text variant="body" style={{ fontFamily: "DMSans-SemiBold", flex: 1 }} numberOfLines={1}>
+          <Body style={{ fontWeight: "600", flex: 1 }} numberOfLines={1}>
             {conversation?.otherUser?.name ?? t.directChat.title}
-          </Text>
+          </Body>
         </View>
 
         {/* Messages */}
@@ -221,37 +220,24 @@ export default function ChatScreen() {
             },
           ]}
         >
-          <TextInput
+          <Input
             value={input}
             onChangeText={setInput}
             placeholder={t.directChat.inputPlaceholder}
-            placeholderTextColor={c.textLight}
             multiline
             maxLength={2000}
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: c.bg,
-                borderColor: c.borderLight,
-                color: c.text,
-              },
-            ]}
+            containerStyle={styles.inputContainer}
+            style={styles.inputText}
           />
-          <Pressable
+          <Button
+            title={t.directChat.send}
             onPress={handleSend}
             disabled={!input.trim() || sendMutation.isPending}
-            style={({ pressed }) => [
-              styles.sendButton,
-              { backgroundColor: c.primary },
-              (!input.trim() || sendMutation.isPending) && { opacity: 0.4 },
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <Ionicons name="send" size={16} color="#FFF" />
-            <Text style={{ color: "#FFF", fontFamily: "DMSans-SemiBold", fontSize: 13 }}>
-              {t.directChat.send}
-            </Text>
-          </Pressable>
+            loading={sendMutation.isPending}
+            variant="primary"
+            size="sm"
+            fullWidth={false}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -323,23 +309,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
   },
-  textInput: {
+  inputContainer: {
     flex: 1,
-    borderRadius: 18,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+  },
+  inputText: {
     fontSize: 14,
     maxHeight: 100,
-    fontFamily: "DMSans-Regular",
-  },
-  sendButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    height: 40,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    paddingVertical: 10,
   },
 });
