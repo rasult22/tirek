@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text, Input, StatusBadge } from "../../components/ui";
+import { Text, Input, StatusBadge, H3, Body, MoodScale } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { FiltersSheet } from "../../components/student/FiltersSheet";
@@ -27,14 +27,6 @@ import { inactivityApi } from "../../lib/api/inactivity";
 import { hapticLight } from "../../lib/haptics";
 
 type Segment = "active" | "pending";
-
-const moodEmojis: Record<number, string> = {
-  1: "\u{1F622}",
-  2: "\u{1F61F}",
-  3: "\u{1F610}",
-  4: "\u{1F60A}",
-  5: "\u{1F929}",
-};
 
 export default function StudentsScreen() {
   const t = useT();
@@ -136,7 +128,7 @@ export default function StudentsScreen() {
       edges={["top"]}
     >
       <View style={styles.header}>
-        <Text variant="h1">{t.psychologist.students}</Text>
+        <H3>{t.psychologist.students}</H3>
         {segment === "active" && (
           <Pressable
             onPress={() => {
@@ -184,15 +176,15 @@ export default function StudentsScreen() {
             },
           ]}
         >
-          <Text
-            variant="small"
+          <Body
+            size="sm"
             style={{
-              fontFamily: "DMSans-SemiBold",
+              fontWeight: "600",
               color: segment === "active" ? c.text : c.textLight,
             }}
           >
             {t.psychologist.studentsTabActive}
-          </Text>
+          </Body>
         </Pressable>
         <Pressable
           onPress={() => {
@@ -207,15 +199,15 @@ export default function StudentsScreen() {
             },
           ]}
         >
-          <Text
-            variant="small"
+          <Body
+            size="sm"
             style={{
-              fontFamily: "DMSans-SemiBold",
+              fontWeight: "600",
               color: segment === "pending" ? c.text : c.textLight,
             }}
           >
             {t.psychologist.studentsTabPending}
-          </Text>
+          </Body>
         </Pressable>
       </View>
 
@@ -280,28 +272,27 @@ export default function StudentsScreen() {
                       { backgroundColor: `${c.primary}1A` },
                     ]}
                   >
-                    <Text
+                    <Body
+                      size="sm"
                       style={{
-                        fontSize: 14,
-                        fontFamily: "DMSans-SemiBold",
+                        fontWeight: "600",
                         color: c.primary,
                       }}
                     >
                       {student.name.charAt(0).toUpperCase()}
-                    </Text>
+                    </Body>
                   </View>
                   <View style={styles.cardInfo}>
                     <View style={styles.nameRow}>
-                      <Text
-                        variant="body"
+                      <Body
                         style={{
-                          fontFamily: "DMSans-SemiBold",
+                          fontWeight: "600",
                           flexShrink: 1,
                         }}
                         numberOfLines={1}
                       >
                         {student.name}
-                      </Text>
+                      </Body>
                       <StatusBadge status={student.status} size="sm" />
                       {inactiveIds.has(student.id) && (
                         <View
@@ -327,23 +318,25 @@ export default function StudentsScreen() {
                       )}
                     </View>
                     <View style={styles.metaRow}>
-                      <Text variant="caption">
+                      <Body size="xs" style={{ color: c.textLight }}>
                         {student.grade != null
                           ? `${student.grade}${student.classLetter ?? ""}`
                           : "—"}
-                      </Text>
-                      <Text variant="caption"> · </Text>
-                      <Text variant="caption">
-                        {student.lastMood != null
-                          ? (moodEmojis[student.lastMood] ?? "—")
-                          : "—"}
-                      </Text>
-                      <Text variant="caption"> · </Text>
-                      <Text variant="caption">
+                      </Body>
+                      <Body size="xs" style={{ color: c.textLight }}> · </Body>
+                      {student.lastMood != null ? (
+                        <MoodScale
+                          value={student.lastMood as 1 | 2 | 3 | 4 | 5}
+                        />
+                      ) : (
+                        <Body size="xs" style={{ color: c.textLight }}>—</Body>
+                      )}
+                      <Body size="xs" style={{ color: c.textLight }}> · </Body>
+                      <Body size="xs" style={{ color: c.textLight }}>
                         {student.lastActive
                           ? new Date(student.lastActive).toLocaleDateString()
                           : "—"}
-                      </Text>
+                      </Body>
                     </View>
                   </View>
                   <Ionicons
@@ -378,15 +371,15 @@ export default function StudentsScreen() {
           ]}
         >
           <Ionicons name="add" size={18} color="#FFF" />
-          <Text
+          <Body
+            size="sm"
             style={{
               color: "#FFF",
-              fontFamily: "DMSans-SemiBold",
-              fontSize: 14,
+              fontWeight: "600",
             }}
           >
             {t.psychologist.addNewStudent}
-          </Text>
+          </Body>
         </Pressable>
       </View>
 

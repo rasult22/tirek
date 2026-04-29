@@ -8,3 +8,5 @@ export { Sheet } from "./Sheet";
 export { Badge } from "./Badge";
 export { SeverityBadge } from "./SeverityBadge";
 export { StatusBadge } from "./StatusBadge";
+export { MoodScale } from "./MoodScale";
+export type { MoodValue } from "./MoodScale";
