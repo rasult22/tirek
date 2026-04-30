@@ -72,17 +72,23 @@ export default function GenerateCodesModal() {
 
   return (
     <View style={[styles.root, { backgroundColor: c.surface }]}>
-      <View style={styles.headerRow}>
+      <View
+        style={{
+          paddingHorizontal: spacing.xl,
+          paddingTop: 48,
+          paddingBottom: spacing.lg,
+          backgroundColor: "red",
+        }}
+      >
         <Text
           style={{
-            fontSize: 18,
-            lineHeight: 24,
+            fontSize: 22,
+            lineHeight: 28,
             fontFamily: "Inter_700Bold",
-            color: c.text,
-            flex: 1,
+            color: "white",
           }}
         >
-          {t.psychologist.generateCodes}
+          DEBUG-HEADER {t.psychologist.generateCodes}
         </Text>
       </View>
 
