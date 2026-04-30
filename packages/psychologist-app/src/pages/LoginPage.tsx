@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-import { useT, useLanguage } from "../hooks/useLanguage.js";
+import { useLanguage } from "../hooks/useLanguage.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { login } from "../api/auth.js";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Shield, MessageCircle, BookOpen } from "lucide-react";
 import logoSrc from "../assets/logo.png";
 
 export function LoginPage() {
@@ -30,37 +30,73 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
-      {/* Background decoration */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-secondary/5 blur-3xl" />
-      </div>
-
-      <div className="w-full max-w-md animate-fade-in-up">
-        {/* Logo area */}
-        <div className="text-center mb-8">
-          <img src={logoSrc} alt="Tirek" className="mx-auto w-20 h-20 mb-4 rounded-2xl shadow-lg shadow-primary/25" />
-          <h1 className="text-2xl font-bold tracking-tight text-text-main">
-            Tirek
-          </h1>
-          <p className="text-sm text-text-light mt-1">
-            {t.auth.psychologistPanel}
-          </p>
+    <div className="min-h-dvh flex flex-col lg:flex-row bg-bg">
+      {/* Brand panel — desktop split */}
+      <aside className="hidden lg:flex lg:w-1/2 xl:w-[55%] relative overflow-hidden bg-gradient-to-br from-brand to-brand-deep text-white p-12 flex-col justify-between">
+        <div className="absolute inset-0 -z-0 opacity-20">
+          <div className="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-white/40 blur-3xl" />
+          <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-white/30 blur-3xl" />
         </div>
 
-        {/* Login card */}
-        <div className="glass-card-elevated rounded-2xl p-6 sm:p-8">
-          <h2 className="text-lg font-bold text-text-main mb-6">
+        <div className="relative z-10 flex items-center gap-3">
+          <img
+            src={logoSrc}
+            alt="Tirek"
+            className="w-12 h-12 rounded-xl shadow-lg"
+          />
+          <span className="text-2xl font-bold tracking-tight">Tirek</span>
+        </div>
+
+        <div className="relative z-10 max-w-md">
+          <h2 className="text-3xl xl:text-4xl font-extrabold leading-tight mb-4">
+            {t.auth.psychologistPanel}
+          </h2>
+          <p className="text-base text-white/85 leading-relaxed">
+            {t.psychologist.dashboard}
+          </p>
+
+          <div className="mt-10 space-y-3">
+            <FeatureRow icon={Shield} text={t.psychologist.crisis} />
+            <FeatureRow icon={MessageCircle} text={t.psychologist.messages} />
+            <FeatureRow icon={BookOpen} text={t.psychologist.diagnostics} />
+          </div>
+        </div>
+
+        <p className="relative z-10 text-xs text-white/50 font-medium">
+          Tirek &copy; {new Date().getFullYear()}
+        </p>
+      </aside>
+
+      {/* Form panel */}
+      <main className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-sm animate-fade-in-up">
+          {/* Logo on mobile only */}
+          <div className="text-center mb-8 lg:hidden">
+            <img
+              src={logoSrc}
+              alt="Tirek"
+              className="mx-auto w-16 h-16 mb-3 rounded-2xl shadow-lg"
+            />
+            <h1 className="text-xl font-bold tracking-tight text-text-main">
+              Tirek
+            </h1>
+            <p className="text-xs text-text-light mt-1">
+              {t.auth.psychologistPanel}
+            </p>
+          </div>
+
+          <h2 className="text-2xl font-bold text-text-main mb-1">
             {t.auth.login}
           </h2>
+          <p className="text-sm text-text-light mb-6">
+            {t.auth.email}
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-semibold text-text-main mb-1.5"
+                className="block text-xs font-semibold text-text-light uppercase tracking-wide mb-1.5"
               >
                 {t.auth.email}
               </label>
@@ -71,18 +107,18 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full h-11 px-4 rounded-xl border border-border-light bg-surface/80 text-sm
+                className="w-full h-11 px-4 rounded-xl border border-input-border bg-surface text-sm
                   text-text-main placeholder:text-text-light/60
+                  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
                   transition-all"
                 placeholder="email@school.kz"
               />
             </div>
 
-            {/* Password */}
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-semibold text-text-main mb-1.5"
+                className="block text-xs font-semibold text-text-light uppercase tracking-wide mb-1.5"
               >
                 {t.auth.password}
               </label>
@@ -94,8 +130,9 @@ export function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="w-full h-11 px-4 pr-11 rounded-xl border border-border-light bg-surface/80 text-sm
+                  className="w-full h-11 px-4 pr-11 rounded-xl border border-input-border bg-surface text-sm
                     text-text-main placeholder:text-text-light/60
+                    focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
                     transition-all"
                 />
                 <button
@@ -112,63 +149,80 @@ export function LoginPage() {
               </p>
             </div>
 
-            {/* Error */}
             {loginMutation.isError && (
               <div className="p-3 rounded-xl bg-danger/8 border border-danger/15 text-danger text-sm font-medium">
                 {t.auth.invalidCredentials}
               </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loginMutation.isPending || !email || !password}
-              className="btn-press w-full h-11 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white text-sm font-bold
+              className="btn-press w-full h-11 rounded-xl bg-primary text-white text-sm font-bold
+                hover:bg-primary-dark
                 disabled:opacity-50 disabled:cursor-not-allowed
                 transition-all flex items-center justify-center gap-2
-                shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/20"
+                shadow-md shadow-primary/15 hover:shadow-lg hover:shadow-primary/25"
             >
-              {loginMutation.isPending && <Loader2 size={16} className="animate-spin" />}
+              {loginMutation.isPending && (
+                <Loader2 size={16} className="animate-spin" />
+              )}
               {t.auth.login}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-text-light">
             {t.auth.noAccount}{" "}
-            <Link to="/register" className="font-bold text-primary-dark hover:underline">
+            <Link
+              to="/register"
+              className="font-bold text-primary-dark hover:underline"
+            >
               {t.auth.register}
             </Link>
           </p>
-        </div>
 
-        {/* Language switcher */}
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button
-            onClick={() => setLanguage("ru")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              language === "ru"
-                ? "bg-primary/10 text-primary border border-primary/30"
-                : "text-text-light hover:text-text-main"
-            }`}
-          >
-            Русский
-          </button>
-          <button
-            onClick={() => setLanguage("kz")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              language === "kz"
-                ? "bg-primary/10 text-primary border border-primary/30"
-                : "text-text-light hover:text-text-main"
-            }`}
-          >
-            Қазақша
-          </button>
+          {/* Language switcher */}
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => setLanguage("ru")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                language === "ru"
+                  ? "bg-brand-soft text-brand-deep"
+                  : "text-text-light hover:text-text-main"
+              }`}
+            >
+              Русский
+            </button>
+            <button
+              onClick={() => setLanguage("kz")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                language === "kz"
+                  ? "bg-brand-soft text-brand-deep"
+                  : "text-text-light hover:text-text-main"
+              }`}
+            >
+              Қазақша
+            </button>
+          </div>
         </div>
+      </main>
+    </div>
+  );
+}
 
-        <p className="text-center text-[11px] text-text-light/60 font-medium mt-4">
-          Tirek &copy; {new Date().getFullYear()}
-        </p>
+function FeatureRow({
+  icon: Icon,
+  text,
+}: {
+  icon: typeof Shield;
+  text: string;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center shrink-0">
+        <Icon size={18} />
       </div>
+      <span className="text-base font-semibold">{text}</span>
     </div>
   );
 }

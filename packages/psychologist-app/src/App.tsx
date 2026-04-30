@@ -22,7 +22,6 @@ import { TestDetailPage } from "./pages/TestDetailPage.js";
 import { CrisisPage } from "./pages/CrisisPage.js";
 import { ProfilePage } from "./pages/ProfilePage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
-import { DirectChatPage } from "./pages/DirectChatPage.js";
 import { OfficeHoursPage } from "./pages/OfficeHoursPage.js";
 import { DesignSystemDevPage } from "./pages/DesignSystemDevPage.js";
 
@@ -78,7 +77,7 @@ export function App() {
             <Route path="/diagnostics/assign-class" element={<ProtectedRoute><AssignToClassPage /></ProtectedRoute>} />
             <Route path="/diagnostics/tests/:slug" element={<ProtectedRoute><TestDetailPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><DirectChatListPage /></ProtectedRoute>} />
-            <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatPage /></ProtectedRoute>} />
+            <Route path="/messages/:conversationId" element={<ProtectedRoute><DirectChatListPage /></ProtectedRoute>} />
             <Route path="/office-hours" element={<ProtectedRoute><OfficeHoursPage /></ProtectedRoute>} />
             <Route path="/crisis" element={<ProtectedRoute><CrisisPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

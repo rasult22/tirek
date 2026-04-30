@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { ChevronRight, Clock, GraduationCap } from "lucide-react";
+import { Clock, GraduationCap, ClipboardList } from "lucide-react";
 import { testDefinitions } from "@tirek/shared";
 import { useT, useLanguage } from "../../hooks/useLanguage.js";
 
@@ -19,7 +19,7 @@ export function CatalogSegment() {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
       {tests.map((td) => {
         const name = language === "kz" ? td.nameKz : td.nameRu;
         const description =
@@ -28,39 +28,53 @@ export function CatalogSegment() {
         const age = (td as {
           ageRange?: { minGrade: number; maxGrade: number };
         }).ageRange;
+        const questionCount = (td as { questions?: ReadonlyArray<unknown> })
+          .questions?.length;
 
         return (
           <button
             key={td.slug}
             onClick={() => navigate(`/diagnostics/tests/${td.slug}`)}
-            className="btn-press w-full flex items-center gap-3 p-3 rounded-xl bg-surface border border-border shadow-sm transition-all hover:shadow-md text-left"
+            className="btn-press group flex flex-col gap-2.5 p-4 rounded-2xl bg-surface border border-border-light hover:border-brand/40 hover:shadow-md transition-all text-left"
           >
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-text-main">{name}</div>
-              <div className="mt-0.5 text-xs text-text-light line-clamp-2">
-                {description}
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-soft flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <ClipboardList size={18} className="text-brand-deep" />
               </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-light">
-                {duration != null && (
-                  <span className="inline-flex items-center gap-1">
-                    <Clock size={10} />
-                    {t.psychologist.testDurationMinutes.replace(
-                      "{n}",
-                      String(duration),
-                    )}
-                  </span>
-                )}
-                {age && (
-                  <span className="inline-flex items-center gap-1">
-                    <GraduationCap size={10} />
-                    {t.psychologist.testAgeRangeGrades
-                      .replace("{from}", String(age.minGrade))
-                      .replace("{to}", String(age.maxGrade))}
-                  </span>
-                )}
+              <div className="flex-1 min-w-0">
+                <div className="text-[15px] font-bold text-text-main leading-tight">
+                  {name}
+                </div>
+                <div className="mt-1 text-[12px] text-text-light line-clamp-2">
+                  {description}
+                </div>
               </div>
             </div>
-            <ChevronRight size={16} className="text-text-light/40 shrink-0" />
+
+            <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-light pt-2 border-t border-border-light">
+              {duration != null && (
+                <span className="inline-flex items-center gap-1">
+                  <Clock size={11} />
+                  {t.psychologist.testDurationMinutes.replace(
+                    "{n}",
+                    String(duration),
+                  )}
+                </span>
+              )}
+              {age && (
+                <span className="inline-flex items-center gap-1">
+                  <GraduationCap size={11} />
+                  {t.psychologist.testAgeRangeGrades
+                    .replace("{from}", String(age.minGrade))
+                    .replace("{to}", String(age.maxGrade))}
+                </span>
+              )}
+              {questionCount != null && (
+                <span className="inline-flex items-center gap-1">
+                  {questionCount} {language === "kz" ? "сұрақ" : "вопр."}
+                </span>
+              )}
+            </div>
           </button>
         );
       })}
