@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -25,7 +25,10 @@ export default function GenerateCodesModal() {
   const c = useThemeColors();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { isOpen, prefill, onSuccess, close } = useGenerateCodesSheetStore();
+  const isOpen = useGenerateCodesSheetStore((s) => s.isOpen);
+  const prefill = useGenerateCodesSheetStore((s) => s.prefill);
+  const onSuccess = useGenerateCodesSheetStore((s) => s.onSuccess);
+  const close = useGenerateCodesSheetStore((s) => s.close);
 
   const [namesText, setNamesText] = useState(prefill?.name ?? "");
   const [grade, setGrade] = useState<number | null>(prefill?.grade ?? null);
@@ -33,9 +36,17 @@ export default function GenerateCodesModal() {
     prefill?.classLetter ?? null,
   );
 
-  useEffect(() => {
-    if (!isOpen) router.back();
-  }, [isOpen, router]);
+  if (!isOpen) {
+    return (
+      <View style={[styles.root, { backgroundColor: c.surface }]}>
+        <View style={styles.headerRow}>
+          <Text style={{ color: c.text }}>
+            DEBUG: generate-codes isOpen=false at mount
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const studentNames = namesText
     .split("\n")

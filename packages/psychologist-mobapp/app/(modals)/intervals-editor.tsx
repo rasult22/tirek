@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,7 +12,9 @@ import { useIntervalsEditorSheetStore } from "../../lib/sheets/intervals-editor"
 export default function IntervalsEditorModal() {
   const c = useThemeColors();
   const router = useRouter();
-  const { payload, onSave, close } = useIntervalsEditorSheetStore();
+  const payload = useIntervalsEditorSheetStore((s) => s.payload);
+  const onSave = useIntervalsEditorSheetStore((s) => s.onSave);
+  const close = useIntervalsEditorSheetStore((s) => s.close);
 
   const showDayOffToggle = payload?.showDayOffToggle ?? true;
   const saving = payload?.saving ?? false;
@@ -26,9 +28,17 @@ export default function IntervalsEditorModal() {
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!payload) router.back();
-  }, [payload, router]);
+  if (!payload) {
+    return (
+      <View style={[styles.root, { backgroundColor: c.surface }]}>
+        <View style={styles.headerRow}>
+          <Text style={{ color: c.text }}>
+            DEBUG: intervals-editor payload=null at mount
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   function updateInterval(idx: number, field: "start" | "end", value: string) {
     setIntervals((arr) => arr.map((iv, i) => (i === idx ? { ...iv, [field]: value } : iv)));

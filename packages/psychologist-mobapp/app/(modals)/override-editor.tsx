@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -28,7 +28,9 @@ function addDaysIso(iso: string, days: number): string {
 export default function OverrideEditorModal() {
   const c = useThemeColors();
   const router = useRouter();
-  const { payload, onSave, close } = useOverrideEditorSheetStore();
+  const payload = useOverrideEditorSheetStore((s) => s.payload);
+  const onSave = useOverrideEditorSheetStore((s) => s.onSave);
+  const close = useOverrideEditorSheetStore((s) => s.close);
 
   const fixedDate = payload?.fixedDate;
   const saving = payload?.saving ?? false;
@@ -43,9 +45,17 @@ export default function OverrideEditorModal() {
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!payload) router.back();
-  }, [payload, router]);
+  if (!payload) {
+    return (
+      <View style={[styles.root, { backgroundColor: c.surface }]}>
+        <View style={styles.headerRow}>
+          <Text style={{ color: c.text }}>
+            DEBUG: override-editor payload=null at mount
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   function updateInterval(idx: number, field: "start" | "end", value: string) {
     setIntervals((arr) => arr.map((iv, i) => (i === idx ? { ...iv, [field]: value } : iv)));

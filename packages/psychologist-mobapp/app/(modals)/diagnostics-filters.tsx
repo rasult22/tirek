@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { testDefinitions, type Severity } from "@tirek/shared";
@@ -17,7 +17,9 @@ export default function DiagnosticsFiltersModal() {
   const { language } = useLanguage();
   const c = useThemeColors();
   const router = useRouter();
-  const { initial, onApply, close } = useDiagnosticsFiltersSheetStore();
+  const initial = useDiagnosticsFiltersSheetStore((s) => s.initial);
+  const onApply = useDiagnosticsFiltersSheetStore((s) => s.onApply);
+  const close = useDiagnosticsFiltersSheetStore((s) => s.close);
 
   const [testSlug, setTestSlug] = useState<string>(initial?.testSlug ?? "");
   const [severity, setSeverity] = useState<string>(
@@ -29,9 +31,17 @@ export default function DiagnosticsFiltersModal() {
   const [from, setFrom] = useState<string>(initial?.from ?? "");
   const [to, setTo] = useState<string>(initial?.to ?? "");
 
-  useEffect(() => {
-    if (!initial) router.back();
-  }, [initial, router]);
+  if (!initial) {
+    return (
+      <View style={[styles.root, { backgroundColor: c.surface }]}>
+        <View style={styles.header}>
+          <Text style={{ color: c.text }}>
+            DEBUG: diagnostics-filters initial=null at mount
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   const tests = Object.values(testDefinitions);
 

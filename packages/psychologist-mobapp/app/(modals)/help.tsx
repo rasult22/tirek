@@ -1,20 +1,24 @@
-import { useEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { useRouter } from "expo-router";
+import { Text } from "../../components/ui";
 import { H3, Body } from "../../components/ui/Typography";
 import { useThemeColors, spacing } from "../../lib/theme";
 import { useHelpSheetStore } from "../../lib/sheets/help";
 
 export default function HelpModal() {
   const c = useThemeColors();
-  const router = useRouter();
-  const { payload } = useHelpSheetStore();
+  const payload = useHelpSheetStore((s) => s.payload);
 
-  useEffect(() => {
-    if (!payload) router.back();
-  }, [payload, router]);
-
-  if (!payload) return null;
+  if (!payload) {
+    return (
+      <View style={[styles.root, { backgroundColor: c.surface }]}>
+        <View style={styles.header}>
+          <Text style={{ color: c.text }}>
+            DEBUG: help payload=null at mount
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.root, { backgroundColor: c.surface }]}>
