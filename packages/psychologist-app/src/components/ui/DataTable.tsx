@@ -25,6 +25,8 @@ export interface DataTableProps<T> {
   groupBy?: (row: T) => string;
   /** Render group header given the group key and row count. */
   renderGroupHeader?: (groupKey: string, count: number) => ReactNode;
+  /** Predicate for group collapse — when true the group's rows are hidden but header stays visible. */
+  isGroupCollapsed?: (groupKey: string) => boolean;
   /** Whole-row click handler. Adds hover state. */
   onRowClick?: (row: T) => void;
   /** Optional empty-state replacement. */
@@ -41,6 +43,7 @@ export function DataTable<T>({
   getRowKey,
   groupBy,
   renderGroupHeader,
+  isGroupCollapsed,
   onRowClick,
   empty,
   density = "default",
@@ -159,28 +162,31 @@ export function DataTable<T>({
       <table className="w-full border-collapse text-left">
         <thead>{headerRow}</thead>
         {groups ? (
-          groups.map(([groupKey, rows]) => (
-            <tbody key={groupKey}>
-              <tr className="sticky top-0 z-[1]">
-                <td
-                  colSpan={columns.length}
-                  className="bg-surface-secondary px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-light border-b border-border"
-                >
-                  {renderGroupHeader ? (
-                    renderGroupHeader(groupKey, rows.length)
-                  ) : (
-                    <span>
-                      {groupKey}
-                      <span className="ml-2 font-normal normal-case tracking-normal text-text-light/70">
-                        · {rows.length}
+          groups.map(([groupKey, rows]) => {
+            const collapsed = isGroupCollapsed?.(groupKey) ?? false;
+            return (
+              <tbody key={groupKey}>
+                <tr className="sticky top-0 z-[1]">
+                  <td
+                    colSpan={columns.length}
+                    className="bg-surface-secondary px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-light border-b border-border"
+                  >
+                    {renderGroupHeader ? (
+                      renderGroupHeader(groupKey, rows.length)
+                    ) : (
+                      <span>
+                        {groupKey}
+                        <span className="ml-2 font-normal normal-case tracking-normal text-text-light/70">
+                          · {rows.length}
+                        </span>
                       </span>
-                    </span>
-                  )}
-                </td>
-              </tr>
-              {rows.map(renderRow)}
-            </tbody>
-          ))
+                    )}
+                  </td>
+                </tr>
+                {!collapsed && rows.map(renderRow)}
+              </tbody>
+            );
+          })
         ) : (
           <tbody>{sortedData.map(renderRow)}</tbody>
         )}
