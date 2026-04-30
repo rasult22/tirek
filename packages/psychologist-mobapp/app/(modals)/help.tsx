@@ -8,17 +8,7 @@ export default function HelpModal() {
   const c = useThemeColors();
   const payload = useHelpSheetStore((s) => s.payload);
 
-  if (!payload) {
-    return (
-      <View style={[styles.root, { backgroundColor: c.surface }]}>
-        <View style={styles.header}>
-          <Text style={{ color: c.text }}>
-            DEBUG: help payload=null at mount
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  if (!payload) return null;
 
   return (
     <View style={[styles.root, { backgroundColor: c.surface }]}>
@@ -45,7 +35,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing["2xl"],
     paddingBottom: spacing.md,
     gap: spacing.md,
   },

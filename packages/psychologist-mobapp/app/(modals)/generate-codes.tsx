@@ -36,17 +36,7 @@ export default function GenerateCodesModal() {
     prefill?.classLetter ?? null,
   );
 
-  if (!isOpen) {
-    return (
-      <View style={[styles.root, { backgroundColor: c.surface }]}>
-        <View style={styles.headerRow}>
-          <Text style={{ color: c.text }}>
-            DEBUG: generate-codes isOpen=false at mount
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  if (!isOpen) return null;
 
   const studentNames = namesText
     .split("\n")
@@ -272,7 +262,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing["2xl"],
     paddingBottom: spacing.md,
     gap: spacing.md,
   },

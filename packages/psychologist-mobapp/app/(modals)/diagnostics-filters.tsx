@@ -31,17 +31,7 @@ export default function DiagnosticsFiltersModal() {
   const [from, setFrom] = useState<string>(initial?.from ?? "");
   const [to, setTo] = useState<string>(initial?.to ?? "");
 
-  if (!initial) {
-    return (
-      <View style={[styles.root, { backgroundColor: c.surface }]}>
-        <View style={styles.header}>
-          <Text style={{ color: c.text }}>
-            DEBUG: diagnostics-filters initial=null at mount
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  if (!initial) return null;
 
   const tests = Object.values(testDefinitions);
 
@@ -263,7 +253,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing["2xl"],
     paddingBottom: spacing.md,
     gap: spacing.md,
   },

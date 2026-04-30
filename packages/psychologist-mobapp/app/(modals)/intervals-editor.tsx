@@ -28,17 +28,7 @@ export default function IntervalsEditorModal() {
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [error, setError] = useState<string | null>(null);
 
-  if (!payload) {
-    return (
-      <View style={[styles.root, { backgroundColor: c.surface }]}>
-        <View style={styles.headerRow}>
-          <Text style={{ color: c.text }}>
-            DEBUG: intervals-editor payload=null at mount
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  if (!payload) return null;
 
   function updateInterval(idx: number, field: "start" | "end", value: string) {
     setIntervals((arr) => arr.map((iv, i) => (i === idx ? { ...iv, [field]: value } : iv)));
@@ -275,7 +265,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing["2xl"],
     paddingBottom: spacing.md,
     gap: spacing.md,
   },

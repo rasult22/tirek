@@ -26,17 +26,7 @@ export default function FiltersModal() {
     payload?.classLetter ?? null,
   );
 
-  if (!payload) {
-    return (
-      <View style={[styles.root, { backgroundColor: c.surface }]}>
-        <View style={styles.headerRow}>
-          <Text style={{ color: c.text }}>
-            DEBUG: filters payload is null — store empty when route mounted
-          </Text>
-        </View>
-      </View>
-    );
-  }
+  if (!payload) return null;
 
   function handleApply() {
     onApply?.({ grade: draftGrade, classLetter: draftLetter });
@@ -196,7 +186,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing["2xl"],
     paddingBottom: spacing.md,
     gap: spacing.md,
   },
