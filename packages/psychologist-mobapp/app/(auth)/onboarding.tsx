@@ -20,6 +20,8 @@ import {
   H1,
   H3,
   Input,
+  Stepper,
+  type StepperStep,
   Text,
 } from "../../components/ui";
 import { useT } from "../../lib/hooks/useLanguage";
@@ -222,7 +224,12 @@ export default function OnboardingScreen() {
 
   // ── School / Schedule shared chrome ──────────────────────────────
   const stepIndex = STEP_INDEX[step];
-  const progress = stepIndex / TOTAL_STEPS;
+
+  const stepperSteps: StepperStep[] = [
+    { id: "welcome", label: ob.wizardWelcomeTitle },
+    { id: "school", label: ob.wizardSchoolTitle },
+    { id: "schedule", label: ob.wizardScheduleTitle },
+  ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]}>
@@ -238,23 +245,11 @@ export default function OnboardingScreen() {
           >
             <Ionicons name="arrow-back" size={18} color={c.text} />
           </Pressable>
-          <Caption style={{ color: c.textLight }}>
-            {stepIndex + 1} {ob.stepOf} {TOTAL_STEPS}
-          </Caption>
           <View style={styles.backBtn} />
         </View>
 
-        <View style={styles.progressWrap}>
-          <View
-            style={[styles.progressTrack, { backgroundColor: c.surfaceSecondary }]}
-          >
-            <View
-              style={[
-                styles.progressFill,
-                { backgroundColor: c.primary, width: `${progress * 100}%` },
-              ]}
-            />
-          </View>
+        <View style={styles.stepperWrap}>
+          <Stepper steps={stepperSteps} current={stepIndex} />
         </View>
 
         <ScrollView
@@ -562,18 +557,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  progressWrap: {
-    paddingHorizontal: 20,
+  stepperWrap: {
+    paddingHorizontal: spacing.xl,
     marginBottom: spacing.lg,
-  },
-  progressTrack: {
-    height: 4,
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 2,
   },
 
   // Step content
