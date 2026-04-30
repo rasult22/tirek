@@ -636,6 +636,7 @@ export const ru = {
     studentDetail: {
       moodTrend: "Тренд настроения",
       days14: "14 дней",
+      days30: "30 дней",
       average: "Среднее",
       riskLevel: "Уровень риска",
       riskLow: "Низкий",

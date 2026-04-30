@@ -638,6 +638,7 @@ export const kz: TranslationKeys = {
     studentDetail: {
       moodTrend: "Көңіл-күй тренді",
       days14: "14 күн",
+      days30: "30 күн",
       average: "Орташа",
       riskLevel: "Қауіп деңгейі",
       riskLow: "Төмен",

@@ -1,31 +1,27 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Loader2,
-  MessageSquare,
-  ClipboardList,
-  Printer,
-  UserMinus,
-} from "lucide-react";
-import { clsx } from "clsx";
+import { ArrowLeft, Loader2, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 import { useT, useLanguage } from "../hooks/useLanguage.js";
 import { getStudent, detachStudent } from "../api/students.js";
 import { directChatApi } from "../api/direct-chat.js";
 import { achievementsApi } from "../api/achievements.js";
-import { cbtApi } from "../api/cbt.js";
 import { schoolsApi } from "../api/schools.js";
+import { timelineApi } from "../api/timeline.js";
 import { useAuthStore } from "../store/auth-store.js";
 import { ErrorState } from "../components/ui/ErrorState.js";
-import { StudentHeroCard } from "../components/student/StudentHeroCard.js";
-import { StudentOverviewTab } from "../components/student/StudentOverviewTab.js";
-import { StudentAssessmentsTab } from "../components/student/StudentAssessmentsTab.js";
-import { calculateMoodTrend, calculateEngagement } from "../utils/mood-analytics.js";
+import { StudentDetailHero } from "../components/student/StudentDetailHero.js";
+import { StudentActionBar } from "../components/student/StudentActionBar.js";
+import { MoodChart } from "../components/student/MoodChart.js";
+import { AchievementsStack } from "../components/student/AchievementsStack.js";
+import { StudentTestsSection } from "../components/student/StudentTestsSection.js";
+import { StudentTimeline } from "../components/student/StudentTimeline.js";
+import { calculateMoodTrend } from "../utils/mood-analytics.js";
 import { openPrintProfile } from "../utils/print-profile.js";
+import type { TimelineEventType } from "@tirek/shared";
 
-type Tab = "overview" | "assessments";
+type Filter = "all" | TimelineEventType;
 
 export function StudentDetailPage() {
   const t = useT();
@@ -35,9 +31,10 @@ export function StudentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const psychologist = useAuthStore((s) => s.user);
 
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [printing, setPrinting] = useState(false);
+  const [messaging, setMessaging] = useState(false);
   const [detaching, setDetaching] = useState(false);
+  const [filter, setFilter] = useState<Filter>("all");
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["student", id],
@@ -51,30 +48,25 @@ export function StudentDetailPage() {
     enabled: !!id,
   });
 
-  const { data: cbtEntries, isLoading: cbtLoading } = useQuery({
-    queryKey: ["cbt", id],
-    queryFn: () => cbtApi.getStudentEntries(id!),
+  const timelineType: TimelineEventType | undefined =
+    filter === "all" ? undefined : filter;
+
+  const { data: timeline, isLoading: timelineLoading } = useQuery({
+    queryKey: ["timeline", id, filter],
+    queryFn: () =>
+      timelineApi.getStudentTimeline(id!, { type: timelineType, limit: 100 }),
     enabled: !!id,
   });
 
   const moodTrend = useMemo(
-    () => calculateMoodTrend(data?.moodHistory ?? []),
+    () => calculateMoodTrend(data?.moodHistory ?? [], 30),
     [data?.moodHistory],
-  );
-
-  const engagement = useMemo(
-    () => calculateEngagement(
-      data?.moodHistory ?? [],
-      data?.testResults ?? [],
-      cbtEntries?.data,
-    ),
-    [data?.moodHistory, data?.testResults, cbtEntries?.data],
   );
 
   if (isLoading) {
     return (
       <div className="flex justify-center py-16">
-        <Loader2 size={28} className="animate-spin text-text-light" />
+        <Loader2 size={28} className="animate-spin text-ink-muted" />
       </div>
     );
   }
@@ -84,11 +76,8 @@ export function StudentDetailPage() {
   }
 
   const { student, status, reason, moodHistory, testResults } = data;
-
-  const tabs: { key: Tab; label: string; icon: typeof ClipboardList }[] = [
-    { key: "overview", label: d.overview, icon: ClipboardList },
-    { key: "assessments", label: d.assessments, icon: ClipboardList },
-  ];
+  const latestEntry =
+    moodHistory.length > 0 ? moodHistory[moodHistory.length - 1] : undefined;
 
   async function handlePrint() {
     if (!psychologist) return;
@@ -126,6 +115,23 @@ export function StudentDetailPage() {
     }
   }
 
+  async function handleMessage() {
+    if (!id) return;
+    setMessaging(true);
+    try {
+      const conv = await directChatApi.createConversation(id);
+      navigate(`/messages/${conv.id}`);
+    } catch {
+      toast.error(t.common.actionFailed);
+    } finally {
+      setMessaging(false);
+    }
+  }
+
+  function handleAssignTest() {
+    navigate("/diagnostics");
+  }
+
   async function handleDetach() {
     if (
       !window.confirm(
@@ -145,115 +151,70 @@ export function StudentDetailPage() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header: back + actions */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => navigate("/students")}
-          className="flex items-center gap-1.5 text-sm text-text-light hover:text-text-main transition-colors"
-        >
-          <ArrowLeft size={16} />
-          {t.common.back}
-        </button>
-        <button
-          onClick={() => {
-            directChatApi.createConversation(id!).then((conv) => {
-              navigate(`/messages/${conv.id}`);
-            }).catch(() => toast.error(t.common.actionFailed));
-          }}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary text-white text-xs
-            font-medium hover:bg-primary-dark transition-colors btn-press"
-        >
-          <MessageSquare size={14} />
-          {t.directChat.writeToStudent}
-        </button>
-      </div>
+    <div className="space-y-4 animate-fade-in-up">
+      <button
+        onClick={() => navigate("/students")}
+        className="flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink transition-colors"
+      >
+        <ArrowLeft size={16} />
+        {t.common.back}
+      </button>
 
-      {/* Hero card */}
-      <StudentHeroCard
-        student={student}
-        status={status}
-        reason={reason}
-        moodTrend={moodTrend}
-        engagement={engagement}
-      />
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        <aside className="xl:col-span-5 xl:sticky xl:top-2 xl:self-start xl:max-h-[calc(100dvh-1rem)] xl:overflow-y-auto xl:pb-4 space-y-4">
+          <StudentDetailHero student={student} status={status} reason={reason} />
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-surface-secondary/70 rounded-lg p-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={clsx(
-              "flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-xs font-medium transition-all",
-              activeTab === tab.key
-                ? "bg-surface shadow-sm text-primary"
-                : "text-text-light hover:text-text-main",
-            )}
-          >
-            <tab.icon size={14} />
-            {tab.label}
-          </button>
-        ))}
-      </div>
+          <MoodChart
+            data={moodTrend.data}
+            average={moodTrend.average}
+            latestEntry={latestEntry}
+            size="hero"
+            rangeLabel={d.days30}
+          />
 
-      {/* Tab content */}
-      {activeTab === "overview" && (
-        <StudentOverviewTab
-          moodTrend={moodTrend}
-          moodHistory={moodHistory}
-          testResults={testResults}
-          cbtEntries={cbtEntries?.data}
-          cbtLoading={cbtLoading}
-          achievements={studentAchievements}
-          achievementsLoading={achievementsLoading}
-          onSwitchToAssessments={() => setActiveTab("assessments")}
-        />
-      )}
+          <StudentActionBar
+            onMessage={handleMessage}
+            onAssignTest={handleAssignTest}
+            onPrint={handlePrint}
+            messaging={messaging}
+            printing={printing}
+          />
 
-      {activeTab === "assessments" && (
-        <StudentAssessmentsTab
-          testResults={testResults}
-          cbtEntries={cbtEntries?.data}
-          cbtLoading={cbtLoading}
-          achievements={studentAchievements}
-          achievementsLoading={achievementsLoading}
-        />
-      )}
+          <AchievementsStack
+            achievements={studentAchievements}
+            loading={achievementsLoading}
+          />
 
-      {/* Danger Zone */}
-      <div className="pt-6 mt-6 border-t border-border space-y-2">
-        <div className="text-xs uppercase tracking-wider text-text-light font-semibold">
-          {d.dangerZone}
-        </div>
-        <button
-          onClick={handlePrint}
-          disabled={printing}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-            bg-surface-secondary border border-border text-sm font-medium text-text-main
-            hover:bg-surface-secondary/70 transition-colors btn-press disabled:opacity-60"
-        >
-          {printing ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <Printer size={16} />
-          )}
-          {t.psychologist.printProfile}
-        </button>
-        <button
-          onClick={handleDetach}
-          disabled={detaching}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
-            bg-danger text-white text-sm font-medium hover:bg-danger/90 transition-colors
-            btn-press disabled:opacity-60"
-        >
-          {detaching ? (
-            <Loader2 size={16} className="animate-spin" />
-          ) : (
-            <UserMinus size={16} />
-          )}
-          {t.psychologist.detachStudent}
-        </button>
+          <div className="pt-4 border-t border-border-light space-y-2">
+            <div className="text-xs uppercase tracking-wider text-ink-muted font-semibold">
+              {d.dangerZone}
+            </div>
+            <button
+              onClick={handleDetach}
+              disabled={detaching}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
+                bg-danger text-white text-sm font-medium hover:bg-danger/90 transition-colors
+                btn-press disabled:opacity-60"
+            >
+              {detaching ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <UserMinus size={16} />
+              )}
+              {t.psychologist.detachStudent}
+            </button>
+          </div>
+        </aside>
+
+        <main className="xl:col-span-7 space-y-6">
+          <StudentTestsSection testResults={testResults} />
+          <StudentTimeline
+            events={timeline?.data ?? []}
+            loading={timelineLoading}
+            filter={filter}
+            onFilterChange={setFilter}
+          />
+        </main>
       </div>
     </div>
   );
