@@ -1,7 +1,11 @@
+import { useState } from "react";
 import type { MoodEntry } from "@tirek/shared";
+import { Info } from "lucide-react";
 import { DataTable, type DataTableColumn } from "../components/ui/DataTable.js";
 import { MoodChart } from "../components/student/MoodChart.js";
 import { StatusBadge } from "../components/ui/StatusBadge.js";
+import { Stepper } from "../components/ui/Stepper.js";
+import { Tooltip } from "../components/ui/Tooltip.js";
 
 interface DemoStudent {
   id: string;
@@ -60,6 +64,13 @@ const moodData14 = Array.from({ length: 14 }, (_, i) => ({
 }));
 
 export function DesignSystemDevPage() {
+  const [stepperCurrent, setStepperCurrent] = useState(1);
+  const stepperSteps = [
+    { id: "test", label: "Тест" },
+    { id: "target", label: "Получатель" },
+    { id: "confirm", label: "Подтвердить" },
+  ];
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-12">
       <header>
@@ -111,6 +122,55 @@ export function DesignSystemDevPage() {
         <h2 className="text-lg font-semibold text-text-main">MoodChart · size="inline"</h2>
         <div className="max-w-md">
           <MoodChart data={moodData14.slice(-7)} average={3.4} />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-text-main">Stepper</h2>
+        <div className="max-w-md space-y-3">
+          <Stepper
+            steps={stepperSteps}
+            current={stepperCurrent}
+            onStepClick={setStepperCurrent}
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                setStepperCurrent((s) => Math.max(0, s - 1))
+              }
+              className="px-3 py-1.5 text-xs rounded-lg border border-border bg-surface hover:bg-surface-hover"
+            >
+              ← prev
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setStepperCurrent((s) => Math.min(stepperSteps.length - 1, s + 1))
+              }
+              className="px-3 py-1.5 text-xs rounded-lg border border-border bg-surface hover:bg-surface-hover"
+            >
+              next →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-text-main">Tooltip</h2>
+        <div className="flex items-center gap-3">
+          <Tooltip content="PHQ-9 — стандартный скрининг депрессии (9 вопросов)">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface border border-border text-sm text-ink-muted hover:text-ink"
+            >
+              <Info size={14} />
+              Hover me
+            </button>
+          </Tooltip>
+          <Tooltip content="Подсказка снизу" side="bottom">
+            <span className="text-sm underline cursor-help">подсказка снизу</span>
+          </Tooltip>
         </div>
       </section>
 
