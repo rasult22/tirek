@@ -36,7 +36,19 @@ function ThemedApp() {
       <StatusBar barStyle="dark-content" />
       <NetworkStatus />
       <OnlineManager />
-      <Stack screenOptions={{ headerShown: false, animation: "fade" }} />
+      <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+        <Stack.Screen
+          name="(modals)"
+          options={{
+            presentation: "formSheet",
+            headerShown: false,
+            sheetAllowedDetents: [0.5, 0.95],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 24,
+            animation: "default",
+          }}
+        />
+      </Stack>
     </>
   );
 }
