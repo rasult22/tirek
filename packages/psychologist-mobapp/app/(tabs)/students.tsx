@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import {
   View,
   Pressable,
-  ScrollView,
+  SectionList,
   RefreshControl,
   StyleSheet,
 } from "react-native";
@@ -11,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text, Input, StatusBadge, H3, Body, MoodScale } from "../../components/ui";
+import { Text, Input, H3, Body } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { FiltersSheet } from "../../components/student/FiltersSheet";
@@ -25,8 +25,120 @@ import { shadow } from "../../lib/theme/shadows";
 import { studentsApi } from "../../lib/api/students";
 import { inactivityApi } from "../../lib/api/inactivity";
 import { hapticLight } from "../../lib/haptics";
+import type { StudentOverview } from "@tirek/shared";
 
 type Segment = "active" | "pending";
+
+type StudentSection = {
+  title: string;
+  /** Sort key — grade*10 + letter index; "Без класса" goes to end. */
+  sortKey: number;
+  count: number;
+  data: StudentOverview[];
+};
+
+const NO_CLASS_LABEL = "Без класса";
+
+function classKey(s: StudentOverview): string {
+  if (s.grade == null) return NO_CLASS_LABEL;
+  return `${s.grade}${s.classLetter ?? ""}`;
+}
+
+function classSortKey(s: StudentOverview): number {
+  if (s.grade == null) return Number.MAX_SAFE_INTEGER;
+  // grade major, classLetter minor (А=0, Б=1, ...)
+  const letter = s.classLetter ?? "";
+  return s.grade * 100 + (letter ? letter.charCodeAt(0) : 0);
+}
+
+function buildSections(students: StudentOverview[]): StudentSection[] {
+  const map = new Map<string, StudentSection>();
+  for (const s of students) {
+    const title = classKey(s);
+    let section = map.get(title);
+    if (!section) {
+      section = {
+        title,
+        sortKey: classSortKey(s),
+        count: 0,
+        data: [],
+      };
+      map.set(title, section);
+    }
+    section.data.push(s);
+    section.count += 1;
+  }
+  return Array.from(map.values()).sort((a, b) => a.sortKey - b.sortKey);
+}
+
+/** Risk stripe color from current student status. */
+function statusStripeColor(
+  status: StudentOverview["status"],
+  c: ReturnType<typeof useThemeColors>,
+): string {
+  switch (status) {
+    case "crisis":
+      return c.danger;
+    case "attention":
+      return c.warning;
+    case "normal":
+    default:
+      return c.success;
+  }
+}
+
+function moodLabel(value: number): string {
+  // 1-5 scale; humanize succinctly.
+  return `${value}/5`;
+}
+
+function relativeDayDelta(iso: string): number {
+  const d = new Date(iso);
+  const today = new Date();
+  const startD = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const startToday = Date.UTC(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  return Math.round((startToday - startD) / 86_400_000);
+}
+
+/**
+ * Pick ONE most recent/important signal for the row.
+ * Priority:
+ *   1. Inactivity (if listed as inactive) → "не входил N дн."
+ *   2. lastMood available → "настроение N/5 (сегодня|вчера|N дн. назад)"
+ *      using lastActive as a proxy for "when".
+ *   3. lastActive only → "был N дн. назад"
+ *   4. Nothing → "—"
+ */
+function pickSignal(
+  s: StudentOverview,
+  daysInactive: number | null | undefined,
+): string {
+  if (daysInactive != null && daysInactive > 0) {
+    return `не входил ${daysInactive} дн.`;
+  }
+  if (s.lastMood != null) {
+    const when = s.lastActive ? whenLabel(s.lastActive) : null;
+    return when
+      ? `настроение ${moodLabel(s.lastMood)} · ${when}`
+      : `настроение ${moodLabel(s.lastMood)}`;
+  }
+  if (s.lastActive) {
+    const when = whenLabel(s.lastActive);
+    return when === "сегодня" ? "был сегодня" : `был ${when}`;
+  }
+  return "—";
+}
+
+function whenLabel(iso: string): string {
+  const delta = relativeDayDelta(iso);
+  if (delta <= 0) return "сегодня";
+  if (delta === 1) return "вчера";
+  return `${delta} дн. назад`;
+}
 
 export default function StudentsScreen() {
   const t = useT();
@@ -74,10 +186,13 @@ export default function StudentsScreen() {
     queryFn: () => inactivityApi.list(),
     enabled: segment === "active",
   });
-  const inactiveIds = useMemo(
-    () => new Set((inactiveData?.data ?? []).map((s) => s.studentId)),
-    [inactiveData],
-  );
+  const inactiveDaysById = useMemo(() => {
+    const map = new Map<string, number | null>();
+    for (const it of inactiveData?.data ?? []) {
+      map.set(it.studentId, it.daysInactive);
+    }
+    return map;
+  }, [inactiveData]);
 
   const filteredAndSorted = useMemo(() => {
     if (!students?.data) return [];
@@ -88,6 +203,11 @@ export default function StudentsScreen() {
     }
     return [...result].sort((a, b) => a.name.localeCompare(b.name));
   }, [students, search]);
+
+  const sections = useMemo(
+    () => buildSections(filteredAndSorted),
+    [filteredAndSorted],
+  );
 
   async function handleRefresh() {
     setRefreshing(true);
@@ -223,10 +343,10 @@ export default function StudentsScreen() {
             />
           </View>
 
-          {/* Student list */}
+          {/* Student list, grouped by class */}
           {isLoading ? (
             <SkeletonList count={6} />
-          ) : filteredAndSorted.length === 0 ? (
+          ) : sections.length === 0 ? (
             <View style={styles.emptyState}>
               <View
                 style={[
@@ -239,7 +359,10 @@ export default function StudentsScreen() {
               <Text variant="bodyLight">{t.common.noData}</Text>
             </View>
           ) : (
-            <ScrollView
+            <SectionList
+              sections={sections}
+              keyExtractor={(item) => item.id}
+              stickySectionHeadersEnabled
               contentContainerStyle={styles.list}
               refreshControl={
                 <RefreshControl
@@ -248,105 +371,84 @@ export default function StudentsScreen() {
                   tintColor={c.primary}
                 />
               }
-            >
-              {filteredAndSorted.map((student) => (
-                <Pressable
-                  key={student.id}
-                  onPress={() => {
-                    hapticLight();
-                    router.push(`/(screens)/students/${student.id}`);
-                  }}
-                  style={({ pressed }) => [
-                    styles.studentCard,
+              renderSectionHeader={({ section }) => (
+                <View
+                  style={[
+                    styles.sectionHeader,
                     {
-                      backgroundColor: c.surface,
-                      borderColor: c.borderLight,
+                      backgroundColor: c.bg,
+                      borderBottomColor: c.borderLight,
                     },
-                    shadow(1),
-                    pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
                   ]}
                 >
-                  <View
-                    style={[
-                      styles.avatar,
-                      { backgroundColor: `${c.primary}1A` },
+                  <Body
+                    size="sm"
+                    style={{
+                      fontWeight: "700",
+                      color: c.text,
+                      letterSpacing: 0.2,
+                    }}
+                  >
+                    {section.title}{" "}
+                    <Body size="sm" style={{ color: c.textLight }}>
+                      ({section.count})
+                    </Body>
+                  </Body>
+                </View>
+              )}
+              renderItem={({ item }) => {
+                const stripe = statusStripeColor(item.status, c);
+                const days = inactiveDaysById.get(item.id) ?? null;
+                const signal = pickSignal(item, days);
+                return (
+                  <Pressable
+                    onPress={() => {
+                      hapticLight();
+                      router.push(`/(screens)/students/${item.id}`);
+                    }}
+                    style={({ pressed }) => [
+                      styles.row,
+                      {
+                        backgroundColor: c.surface,
+                        borderBottomColor: c.borderLight,
+                      },
+                      pressed && { opacity: 0.85 },
                     ]}
                   >
-                    <Body
-                      size="sm"
-                      style={{
-                        fontWeight: "600",
-                        color: c.primary,
-                      }}
-                    >
-                      {student.name.charAt(0).toUpperCase()}
-                    </Body>
-                  </View>
-                  <View style={styles.cardInfo}>
-                    <View style={styles.nameRow}>
-                      <Body
+                    <View
+                      style={[styles.stripe, { backgroundColor: stripe }]}
+                    />
+                    <View style={styles.rowBody}>
+                      <Text
                         style={{
+                          fontSize: 16,
                           fontWeight: "600",
-                          flexShrink: 1,
+                          color: c.text,
                         }}
                         numberOfLines={1}
                       >
-                        {student.name}
-                      </Body>
-                      <StatusBadge status={student.status} size="sm" />
-                      {inactiveIds.has(student.id) && (
-                        <View
-                          style={[
-                            styles.inactiveBadge,
-                            {
-                              backgroundColor: `${c.warning}1A`,
-                              borderColor: `${c.warning}40`,
-                            },
-                          ]}
-                        >
-                          <Ionicons name="moon" size={10} color={c.warning} />
-                          <Text
-                            style={{
-                              fontSize: 10,
-                              fontWeight: "700",
-                              color: c.warning,
-                            }}
-                          >
-                            {t.psychologist.inactiveBadge}
-                          </Text>
-                        </View>
-                      )}
+                        {item.name}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: c.textLight,
+                          marginTop: 2,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {signal}
+                      </Text>
                     </View>
-                    <View style={styles.metaRow}>
-                      <Body size="xs" style={{ color: c.textLight }}>
-                        {student.grade != null
-                          ? `${student.grade}${student.classLetter ?? ""}`
-                          : "—"}
-                      </Body>
-                      <Body size="xs" style={{ color: c.textLight }}> · </Body>
-                      {student.lastMood != null ? (
-                        <MoodScale
-                          value={student.lastMood as 1 | 2 | 3 | 4 | 5}
-                        />
-                      ) : (
-                        <Body size="xs" style={{ color: c.textLight }}>—</Body>
-                      )}
-                      <Body size="xs" style={{ color: c.textLight }}> · </Body>
-                      <Body size="xs" style={{ color: c.textLight }}>
-                        {student.lastActive
-                          ? new Date(student.lastActive).toLocaleDateString()
-                          : "—"}
-                      </Body>
-                    </View>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={`${c.textLight}60`}
-                  />
-                </Pressable>
-              ))}
-            </ScrollView>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={16}
+                      color={`${c.textLight}60`}
+                    />
+                  </Pressable>
+                );
+              }}
+            />
           )}
         </>
       ) : (
@@ -453,47 +555,31 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   list: {
-    paddingHorizontal: 20,
     paddingBottom: 100,
-    gap: 8,
   },
-  studentCard: {
+  sectionHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 12,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
+  stripe: {
+    width: 4,
+    alignSelf: "stretch",
+    borderRadius: 2,
+    marginRight: 12,
+    minHeight: 36,
   },
-  cardInfo: {
+  rowBody: {
     flex: 1,
     minWidth: 0,
-  },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 2,
-  },
-  inactiveBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 999,
-    borderWidth: 1,
   },
   emptyState: {
     flex: 1,
