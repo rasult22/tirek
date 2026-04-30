@@ -22,11 +22,54 @@ import { useAuthStore } from "../../../lib/store/auth-store";
 import { hapticLight } from "../../../lib/haptics";
 import type { DirectMessage } from "@tirek/shared";
 
+const TIME_GROUP_GAP_MS = 5 * 60 * 1000; // 5 minutes
+
 function formatMessageTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+interface ChatItem {
+  type: "time" | "message";
+  // for time
+  timestamp?: string;
+  // for message
+  message?: DirectMessage;
+  showStatus?: boolean;
+}
+
+/**
+ * Build flat list of chat items with sparse time separators.
+ * A timestamp separator is inserted before the very first message and
+ * before any message whose gap from the previous one exceeds 5 minutes.
+ * Messages within a 5-minute window are grouped without timestamp.
+ */
+function buildItems(messages: DirectMessage[], userId: string | undefined): ChatItem[] {
+  const items: ChatItem[] = [];
+  let prevTime = 0;
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    const t = new Date(msg.createdAt).getTime();
+    if (i === 0 || t - prevTime > TIME_GROUP_GAP_MS) {
+      items.push({ type: "time", timestamp: msg.createdAt });
+    }
+    // Show read-receipt only on the last "mine" message in a 5-min group.
+    const next = messages[i + 1];
+    const isMine = msg.senderId === userId;
+    const nextIsMineSameGroup =
+      !!next &&
+      next.senderId === userId &&
+      new Date(next.createdAt).getTime() - t <= TIME_GROUP_GAP_MS;
+    items.push({
+      type: "message",
+      message: msg,
+      showStatus: isMine && !nextIsMineSameGroup,
+    });
+    prevTime = t;
+  }
+  return items;
 }
 
 export default function ChatScreen() {
@@ -35,7 +78,7 @@ export default function ChatScreen() {
   const c = useThemeColors();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlatList<ChatItem>>(null);
   const userId = useAuthStore((s) => s.user?.id);
   const insets = useSafeAreaInsets();
 
@@ -43,8 +86,10 @@ export default function ChatScreen() {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
 
   useEffect(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
     const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
     const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
     return () => {
@@ -67,28 +112,34 @@ export default function ChatScreen() {
 
   const conversation = convData?.data?.find((c) => c.id === conversationId);
   const messages = messagesData?.data ?? [];
+  const items = buildItems(messages, userId);
 
   // Mark as read
   useEffect(() => {
     if (conversationId) {
       directChatApi.markRead(conversationId).then(() => {
-        queryClient.invalidateQueries({ queryKey: ["direct-chat", "unread-count"] });
-        queryClient.invalidateQueries({ queryKey: ["direct-chat", "conversations"] });
+        queryClient.invalidateQueries({
+          queryKey: ["direct-chat", "unread-count"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["direct-chat", "conversations"],
+        });
       });
     }
   }, [conversationId, messagesData]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (messages.length > 0) {
+    if (items.length > 0) {
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
-  }, [messages.length]);
+  }, [items.length]);
 
   const sendMutation = useMutation({
-    mutationFn: (content: string) => directChatApi.send(conversationId!, content),
+    mutationFn: (content: string) =>
+      directChatApi.send(conversationId!, content),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["direct-chat", "messages", conversationId],
@@ -107,7 +158,17 @@ export default function ChatScreen() {
     sendMutation.mutate(content);
   }
 
-  function renderMessage({ item: msg }: { item: DirectMessage }) {
+  function renderItem({ item }: { item: ChatItem }) {
+    if (item.type === "time") {
+      return (
+        <View style={styles.timeSeparator}>
+          <Text style={[styles.timeSeparatorText, { color: c.textLight }]}>
+            {formatMessageTime(item.timestamp!)}
+          </Text>
+        </View>
+      );
+    }
+    const msg = item.message!;
     const isMine = msg.senderId === userId;
     return (
       <View
@@ -123,7 +184,7 @@ export default function ChatScreen() {
               ? [styles.bubbleMine, { backgroundColor: ds.brandSoft }]
               : [
                   styles.bubbleOther,
-                  { backgroundColor: c.surface, borderColor: c.borderLight },
+                  { backgroundColor: c.surfaceSecondary },
                 ],
           ]}
         >
@@ -136,31 +197,16 @@ export default function ChatScreen() {
           >
             {msg.content}
           </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 4,
-              marginTop: 2,
-              alignSelf: isMine ? "flex-end" : "flex-start",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 10,
-                color: c.textLight,
-              }}
-            >
-              {formatMessageTime(msg.createdAt)}
-            </Text>
-            {isMine && (
+          {/* Read receipt only on last mine message in a group. */}
+          {isMine && item.showStatus && (
+            <View style={styles.statusRow}>
               <Ionicons
                 name={msg.readAt ? "checkmark-done" : "checkmark"}
                 size={12}
                 color={msg.readAt ? c.primary : c.textLight}
               />
-            )}
-          </View>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -169,78 +215,92 @@ export default function ChatScreen() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={0}
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: c.bg }]}
+        edges={["top"]}
       >
-        {/* Header */}
-        <View style={[styles.chatHeader, { backgroundColor: c.surface, borderBottomColor: c.borderLight }]}>
-          <Pressable
-            onPress={() => router.back()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={22} color={c.text} />
-          </Pressable>
-          <View style={[styles.headerAvatar, { backgroundColor: ds.brandSoft }]}>
-            <Text style={{ fontSize: 13, fontWeight: "600", color: c.primary }}>
-              {conversation?.otherUser?.name?.charAt(0)?.toUpperCase() ?? "?"}
-            </Text>
-          </View>
-          <Body style={{ fontWeight: "600", flex: 1 }} numberOfLines={1}>
-            {conversation?.otherUser?.name ?? t.directChat.title}
-          </Body>
-        </View>
-
-        {/* Messages */}
-        {isLoading ? (
-          <SkeletonList count={6} />
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(msg) => String(msg.id)}
-            renderItem={renderMessage}
-            contentContainerStyle={styles.messagesList}
-            onContentSizeChange={() => {
-              flatListRef.current?.scrollToEnd({ animated: false });
-            }}
-          />
-        )}
-
-        {/* Input bar */}
-        <View
-          style={[
-            styles.inputBar,
-            {
-              backgroundColor: c.surface,
-              borderTopColor: c.borderLight,
-              paddingBottom: keyboardOpen ? 10 : 10 + insets.bottom,
-            },
-          ]}
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={0}
         >
-          <Input
-            value={input}
-            onChangeText={setInput}
-            placeholder={t.directChat.inputPlaceholder}
-            multiline
-            maxLength={2000}
-            containerStyle={styles.inputContainer}
-            style={styles.inputText}
-          />
-          <Button
-            title={t.directChat.send}
-            onPress={handleSend}
-            disabled={!input.trim() || sendMutation.isPending}
-            loading={sendMutation.isPending}
-            variant="primary"
-            size="sm"
-            fullWidth={false}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          {/* Header */}
+          <View
+            style={[
+              styles.chatHeader,
+              {
+                backgroundColor: c.surface,
+                borderBottomColor: c.borderLight,
+              },
+            ]}
+          >
+            <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={22} color={c.text} />
+            </Pressable>
+            <View
+              style={[styles.headerAvatar, { backgroundColor: ds.brandSoft }]}
+            >
+              <Text
+                style={{ fontSize: 13, fontWeight: "600", color: c.primary }}
+              >
+                {conversation?.otherUser?.name?.charAt(0)?.toUpperCase() ?? "?"}
+              </Text>
+            </View>
+            <Body style={{ fontWeight: "600", flex: 1 }} numberOfLines={1}>
+              {conversation?.otherUser?.name ?? t.directChat.title}
+            </Body>
+          </View>
+
+          {/* Messages */}
+          {isLoading ? (
+            <SkeletonList count={6} />
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={items}
+              keyExtractor={(it, idx) =>
+                it.type === "message" ? `m-${it.message!.id}` : `t-${idx}`
+              }
+              renderItem={renderItem}
+              contentContainerStyle={styles.messagesList}
+              onContentSizeChange={() => {
+                flatListRef.current?.scrollToEnd({ animated: false });
+              }}
+            />
+          )}
+
+          {/* Input bar */}
+          <View
+            style={[
+              styles.inputBar,
+              {
+                backgroundColor: c.surface,
+                borderTopColor: c.borderLight,
+                paddingBottom: keyboardOpen ? 10 : 10 + insets.bottom,
+              },
+            ]}
+          >
+            <Input
+              value={input}
+              onChangeText={setInput}
+              placeholder={t.directChat.inputPlaceholder}
+              multiline
+              maxLength={2000}
+              containerStyle={styles.inputContainer}
+              style={styles.inputText}
+            />
+            <Button
+              title={t.directChat.send}
+              onPress={handleSend}
+              disabled={!input.trim() || sendMutation.isPending}
+              loading={sendMutation.isPending}
+              variant="primary"
+              size="sm"
+              fullWidth={false}
+            />
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </>
   );
 }
@@ -277,7 +337,16 @@ const styles = StyleSheet.create({
   messagesList: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 6,
+    gap: 4,
+  },
+  timeSeparator: {
+    alignItems: "center",
+    paddingVertical: 8,
+  },
+  timeSeparatorText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_400Regular",
   },
   bubbleRow: {
     flexDirection: "row",
@@ -299,7 +368,12 @@ const styles = StyleSheet.create({
   },
   bubbleOther: {
     borderBottomLeftRadius: 6,
-    borderWidth: 1,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginTop: 2,
   },
   inputBar: {
     flexDirection: "row",

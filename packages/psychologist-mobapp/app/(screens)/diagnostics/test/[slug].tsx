@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, Pressable, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,7 +7,6 @@ import { testDefinitions } from "@tirek/shared";
 import { Text, Button } from "../../../../components/ui";
 import { useT, useLanguage } from "../../../../lib/hooks/useLanguage";
 import { useThemeColors, radius } from "../../../../lib/theme";
-import { colors as ds } from "@tirek/shared/design-system";
 import { hapticLight } from "../../../../lib/haptics";
 
 export default function TestDetailScreen() {
@@ -15,6 +15,8 @@ export default function TestDetailScreen() {
   const c = useThemeColors();
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
+
+  const [tipsOpen, setTipsOpen] = useState(false);
 
   if (!slug || !(slug in testDefinitions)) {
     return (
@@ -116,29 +118,47 @@ export default function TestDetailScreen() {
             style={[
               styles.tipsCard,
               {
-                backgroundColor: ds.warningSoft,
-                borderColor: `${c.warning}33`,
+                backgroundColor: c.surface,
+                borderColor: c.borderLight,
               },
             ]}
           >
-            <View style={styles.tipsHeader}>
-              <Ionicons name="bulb-outline" size={16} color={c.warning} />
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                setTipsOpen((v) => !v);
+              }}
+              style={styles.tipsHeader}
+            >
+              <Ionicons name="bulb-outline" size={18} color={c.warning} />
               <Text
                 variant="body"
                 style={{
                   fontWeight: "700",
-                  color: c.warning,
+                  color: c.text,
+                  flex: 1,
                 }}
               >
                 {t.psychologist.testWhenToAssign}
               </Text>
-            </View>
-            <Text
-              variant="body"
-              style={{ color: c.text, marginTop: 6, lineHeight: 20 }}
-            >
-              {tips}
-            </Text>
+              <Ionicons
+                name={tipsOpen ? "chevron-up" : "chevron-down"}
+                size={18}
+                color={c.textLight}
+              />
+            </Pressable>
+            {tipsOpen && (
+              <Text
+                variant="body"
+                style={{
+                  color: c.text,
+                  marginTop: 10,
+                  lineHeight: 20,
+                }}
+              >
+                {tips}
+              </Text>
+            )}
           </View>
         )}
       </ScrollView>
@@ -149,22 +169,36 @@ export default function TestDetailScreen() {
           { backgroundColor: c.bg, borderTopColor: c.borderLight },
         ]}
       >
-        <View style={{ flex: 1 }}>
-          <Button
-            title={t.psychologist.assignToStudentBtn}
-            variant="primary"
-            size="md"
-            onPress={() => goAssign("student")}
-          />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Button
-            title={t.psychologist.assignToClassBtn}
-            variant="secondary"
-            size="md"
-            onPress={() => goAssign("class")}
-          />
-        </View>
+        {/* Primary CTA — brand fill, full-width */}
+        <Button
+          title={t.psychologist.assignToStudentBtn}
+          variant="primary"
+          size="md"
+          onPress={() => goAssign("student")}
+        />
+        {/* Secondary CTA — outline (transparent fill + brand border) */}
+        <Pressable
+          onPress={() => goAssign("class")}
+          style={({ pressed }) => [
+            styles.outlineBtn,
+            {
+              borderColor: c.primary,
+              backgroundColor: "transparent",
+            },
+            pressed && { opacity: 0.85 },
+          ]}
+          accessibilityRole="button"
+        >
+          <Text
+            style={{
+              fontFamily: "Inter_600SemiBold",
+              fontSize: 16,
+              color: c.primary,
+            }}
+          >
+            {t.psychologist.assignToClassBtn}
+          </Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -175,7 +209,7 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 100,
+    paddingBottom: 140,
     gap: 4,
   },
   metaRow: {
@@ -194,26 +228,35 @@ const styles = StyleSheet.create({
   },
   tipsCard: {
     marginTop: 16,
-    padding: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
   },
   tipsHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
   footer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: "row",
+    flexDirection: "column",
     gap: 8,
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 16,
     borderTopWidth: 1,
+  },
+  outlineBtn: {
+    height: 50,
+    borderRadius: radius.lg,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "stretch",
   },
   empty: {
     flex: 1,

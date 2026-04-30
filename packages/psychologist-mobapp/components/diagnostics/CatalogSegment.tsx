@@ -8,6 +8,22 @@ import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { hapticLight } from "../../lib/haptics";
 
+type IconName = keyof typeof Ionicons.glyphMap;
+
+/**
+ * Map test slug → category icon. Falls back to a generic clipboard icon.
+ * Icons are picked by category meaning rather than per-test branding so
+ * new test slugs work out of the box.
+ */
+function iconForSlug(slug: string): IconName {
+  if (slug.startsWith("phq")) return "sad-outline"; // depression
+  if (slug.startsWith("gad")) return "pulse-outline"; // anxiety
+  if (slug.startsWith("scared")) return "shield-half-outline"; // anxiety (kids)
+  if (slug.startsWith("rcads")) return "happy-outline"; // anxiety/depression
+  if (slug.startsWith("sdq")) return "people-outline"; // strengths/diff
+  return "clipboard-outline";
+}
+
 export function CatalogSegment() {
   const t = useT();
   const { language } = useLanguage();
@@ -34,6 +50,9 @@ export function CatalogSegment() {
         const age = (td as {
           ageRange?: { minGrade: number; maxGrade: number };
         }).ageRange;
+        const questionCount = (td as { questions?: ReadonlyArray<unknown> })
+          .questions?.length;
+        const icon = iconForSlug(td.slug);
 
         return (
           <Pressable
@@ -49,22 +68,44 @@ export function CatalogSegment() {
               pressed && { opacity: 0.95, transform: [{ scale: 0.98 }] },
             ]}
           >
-            <View style={{ flex: 1 }}>
-              <Text variant="body" style={{ fontWeight: "600" }} numberOfLines={2}>
+            <View
+              style={[styles.iconWrap, { backgroundColor: c.surfaceSecondary }]}
+            >
+              <Ionicons name={icon} size={20} color={c.primary} />
+            </View>
+
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  lineHeight: 22,
+                  fontFamily: "Inter_600SemiBold",
+                  color: c.text,
+                }}
+                numberOfLines={2}
+              >
                 {name}
               </Text>
-              <Text variant="caption" numberOfLines={2} style={styles.desc}>
-                {description}
-              </Text>
-              <View style={styles.metaRow}>
+              {description ? (
+                <Text variant="caption" numberOfLines={2} style={styles.desc}>
+                  {description}
+                </Text>
+              ) : null}
+
+              <View style={styles.chipsRow}>
                 {duration != null && (
-                  <View style={styles.metaItem}>
+                  <View
+                    style={[
+                      styles.chip,
+                      { backgroundColor: c.surfaceSecondary },
+                    ]}
+                  >
                     <Ionicons
                       name="time-outline"
                       size={11}
                       color={c.textLight}
                     />
-                    <Text variant="caption">
+                    <Text style={[styles.chipText, { color: c.textLight }]}>
                       {t.psychologist.testDurationMinutes.replace(
                         "{n}",
                         String(duration),
@@ -73,21 +114,45 @@ export function CatalogSegment() {
                   </View>
                 )}
                 {age && (
-                  <View style={styles.metaItem}>
+                  <View
+                    style={[
+                      styles.chip,
+                      { backgroundColor: c.surfaceSecondary },
+                    ]}
+                  >
                     <Ionicons
                       name="school-outline"
                       size={11}
                       color={c.textLight}
                     />
-                    <Text variant="caption">
+                    <Text style={[styles.chipText, { color: c.textLight }]}>
                       {t.psychologist.testAgeRangeGrades
                         .replace("{from}", String(age.minGrade))
                         .replace("{to}", String(age.maxGrade))}
                     </Text>
                   </View>
                 )}
+                {questionCount != null && (
+                  <View
+                    style={[
+                      styles.chip,
+                      { backgroundColor: c.surfaceSecondary },
+                    ]}
+                  >
+                    <Ionicons
+                      name="help-circle-outline"
+                      size={11}
+                      color={c.textLight}
+                    />
+                    <Text style={[styles.chipText, { color: c.textLight }]}>
+                      {questionCount}{" "}
+                      {language === "kz" ? "сұрақ" : "вопр."}
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
+
             <Ionicons
               name="chevron-forward"
               size={16}
@@ -110,24 +175,39 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
     padding: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
   },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   desc: {
     marginTop: 2,
   },
-  metaRow: {
+  chipsRow: {
     marginTop: 6,
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: 6,
   },
-  metaItem: {
+  chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  chipText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_500Medium",
   },
   empty: {
     flex: 1,

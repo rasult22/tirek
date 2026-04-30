@@ -11,16 +11,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text, Input, H3, Body, Card, Badge } from "../../components/ui";
+import { Text, Input, H3, Body, Card } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
 import { useThemeColors } from "../../lib/theme";
 import { colors as ds } from "@tirek/shared/design-system";
 import { directChatApi } from "../../lib/api/direct-chat";
+import { useAuthStore } from "../../lib/store/auth-store";
 import { hapticLight } from "../../lib/haptics";
 import type { Conversation } from "@tirek/shared";
 
-function formatTime(dateStr: string, t: { directChat: { today: string; yesterday: string } }) {
+function formatTime(
+  dateStr: string,
+  t: { directChat: { today: string; yesterday: string } },
+) {
   const d = new Date(dateStr);
   const now = new Date();
   const isToday = d.toDateString() === now.toDateString();
@@ -40,6 +44,7 @@ export default function MessagesScreen() {
   const c = useThemeColors();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
 
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -65,20 +70,28 @@ export default function MessagesScreen() {
 
   async function handleRefresh() {
     setRefreshing(true);
-    await queryClient.invalidateQueries({ queryKey: ["direct-chat", "conversations"] });
+    await queryClient.invalidateQueries({
+      queryKey: ["direct-chat", "conversations"],
+    });
     setRefreshing(false);
   }
 
   if (isError) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: c.bg }]}
+        edges={["top"]}
+      >
         <ErrorState onRetry={() => refetch()} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: c.bg }]} edges={["top"]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: c.bg }]}
+      edges={["top"]}
+    >
       <View style={styles.header}>
         <H3>{t.directChat.title}</H3>
       </View>
@@ -99,7 +112,9 @@ export default function MessagesScreen() {
           <View style={[styles.emptyIcon, { backgroundColor: ds.brandSoft }]}>
             <Ionicons name="chatbubbles-outline" size={32} color={c.primary} />
           </View>
-          <Body style={{ color: c.textLight }}>{t.directChat.noConversations}</Body>
+          <Body style={{ color: c.textLight }}>
+            {t.directChat.noConversations}
+          </Body>
         </View>
       ) : (
         <ScrollView
@@ -112,57 +127,101 @@ export default function MessagesScreen() {
             />
           }
         >
-          {filtered.map((conv: Conversation) => (
-            <Pressable
-              key={conv.id}
-              onPress={() => {
-                hapticLight();
-                router.push(`/(screens)/messages/${conv.id}`);
-              }}
-              style={({ pressed }) => [
-                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
-              ]}
-            >
-              <Card style={styles.convCard}>
-                <View style={[styles.avatar, { backgroundColor: ds.brandSoft }]}>
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: "600",
-                      color: c.primary,
-                    }}
-                  >
-                    {conv.otherUser.name.charAt(0).toUpperCase()}
-                  </Text>
-                </View>
+          {filtered.map((conv: Conversation) => {
+            // Unread indicator: only when last message is from the other side
+            // (i.e. the student) and there's at least one unread.
+            const lastIsFromStudent =
+              !!conv.lastMessage && conv.lastMessage.senderId !== userId;
+            const hasUnread = conv.unreadCount > 0 && lastIsFromStudent;
 
-                <View style={styles.cardInfo}>
-                  <View style={styles.nameRow}>
-                    <Body
-                      style={{ fontWeight: "600", flexShrink: 1 }}
-                      numberOfLines={1}
+            return (
+              <Pressable
+                key={conv.id}
+                onPress={() => {
+                  hapticLight();
+                  router.push(`/(screens)/messages/${conv.id}`);
+                }}
+                style={({ pressed }) => [
+                  pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
+                ]}
+              >
+                <Card style={styles.convCard}>
+                  {/* Unread dot — single, brand color, left of avatar.
+                      Reserve fixed width even when no dot to keep alignment. */}
+                  <View style={styles.dotSlot}>
+                    {hasUnread && (
+                      <View
+                        style={[
+                          styles.unreadDot,
+                          { backgroundColor: c.primary },
+                        ]}
+                      />
+                    )}
+                  </View>
+
+                  <View
+                    style={[styles.avatar, { backgroundColor: ds.brandSoft }]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: "600",
+                        color: c.primary,
+                      }}
                     >
-                      {conv.otherUser.name}
-                    </Body>
+                      {conv.otherUser.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+
+                  <View style={styles.cardInfo}>
+                    <View style={styles.nameRow}>
+                      <Text
+                        style={[
+                          styles.nameText,
+                          {
+                            color: c.text,
+                            fontFamily: hasUnread
+                              ? "Inter_700Bold"
+                              : "Inter_600SemiBold",
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {conv.otherUser.name}
+                      </Text>
+                      {conv.lastMessage && (
+                        <Text
+                          style={[
+                            styles.timeText,
+                            { color: c.textLight },
+                          ]}
+                        >
+                          {formatTime(conv.lastMessage.createdAt as string, t)}
+                        </Text>
+                      )}
+                    </View>
                     {conv.lastMessage && (
-                      <Text variant="caption" style={{ flexShrink: 0 }}>
-                        {formatTime(conv.lastMessage.createdAt as string, t)}
+                      <Text
+                        style={[
+                          styles.lastMsgText,
+                          {
+                            color: hasUnread ? c.text : c.textLight,
+                            fontFamily: hasUnread
+                              ? "Inter_500Medium"
+                              : "Inter_400Regular",
+                          },
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {conv.lastMessage.content}
                       </Text>
                     )}
                   </View>
-                  {conv.lastMessage && (
-                    <Text variant="bodyXs" numberOfLines={1} style={{ marginTop: 2, color: c.textLight }}>
-                      {conv.lastMessage.content}
-                    </Text>
-                  )}
-                </View>
-
-                <Badge count={conv.unreadCount} variant="primary" />
-
-                <Ionicons name="chevron-forward" size={16} color={`${c.textLight}60`} />
-              </Card>
-            </Pressable>
-          ))}
+                </Card>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -190,8 +249,18 @@ const styles = StyleSheet.create({
   convCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     padding: 12,
+  },
+  dotSlot: {
+    width: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   avatar: {
     width: 44,
@@ -209,6 +278,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
+  },
+  nameText: {
+    flexShrink: 1,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  timeText: {
+    flexShrink: 0,
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_400Regular",
+  },
+  lastMsgText: {
+    marginTop: 2,
+    fontSize: 14,
+    lineHeight: 20,
   },
   emptyState: {
     flex: 1,
