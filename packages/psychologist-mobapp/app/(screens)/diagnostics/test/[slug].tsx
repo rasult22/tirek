@@ -1,14 +1,14 @@
-import { useState } from "react";
 import { View, Pressable, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { testDefinitions } from "@tirek/shared";
-import { Text, Button, HelpSheet } from "../../../../components/ui";
+import { Text, Button } from "../../../../components/ui";
 import { useT, useLanguage } from "../../../../lib/hooks/useLanguage";
 import { useThemeColors, radius, spacing } from "../../../../lib/theme";
 import { hapticLight } from "../../../../lib/haptics";
 import { colors as ds } from "@tirek/shared/design-system";
+import { useHelpSheetStore } from "../../../../lib/sheets/help";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -27,8 +27,6 @@ export default function TestDetailScreen() {
   const c = useThemeColors();
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
-
-  const [helpOpen, setHelpOpen] = useState(false);
 
   if (!slug || !(slug in testDefinitions)) {
     return (
@@ -184,7 +182,11 @@ export default function TestDetailScreen() {
           <Pressable
             onPress={() => {
               hapticLight();
-              setHelpOpen(true);
+              useHelpSheetStore.getState().open({
+                title: t.psychologist.testWhenToAssign,
+                description: tips,
+              });
+              router.push("/(modals)/help" as any);
             }}
             style={({ pressed }) => [
               styles.tipsTrigger,
@@ -214,15 +216,6 @@ export default function TestDetailScreen() {
           </Pressable>
         )}
       </ScrollView>
-
-      {tips && (
-        <HelpSheet
-          visible={helpOpen}
-          title={t.psychologist.testWhenToAssign}
-          description={tips}
-          onClose={() => setHelpOpen(false)}
-        />
-      )}
     </SafeAreaView>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { View, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../components/ui";
 import { useT } from "../../lib/hooks/useLanguage";
@@ -10,7 +11,7 @@ import { hapticLight } from "../../lib/haptics";
 import { CatalogSegment } from "../../components/diagnostics/CatalogSegment";
 import { AssignmentsSegment } from "../../components/diagnostics/AssignmentsSegment";
 import { ResultsSegment } from "../../components/diagnostics/ResultsSegment";
-import { DiagnosticsFiltersSheet } from "../../components/diagnostics/DiagnosticsFiltersSheet";
+import { useDiagnosticsFiltersSheetStore } from "../../lib/sheets/diagnostics-filters";
 import type { DiagnosticsFilters } from "../../lib/api/diagnostics";
 
 type Segment = "catalog" | "assignments" | "results";
@@ -24,10 +25,17 @@ function isFilterActive(f: DiagnosticsFilters): boolean {
 export default function DiagnosticsScreen() {
   const t = useT();
   const c = useThemeColors();
+  const router = useRouter();
 
   const [segment, setSegment] = useState<Segment>("catalog");
   const [filters, setFilters] = useState<DiagnosticsFilters>({});
-  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  function openFilters() {
+    useDiagnosticsFiltersSheetStore.getState().open(filters, (next) => {
+      setFilters(next);
+    });
+    router.push("/(modals)/diagnostics-filters" as any);
+  }
 
   return (
     <SafeAreaView
@@ -40,7 +48,7 @@ export default function DiagnosticsScreen() {
           <Pressable
             onPress={() => {
               hapticLight();
-              setFiltersOpen(true);
+              openFilters();
             }}
             style={({ pressed }) => [
               styles.filterBtn,
@@ -96,15 +104,6 @@ export default function DiagnosticsScreen() {
         {segment === "results" && <ResultsSegment filters={filters} />}
       </View>
 
-      <DiagnosticsFiltersSheet
-        visible={filtersOpen}
-        initial={filters}
-        onClose={() => setFiltersOpen(false)}
-        onApply={(next) => {
-          setFilters(next);
-          setFiltersOpen(false);
-        }}
-      />
     </SafeAreaView>
   );
 }

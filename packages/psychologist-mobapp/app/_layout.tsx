@@ -3,8 +3,6 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import * as SplashScreen from "expo-splash-screen";
 import {
   useFonts,
@@ -60,24 +58,20 @@ function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister: asyncStoragePersister }}
-      >
-        <LanguageProvider>
-          <ThemeProvider>
-            <SafeAreaProvider>
-              <BottomSheetModalProvider>
-                <ErrorBoundary>
-                  <ThemedApp />
-                </ErrorBoundary>
-              </BottomSheetModalProvider>
-            </SafeAreaProvider>
-          </ThemeProvider>
-        </LanguageProvider>
-      </PersistQueryClientProvider>
-    </GestureHandlerRootView>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: asyncStoragePersister }}
+    >
+      <LanguageProvider>
+        <ThemeProvider>
+          <SafeAreaProvider>
+            <ErrorBoundary>
+              <ThemedApp />
+            </ErrorBoundary>
+          </SafeAreaProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </PersistQueryClientProvider>
   );
 }
 

@@ -1,77 +1,51 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  type BottomSheetBackdropProps,
-} from "@gorhom/bottom-sheet";
-import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
 import { testDefinitions, type Severity } from "@tirek/shared";
-import { Text, Button } from "../ui";
+import { Text, Button } from "../../components/ui";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
 import { colors as ds } from "@tirek/shared/design-system";
-import type { DiagnosticsFilters } from "../../lib/api/diagnostics";
-
-interface Props {
-  visible: boolean;
-  initial: DiagnosticsFilters;
-  onClose: () => void;
-  onApply: (filters: DiagnosticsFilters) => void;
-}
+import { useDiagnosticsFiltersSheetStore } from "../../lib/sheets/diagnostics-filters";
 
 const SEVERITIES: Severity[] = ["minimal", "mild", "moderate", "severe"];
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
-export function DiagnosticsFiltersSheet({
-  visible,
-  initial,
-  onClose,
-  onApply,
-}: Props) {
+export default function DiagnosticsFiltersModal() {
   const t = useT();
   const { language } = useLanguage();
   const c = useThemeColors();
-  const ref = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["75%", "90%"], []);
+  const router = useRouter();
+  const { initial, onApply, close } = useDiagnosticsFiltersSheetStore();
 
-  const [testSlug, setTestSlug] = useState<string>(initial.testSlug ?? "");
+  const [testSlug, setTestSlug] = useState<string>(initial?.testSlug ?? "");
   const [severity, setSeverity] = useState<string>(
-    typeof initial.severity === "string" ? initial.severity : "",
+    typeof initial?.severity === "string" ? initial.severity : "",
   );
   const [grade, setGrade] = useState<string>(
-    initial.grade != null ? String(initial.grade) : "",
+    initial?.grade != null ? String(initial.grade) : "",
   );
-  const [from, setFrom] = useState<string>(initial.from ?? "");
-  const [to, setTo] = useState<string>(initial.to ?? "");
+  const [from, setFrom] = useState<string>(initial?.from ?? "");
+  const [to, setTo] = useState<string>(initial?.to ?? "");
 
   useEffect(() => {
-    if (visible) {
-      setTestSlug(initial.testSlug ?? "");
-      setSeverity(typeof initial.severity === "string" ? initial.severity : "");
-      setGrade(initial.grade != null ? String(initial.grade) : "");
-      setFrom(initial.from ?? "");
-      setTo(initial.to ?? "");
-      ref.current?.present();
-    } else {
-      ref.current?.dismiss();
-    }
-  }, [visible, initial]);
+    if (!initial) router.back();
+  }, [initial, router]);
 
   const tests = Object.values(testDefinitions);
 
   function apply() {
     hapticLight();
-    onApply({
+    onApply?.({
       testSlug: testSlug || undefined,
       severity: severity || undefined,
       grade: grade ? Number(grade) : undefined,
       from: from || undefined,
       to: to || undefined,
     });
+    close();
+    router.back();
   }
 
   function reset() {
@@ -82,31 +56,8 @@ export function DiagnosticsFiltersSheet({
     setTo("");
   }
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.4}
-      />
-    ),
-    [],
-  );
-
   return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={snapPoints}
-      index={0}
-      onDismiss={onClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: c.surface }}
-      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      enablePanDownToClose
-    >
+    <View style={[styles.root, { backgroundColor: c.surface }]}>
       <View style={styles.header}>
         <Text
           style={{
@@ -119,22 +70,13 @@ export function DiagnosticsFiltersSheet({
         >
           {t.psychologist.filtersTitle}
         </Text>
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => [
-            styles.closeBtn,
-            { backgroundColor: c.surfaceSecondary },
-            pressed && { opacity: 0.7 },
-          ]}
-        >
-          <Ionicons name="close" size={18} color={c.textLight} />
-        </Pressable>
       </View>
 
-      <BottomSheetScrollView
+      <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Section
           title={t.psychologist.filtersTest}
@@ -161,17 +103,14 @@ export function DiagnosticsFiltersSheet({
           t={t}
           value={grade}
           setValue={setGrade}
-          options={GRADES.map((g) => ({
-            value: String(g),
-            label: String(g),
-          }))}
+          options={GRADES.map((g) => ({ value: String(g), label: String(g) }))}
         />
         <View style={styles.dateRow}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.label, { color: c.textLight }]}>
               {t.psychologist.filtersDateFrom}
             </Text>
-            <BottomSheetTextInput
+            <TextInput
               value={from}
               onChangeText={setFrom}
               placeholder="YYYY-MM-DD"
@@ -191,7 +130,7 @@ export function DiagnosticsFiltersSheet({
             <Text style={[styles.label, { color: c.textLight }]}>
               {t.psychologist.filtersDateTo}
             </Text>
-            <BottomSheetTextInput
+            <TextInput
               value={to}
               onChangeText={setTo}
               placeholder="YYYY-MM-DD"
@@ -208,7 +147,7 @@ export function DiagnosticsFiltersSheet({
             />
           </View>
         </View>
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
         <Button
@@ -226,7 +165,7 @@ export function DiagnosticsFiltersSheet({
           style={{ flex: 2 }}
         />
       </View>
-    </BottomSheetModal>
+    </View>
   );
 }
 
@@ -309,20 +248,14 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
-  },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
   },
   body: {
     paddingHorizontal: spacing.xl,

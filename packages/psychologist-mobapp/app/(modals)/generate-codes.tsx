@@ -1,69 +1,41 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from "react-native";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  type BottomSheetBackdropProps,
-} from "@gorhom/bottom-sheet";
-import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text } from "../ui";
+import { Text } from "../../components/ui";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
 import { inviteCodesApi } from "../../lib/api/inviteCodes";
 import { colors as ds } from "@tirek/shared/design-system";
+import { useGenerateCodesSheetStore } from "../../lib/sheets/generate-codes";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
 
-export interface GenerateCodesPrefill {
-  name: string;
-  grade: number | null;
-  classLetter: string | null;
-}
-
-interface GenerateCodesSheetProps {
-  open: boolean;
-  prefill: GenerateCodesPrefill | null;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-export function GenerateCodesSheet({
-  open,
-  prefill,
-  onClose,
-  onSuccess,
-}: GenerateCodesSheetProps) {
+export default function GenerateCodesModal() {
   const t = useT();
   const c = useThemeColors();
+  const router = useRouter();
   const queryClient = useQueryClient();
-  const ref = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["75%", "92%"], []);
+  const { isOpen, prefill, onSuccess, close } = useGenerateCodesSheetStore();
 
-  const [namesText, setNamesText] = useState("");
-  const [grade, setGrade] = useState<number | null>(null);
-  const [classLetter, setClassLetter] = useState<string | null>(null);
+  const [namesText, setNamesText] = useState(prefill?.name ?? "");
+  const [grade, setGrade] = useState<number | null>(prefill?.grade ?? null);
+  const [classLetter, setClassLetter] = useState<string | null>(
+    prefill?.classLetter ?? null,
+  );
 
   useEffect(() => {
-    if (open) {
-      setNamesText(prefill?.name ?? "");
-      setGrade(prefill?.grade ?? null);
-      setClassLetter(prefill?.classLetter ?? null);
-      ref.current?.present();
-    } else {
-      ref.current?.dismiss();
-    }
-  }, [open, prefill]);
+    if (!isOpen) router.back();
+  }, [isOpen, router]);
 
   const studentNames = namesText
     .split("\n")
@@ -86,7 +58,9 @@ export function GenerateCodesSheet({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invite-codes"] });
-      onSuccess();
+      onSuccess?.();
+      close();
+      router.back();
     },
   });
 
@@ -95,31 +69,8 @@ export function GenerateCodesSheet({
     studentNames.length >= 1 &&
     studentNames.length <= 100;
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.4}
-      />
-    ),
-    [],
-  );
-
   return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={snapPoints}
-      index={0}
-      onDismiss={onClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: c.surface }}
-      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      enablePanDownToClose
-    >
+    <View style={[styles.root, { backgroundColor: c.surface }]}>
       <View style={styles.headerRow}>
         <Text
           style={{
@@ -132,19 +83,9 @@ export function GenerateCodesSheet({
         >
           {t.psychologist.generateCodes}
         </Text>
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => [
-            styles.closeBtn,
-            { backgroundColor: c.surfaceSecondary },
-            pressed && { opacity: 0.7 },
-          ]}
-        >
-          <Ionicons name="close" size={18} color={c.textLight} />
-        </Pressable>
       </View>
 
-      <BottomSheetScrollView
+      <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         keyboardShouldPersistTaps="handled"
@@ -159,7 +100,7 @@ export function GenerateCodesSheet({
             { borderColor: c.borderLight, backgroundColor: c.bg },
           ]}
         >
-          <BottomSheetTextInput
+          <TextInput
             value={namesText}
             onChangeText={setNamesText}
             multiline
@@ -255,7 +196,7 @@ export function GenerateCodesSheet({
             />
           ))}
         </ScrollView>
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
         <Pressable
@@ -276,7 +217,7 @@ export function GenerateCodesSheet({
           <Text style={styles.submitText}>{t.psychologist.generate}</Text>
         </Pressable>
       </View>
-    </BottomSheetModal>
+    </View>
   );
 }
 
@@ -315,20 +256,14 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
-  },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
   },
   body: {
     paddingHorizontal: spacing.xl,

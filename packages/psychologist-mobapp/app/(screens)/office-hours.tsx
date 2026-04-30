@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Text, Body } from "../../components/ui";
@@ -18,8 +18,8 @@ import type {
   OfficeHoursOverrideEntry,
   OfficeHoursResolved,
 } from "@tirek/shared";
-import { IntervalsEditorSheet } from "../../components/office-hours/IntervalsEditorSheet";
-import { OverrideEditorSheet } from "../../components/office-hours/OverrideEditorSheet";
+import { useIntervalsEditorSheetStore } from "../../lib/sheets/intervals-editor";
+import { useOverrideEditorSheetStore } from "../../lib/sheets/override-editor";
 
 const DOW_LABELS: Record<number, string> = {
   1: "Пн",
@@ -60,6 +60,7 @@ function formatHumanDate(iso: string): string {
 export default function OfficeHoursScreen() {
   const c = useThemeColors();
   const qc = useQueryClient();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const psychologistId = user?.id ?? "";
 
@@ -99,15 +100,6 @@ export default function OfficeHoursScreen() {
     return [...(overrides ?? [])].sort((a, b) => a.date.localeCompare(b.date));
   }, [overrides]);
 
-  const [editingDow, setEditingDow] = useState<OfficeHoursDayOfWeek | null>(null);
-  const [overrideMode, setOverrideMode] = useState<
-    | { kind: "create" }
-    | { kind: "edit"; date: string; intervals: OfficeHoursInterval[]; notes: string | null }
-    | null
-  >(null);
-
-  const editingTemplateRow = editingDow != null ? templateByDow.get(editingDow) : null;
-
   const upsertTemplateMut = useMutation({
     mutationFn: ({
       dayOfWeek,
@@ -121,7 +113,6 @@ export default function OfficeHoursScreen() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["office-hours-template"] });
       qc.invalidateQueries({ queryKey: ["office-hours-resolve"] });
-      setEditingDow(null);
     },
   });
 
@@ -138,9 +129,54 @@ export default function OfficeHoursScreen() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["office-hours-overrides"] });
       qc.invalidateQueries({ queryKey: ["office-hours-resolve"] });
-      setOverrideMode(null);
     },
   });
+
+  function openTemplateEditor(dow: OfficeHoursDayOfWeek) {
+    const row = templateByDow.get(dow);
+    useIntervalsEditorSheetStore.getState().open(
+      {
+        title: `Шаблон: ${DOW_LABELS[dow]}`,
+        initialIntervals: row?.intervals ?? [],
+        initialNotes: row?.notes ?? null,
+      },
+      (intervals, notes) => {
+        upsertTemplateMut.mutate({ dayOfWeek: dow, intervals, notes });
+      },
+    );
+    router.push("/(modals)/intervals-editor" as any);
+  }
+
+  function openOverrideCreate() {
+    useOverrideEditorSheetStore.getState().open(
+      {
+        initialIntervals: [],
+        initialNotes: null,
+      },
+      (date, intervals, notes) => {
+        upsertOverrideMut.mutate({ date, intervals, notes });
+      },
+    );
+    router.push("/(modals)/override-editor" as any);
+  }
+
+  function openOverrideEdit(
+    date: string,
+    intervals: OfficeHoursInterval[],
+    notes: string | null,
+  ) {
+    useOverrideEditorSheetStore.getState().open(
+      {
+        fixedDate: date,
+        initialIntervals: intervals,
+        initialNotes: notes,
+      },
+      (d, i, n) => {
+        upsertOverrideMut.mutate({ date: d, intervals: i, notes: n });
+      },
+    );
+    router.push("/(modals)/override-editor" as any);
+  }
 
   const deleteOverrideMut = useMutation({
     mutationFn: (date: string) => officeHoursApi.deleteOverrideDay(date),
@@ -184,7 +220,7 @@ export default function OfficeHoursScreen() {
                   key={dow}
                   onPress={() => {
                     hapticLight();
-                    setEditingDow(dow);
+                    openTemplateEditor(dow);
                   }}
                   style={({ pressed }) => [
                     styles.dayCell,
@@ -255,7 +291,7 @@ export default function OfficeHoursScreen() {
           <Pressable
             onPress={() => {
               hapticLight();
-              setOverrideMode({ kind: "create" });
+              openOverrideCreate();
             }}
             style={({ pressed }) => [
               styles.addBtn,
@@ -315,12 +351,7 @@ export default function OfficeHoursScreen() {
                     style={{ flex: 1 }}
                     onPress={() => {
                       hapticLight();
-                      setOverrideMode({
-                        kind: "edit",
-                        date: ov.date,
-                        intervals: ov.intervals,
-                        notes: ov.notes,
-                      });
+                      openOverrideEdit(ov.date, ov.intervals, ov.notes);
                     }}
                   >
                     <Text
@@ -365,33 +396,6 @@ export default function OfficeHoursScreen() {
         )}
       </ScrollView>
 
-      {editingDow != null ? (
-        <IntervalsEditorSheet
-          open={editingDow != null}
-          title={`Шаблон: ${DOW_LABELS[editingDow]}`}
-          initialIntervals={editingTemplateRow?.intervals ?? []}
-          initialNotes={editingTemplateRow?.notes ?? null}
-          saving={upsertTemplateMut.isPending}
-          onClose={() => setEditingDow(null)}
-          onSave={(intervals, notes) => {
-            upsertTemplateMut.mutate({ dayOfWeek: editingDow, intervals, notes });
-          }}
-        />
-      ) : null}
-
-      {overrideMode != null ? (
-        <OverrideEditorSheet
-          open
-          fixedDate={overrideMode.kind === "edit" ? overrideMode.date : undefined}
-          initialIntervals={overrideMode.kind === "edit" ? overrideMode.intervals : []}
-          initialNotes={overrideMode.kind === "edit" ? overrideMode.notes : null}
-          saving={upsertOverrideMut.isPending}
-          onClose={() => setOverrideMode(null)}
-          onSave={(date, intervals, notes) => {
-            upsertOverrideMut.mutate({ date, intervals, notes });
-          }}
-        />
-      ) : null}
     </SafeAreaView>
   );
 }

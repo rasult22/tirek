@@ -14,12 +14,12 @@ import { useT } from "../../lib/hooks/useLanguage";
 import { Text, Input, H3, Body } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
-import { FiltersSheet } from "../../components/student/FiltersSheet";
 import { PendingList } from "../../components/student/PendingList";
+import { useFiltersSheetStore } from "../../lib/sheets/filters";
 import {
-  GenerateCodesSheet,
+  useGenerateCodesSheetStore,
   type GenerateCodesPrefill,
-} from "../../components/student/GenerateCodesSheet";
+} from "../../lib/sheets/generate-codes";
 import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { studentsApi } from "../../lib/api/students";
@@ -151,12 +151,6 @@ export default function StudentsScreen() {
   const [grade, setGrade] = useState<number | null>(null);
   const [classLetter, setClassLetter] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [sheetPrefill, setSheetPrefill] = useState<GenerateCodesPrefill | null>(
-    null,
-  );
 
   const hasActiveFilter = grade !== null || classLetter !== null;
 
@@ -216,19 +210,28 @@ export default function StudentsScreen() {
   }
 
   function openAddSheet() {
-    setSheetPrefill(null);
-    setSheetOpen(true);
+    useGenerateCodesSheetStore.getState().open(null, () => {
+      setSegment("pending");
+    });
+    router.push("/(modals)/generate-codes" as any);
   }
 
   function openGenerateNew(prefill: GenerateCodesPrefill) {
-    setSheetPrefill(prefill);
-    setSheetOpen(true);
+    useGenerateCodesSheetStore.getState().open(prefill, () => {
+      setSegment("pending");
+    });
+    router.push("/(modals)/generate-codes" as any);
   }
 
-  function handleSheetSuccess() {
-    setSheetOpen(false);
-    setSheetPrefill(null);
-    setSegment("pending");
+  function openFilters() {
+    useFiltersSheetStore.getState().open(
+      { grade, classLetter },
+      ({ grade: g, classLetter: l }) => {
+        setGrade(g);
+        setClassLetter(l);
+      },
+    );
+    router.push("/(modals)/filters" as any);
   }
 
   if (isError && segment === "active") {
@@ -253,7 +256,7 @@ export default function StudentsScreen() {
           <Pressable
             onPress={() => {
               hapticLight();
-              setFiltersOpen(true);
+              openFilters();
             }}
             accessibilityLabel={t.common.filters}
             hitSlop={8}
@@ -485,23 +488,6 @@ export default function StudentsScreen() {
         </Pressable>
       </View>
 
-      <FiltersSheet
-        open={filtersOpen}
-        grade={grade}
-        classLetter={classLetter}
-        onClose={() => setFiltersOpen(false)}
-        onApply={({ grade: g, classLetter: l }) => {
-          setGrade(g);
-          setClassLetter(l);
-        }}
-      />
-
-      <GenerateCodesSheet
-        open={sheetOpen}
-        prefill={sheetPrefill}
-        onClose={() => setSheetOpen(false)}
-        onSuccess={handleSheetSuccess}
-      />
     </SafeAreaView>
   );
 }

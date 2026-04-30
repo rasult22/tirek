@@ -1,43 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, StyleSheet, Switch, View } from "react-native";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  type BottomSheetBackdropProps,
-} from "@gorhom/bottom-sheet";
+import { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from "react-native";
+import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Text, Button } from "../ui";
+import { Text, Button } from "../../components/ui";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
 import { validateIntervals } from "@tirek/shared/office-hours";
 import type { OfficeHoursInterval } from "@tirek/shared";
+import { useIntervalsEditorSheetStore } from "../../lib/sheets/intervals-editor";
 
-export interface IntervalsEditorSheetProps {
-  open: boolean;
-  title: string;
-  initialIntervals: OfficeHoursInterval[];
-  initialNotes: string | null;
-  showDayOffToggle?: boolean;
-  saving?: boolean;
-  onClose: () => void;
-  onSave: (intervals: OfficeHoursInterval[], notes: string | null) => void;
-}
-
-export function IntervalsEditorSheet({
-  open,
-  title,
-  initialIntervals,
-  initialNotes,
-  showDayOffToggle = true,
-  saving = false,
-  onClose,
-  onSave,
-}: IntervalsEditorSheetProps) {
+export default function IntervalsEditorModal() {
   const c = useThemeColors();
-  const ref = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["75%", "92%"], []);
+  const router = useRouter();
+  const { payload, onSave, close } = useIntervalsEditorSheetStore();
+
+  const showDayOffToggle = payload?.showDayOffToggle ?? true;
+  const saving = payload?.saving ?? false;
+  const initialIntervals = payload?.initialIntervals ?? [];
+  const initialNotes = payload?.initialNotes ?? null;
 
   const [dayOff, setDayOff] = useState(initialIntervals.length === 0);
   const [intervals, setIntervals] = useState<OfficeHoursInterval[]>(
@@ -47,20 +27,8 @@ export function IntervalsEditorSheet({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setDayOff(initialIntervals.length === 0);
-      setIntervals(
-        initialIntervals.length > 0
-          ? initialIntervals
-          : [{ start: "09:00", end: "17:00" }],
-      );
-      setNotes(initialNotes ?? "");
-      setError(null);
-      ref.current?.present();
-    } else {
-      ref.current?.dismiss();
-    }
-  }, [open, initialIntervals, initialNotes]);
+    if (!payload) router.back();
+  }, [payload, router]);
 
   function updateInterval(idx: number, field: "start" | "end", value: string) {
     setIntervals((arr) => arr.map((iv, i) => (i === idx ? { ...iv, [field]: value } : iv)));
@@ -87,34 +55,18 @@ export function IntervalsEditorSheet({
       return;
     }
     const trimmed = notes.trim();
-    onSave(finalIntervals, trimmed.length > 0 ? trimmed : null);
+    onSave?.(finalIntervals, trimmed.length > 0 ? trimmed : null);
+    close();
+    router.back();
   }
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.4}
-      />
-    ),
-    [],
-  );
+  function handleCancel() {
+    close();
+    router.back();
+  }
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={snapPoints}
-      index={0}
-      onDismiss={onClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: c.surface }}
-      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-      enablePanDownToClose
-    >
+    <View style={[styles.root, { backgroundColor: c.surface }]}>
       <View style={styles.headerRow}>
         <Text
           style={{
@@ -125,24 +77,15 @@ export function IntervalsEditorSheet({
             flex: 1,
           }}
         >
-          {title}
+          {payload?.title ?? ""}
         </Text>
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => [
-            styles.closeBtn,
-            { backgroundColor: c.surfaceSecondary },
-            pressed && { opacity: 0.7 },
-          ]}
-        >
-          <Ionicons name="close" size={18} color={c.textLight} />
-        </Pressable>
       </View>
 
-      <BottomSheetScrollView
+      <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {showDayOffToggle ? (
           <View
@@ -183,7 +126,7 @@ export function IntervalsEditorSheet({
             <View style={{ gap: spacing.sm }}>
               {intervals.map((iv, idx) => (
                 <View key={idx} style={styles.intervalRow}>
-                  <BottomSheetTextInput
+                  <TextInput
                     value={iv.start}
                     onChangeText={(v) => updateInterval(idx, "start", v)}
                     placeholder="09:00"
@@ -199,7 +142,7 @@ export function IntervalsEditorSheet({
                     maxLength={5}
                   />
                   <Text style={{ color: c.textLight }}>—</Text>
-                  <BottomSheetTextInput
+                  <TextInput
                     value={iv.end}
                     onChangeText={(v) => updateInterval(idx, "end", v)}
                     placeholder="17:00"
@@ -260,7 +203,7 @@ export function IntervalsEditorSheet({
         <Text style={[styles.label, { color: c.textLight, marginTop: spacing.lg }]}>
           Заметка (необязательно)
         </Text>
-        <BottomSheetTextInput
+        <TextInput
           value={notes}
           onChangeText={setNotes}
           placeholder="напр. конференция"
@@ -295,13 +238,13 @@ export function IntervalsEditorSheet({
             </Text>
           </View>
         ) : null}
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
         <Button
           title="Отмена"
           variant="secondary"
-          onPress={onClose}
+          onPress={handleCancel}
           style={{ flex: 1 }}
         />
         <Button
@@ -312,25 +255,19 @@ export function IntervalsEditorSheet({
           style={{ flex: 1 }}
         />
       </View>
-    </BottomSheetModal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
-  },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
   },
   body: {
     paddingHorizontal: spacing.xl,

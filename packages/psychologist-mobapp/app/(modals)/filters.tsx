@@ -1,57 +1,37 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  type BottomSheetBackdropProps,
-} from "@gorhom/bottom-sheet";
-import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useT } from "../../lib/hooks/useLanguage";
-import { Text, Button } from "../ui";
+import { Text, Button } from "../../components/ui";
 import { useThemeColors, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
 import { colors as ds } from "@tirek/shared/design-system";
+import { useFiltersSheetStore } from "../../lib/sheets/filters";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
 
-interface FiltersSheetProps {
-  open: boolean;
-  grade: number | null;
-  classLetter: string | null;
-  onClose: () => void;
-  onApply: (next: { grade: number | null; classLetter: string | null }) => void;
-}
-
-export function FiltersSheet({
-  open,
-  grade,
-  classLetter,
-  onClose,
-  onApply,
-}: FiltersSheetProps) {
+export default function FiltersModal() {
   const t = useT();
   const c = useThemeColors();
-  const ref = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ["55%", "85%"], []);
+  const router = useRouter();
+  const { payload, onApply, close } = useFiltersSheetStore();
 
-  const [draftGrade, setDraftGrade] = useState<number | null>(grade);
-  const [draftLetter, setDraftLetter] = useState<string | null>(classLetter);
+  const [draftGrade, setDraftGrade] = useState<number | null>(
+    payload?.grade ?? null,
+  );
+  const [draftLetter, setDraftLetter] = useState<string | null>(
+    payload?.classLetter ?? null,
+  );
 
   useEffect(() => {
-    if (open) {
-      setDraftGrade(grade);
-      setDraftLetter(classLetter);
-      ref.current?.present();
-    } else {
-      ref.current?.dismiss();
-    }
-  }, [open, grade, classLetter]);
+    if (!payload) router.back();
+  }, [payload, router]);
 
   function handleApply() {
-    onApply({ grade: draftGrade, classLetter: draftLetter });
-    onClose();
+    onApply?.({ grade: draftGrade, classLetter: draftLetter });
+    close();
+    router.back();
   }
 
   function handleReset() {
@@ -59,29 +39,8 @@ export function FiltersSheet({
     setDraftLetter(null);
   }
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.4}
-      />
-    ),
-    [],
-  );
-
   return (
-    <BottomSheetModal
-      ref={ref}
-      snapPoints={snapPoints}
-      index={0}
-      onDismiss={onClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: c.surface }}
-      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
-      enablePanDownToClose
-    >
+    <View style={[styles.root, { backgroundColor: c.surface }]}>
       <View style={styles.headerRow}>
         <Text
           style={{
@@ -94,19 +53,9 @@ export function FiltersSheet({
         >
           {t.common.filters}
         </Text>
-        <Pressable
-          onPress={onClose}
-          style={({ pressed }) => [
-            styles.closeBtn,
-            { backgroundColor: c.surfaceSecondary },
-            pressed && { opacity: 0.7 },
-          ]}
-        >
-          <Ionicons name="close" size={18} color={c.textLight} />
-        </Pressable>
       </View>
 
-      <BottomSheetScrollView
+      <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
@@ -177,7 +126,7 @@ export function FiltersSheet({
             />
           ))}
         </ScrollView>
-      </BottomSheetScrollView>
+      </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
         <Button
@@ -193,7 +142,7 @@ export function FiltersSheet({
           style={{ flex: 1 }}
         />
       </View>
-    </BottomSheetModal>
+    </View>
   );
 }
 
@@ -232,20 +181,14 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
-  },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
   },
   body: {
     paddingHorizontal: spacing.xl,
