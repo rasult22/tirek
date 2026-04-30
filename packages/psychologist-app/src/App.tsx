@@ -24,6 +24,7 @@ import { ProfilePage } from "./pages/ProfilePage.js";
 import { DirectChatListPage } from "./pages/DirectChatListPage.js";
 import { DirectChatPage } from "./pages/DirectChatPage.js";
 import { OfficeHoursPage } from "./pages/OfficeHoursPage.js";
+import { DesignSystemDevPage } from "./pages/DesignSystemDevPage.js";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -81,6 +82,9 @@ export function App() {
             <Route path="/office-hours" element={<ProtectedRoute><OfficeHoursPage /></ProtectedRoute>} />
             <Route path="/crisis" element={<ProtectedRoute><CrisisPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            {import.meta.env.DEV && (
+              <Route path="/dev/ds" element={<DesignSystemDevPage />} />
+            )}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </BrowserRouter>
