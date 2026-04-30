@@ -1,53 +1,75 @@
-import { type ReactNode } from "react";
-import { useNavigate } from "react-router";
-import { BottomNav } from "./BottomNav.js";
-import { useAuthStore } from "../../store/auth-store.js";
+import { useState, useEffect, type ReactNode } from "react";
+import { Menu } from "lucide-react";
+import { useLocation } from "react-router";
+import { Sidebar } from "./Sidebar.js";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
+const COLLAPSED_KEY = "tirek.psy.sidebar.collapsed";
+
+/**
+ * Layout shell for psy-app web.
+ * - Slim sidebar nav on the left (240px expanded → 64px rail).
+ * - Multi-column friendly: `<main>` fills remaining width; pages decide
+ *   their own column layout (e.g. main + side panel) inside.
+ * - Below `lg` (1024px) sidebar becomes a drawer; a small top bar with a
+ *   menu button replaces it. This is the mobile-like fallback.
+ */
 export function AppLayout({ children }: AppLayoutProps) {
-  const user = useAuthStore((s) => s.user);
-  const navigate = useNavigate();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(COLLAPSED_KEY) === "1";
+  });
+  const location = useLocation();
+
+  // Close mobile drawer on route change.
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
+  const handleToggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        window.localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        // ignore quota / private mode errors
+      }
+      return next;
+    });
+  };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-bg">
-      {/* Compact mobile header */}
-      <header className="h-12 glass-card-elevated border-b border-border-light flex items-center justify-between px-4 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-dark">
-            <span className="text-xs font-extrabold text-white">T</span>
-          </div>
-          <span className="text-base font-bold tracking-tight text-text-main">
-            Tirek
-          </span>
-        </div>
+    <div className="flex h-[100dvh] bg-bg">
+      <Sidebar
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        collapsed={collapsed}
+        onToggleCollapsed={handleToggleCollapsed}
+      />
 
-        <div className="flex items-center gap-1.5">
-          {/* User avatar */}
-          <div
-            role="button"
-            tabIndex={0}
-            aria-label="Profile"
-            onClick={() => navigate("/profile")}
-            onKeyDown={(e) => e.key === "Enter" && navigate("/profile")}
-            className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/15 to-secondary/10 text-primary flex items-center justify-center text-xs font-bold cursor-pointer"
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Compact top bar — only visible on <lg, hosts the menu button */}
+        <header className="lg:hidden h-12 bg-surface border-b border-border-light flex items-center px-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="p-2 rounded-lg hover:bg-surface-hover text-ink-muted transition-colors"
+            aria-label="Open menu"
           >
-            {user?.name?.charAt(0)?.toUpperCase() ?? "P"}
+            <Menu size={20} />
+          </button>
+        </header>
+
+        <main className="flex-1 overflow-y-auto">
+          <div className="px-4 py-4 md:px-6 md:py-5 xl:px-8 xl:py-6">
+            {children}
           </div>
-        </div>
-      </header>
-
-      {/* Main content — pb-16 for bottom nav */}
-      <main className="flex-1 overflow-y-auto pb-16">
-        <div className="px-4 py-4">
-          {children}
-        </div>
-      </main>
-
-      {/* Bottom navigation */}
-      <BottomNav />
+        </main>
+      </div>
     </div>
   );
 }
