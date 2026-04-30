@@ -14,9 +14,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
 import { Text } from "../ui";
-import { useThemeColors, radius } from "../../lib/theme";
+import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
 import { inviteCodesApi } from "../../lib/api/inviteCodes";
+import { colors as ds } from "@tirek/shared/design-system";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
@@ -107,28 +108,42 @@ export function GenerateCodesSheet({
             </View>
 
             <View style={styles.headerRow}>
-              <Text variant="h3">{t.psychologist.generateCodes}</Text>
+              <Text
+                style={{
+                  fontSize: 18,
+                  lineHeight: 24,
+                  fontFamily: "Inter_700Bold",
+                  color: c.text,
+                  flex: 1,
+                }}
+              >
+                {t.psychologist.generateCodes}
+              </Text>
               <Pressable
                 onPress={onClose}
-                hitSlop={8}
-                style={({ pressed }) => [pressed && { opacity: 0.6 }]}
+                style={({ pressed }) => [
+                  styles.closeBtn,
+                  { backgroundColor: c.surfaceSecondary },
+                  pressed && { opacity: 0.7 },
+                ]}
               >
-                <Ionicons name="close" size={22} color={c.textLight} />
+                <Ionicons name="close" size={18} color={c.textLight} />
               </Pressable>
             </View>
 
             <ScrollView
-              style={{ maxHeight: 480 }}
+              style={styles.body}
+              contentContainerStyle={styles.bodyContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text variant="caption" style={styles.sectionLabel}>
+              <Text style={[styles.sectionLabel, { color: c.textLight }]}>
                 {t.psychologist.studentNamesLabel}
               </Text>
               <View
                 style={[
                   styles.namesInput,
-                  { borderColor: c.borderLight, backgroundColor: c.surface },
+                  { borderColor: c.borderLight, backgroundColor: c.bg },
                 ]}
               >
                 <TextInput
@@ -143,13 +158,23 @@ export function GenerateCodesSheet({
                 />
               </View>
               <Text
-                variant="caption"
-                style={{ color: c.textLight, marginTop: 4 }}
+                style={{
+                  fontSize: 11,
+                  lineHeight: 14,
+                  color: c.textLight,
+                  marginTop: 4,
+                  fontFamily: "Inter_500Medium",
+                }}
               >
                 {studentNames.length} / 100
               </Text>
 
-              <Text variant="caption" style={styles.sectionLabel}>
+              <Text
+                style={[
+                  styles.sectionLabel,
+                  { color: c.textLight, marginTop: spacing.lg },
+                ]}
+              >
                 {t.auth.selectGrade}
               </Text>
               <ScrollView
@@ -158,58 +183,35 @@ export function GenerateCodesSheet({
                 contentContainerStyle={styles.chipsRow}
                 keyboardShouldPersistTaps="handled"
               >
-                <Pressable
+                <Chip
+                  label={t.psychologist.codeAny}
+                  active={grade === null}
                   onPress={() => {
                     hapticLight();
                     setGrade(null);
                   }}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor:
-                        grade === null ? c.primary : c.surfaceSecondary,
-                    },
-                  ]}
-                >
-                  <Text
-                    variant="small"
-                    style={{
-                      fontFamily: "DMSans-SemiBold",
-                      color: grade === null ? "#FFF" : c.textLight,
-                    }}
-                  >
-                    {t.psychologist.codeAny}
-                  </Text>
-                </Pressable>
+                  c={c}
+                />
                 {GRADES.map((g) => (
-                  <Pressable
+                  <Chip
                     key={g}
+                    label={String(g)}
+                    active={grade === g}
                     onPress={() => {
                       hapticLight();
                       setGrade(grade === g ? null : g);
                     }}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor:
-                          grade === g ? c.primary : c.surfaceSecondary,
-                      },
-                    ]}
-                  >
-                    <Text
-                      variant="small"
-                      style={{
-                        fontFamily: "DMSans-SemiBold",
-                        color: grade === g ? "#FFF" : c.textLight,
-                      }}
-                    >
-                      {g}
-                    </Text>
-                  </Pressable>
+                    c={c}
+                  />
                 ))}
               </ScrollView>
 
-              <Text variant="caption" style={styles.sectionLabel}>
+              <Text
+                style={[
+                  styles.sectionLabel,
+                  { color: c.textLight, marginTop: spacing.lg },
+                ]}
+              >
                 {t.auth.selectClass}
               </Text>
               <ScrollView
@@ -218,78 +220,87 @@ export function GenerateCodesSheet({
                 contentContainerStyle={styles.chipsRow}
                 keyboardShouldPersistTaps="handled"
               >
-                <Pressable
+                <Chip
+                  label={t.psychologist.codeAny}
+                  active={classLetter === null}
                   onPress={() => {
                     hapticLight();
                     setClassLetter(null);
                   }}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor:
-                        classLetter === null ? c.primary : c.surfaceSecondary,
-                    },
-                  ]}
-                >
-                  <Text
-                    variant="small"
-                    style={{
-                      fontFamily: "DMSans-SemiBold",
-                      color: classLetter === null ? "#FFF" : c.textLight,
-                    }}
-                  >
-                    {t.psychologist.codeAny}
-                  </Text>
-                </Pressable>
+                  c={c}
+                />
                 {CLASS_LETTERS.map((l) => (
-                  <Pressable
+                  <Chip
                     key={l}
+                    label={l}
+                    active={classLetter === l}
                     onPress={() => {
                       hapticLight();
                       setClassLetter(classLetter === l ? null : l);
                     }}
-                    style={[
-                      styles.chip,
-                      {
-                        backgroundColor:
-                          classLetter === l ? c.primary : c.surfaceSecondary,
-                      },
-                    ]}
-                  >
-                    <Text
-                      variant="small"
-                      style={{
-                        fontFamily: "DMSans-SemiBold",
-                        color: classLetter === l ? "#FFF" : c.textLight,
-                      }}
-                    >
-                      {l}
-                    </Text>
-                  </Pressable>
+                    c={c}
+                  />
                 ))}
               </ScrollView>
             </ScrollView>
 
-            <Pressable
-              onPress={() => {
-                hapticLight();
-                generateMutation.mutate();
-              }}
-              disabled={!canSubmit}
-              style={[
-                styles.submitBtn,
-                { backgroundColor: canSubmit ? c.primary : `${c.primary}60` },
-              ]}
-            >
-              {generateMutation.isPending && (
-                <ActivityIndicator size="small" color="#FFF" />
-              )}
-              <Text style={styles.submitText}>{t.psychologist.generate}</Text>
-            </Pressable>
+            <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
+              <Pressable
+                onPress={() => {
+                  hapticLight();
+                  generateMutation.mutate();
+                }}
+                disabled={!canSubmit}
+                style={[
+                  styles.submitBtn,
+                  { backgroundColor: c.primary },
+                  !canSubmit && { opacity: 0.5 },
+                ]}
+              >
+                {generateMutation.isPending && (
+                  <ActivityIndicator size="small" color="#FFF" />
+                )}
+                <Text style={styles.submitText}>{t.psychologist.generate}</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
+  );
+}
+
+function Chip({
+  label,
+  active,
+  onPress,
+  c,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  c: ReturnType<typeof useThemeColors>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.chip,
+        active
+          ? { backgroundColor: ds.brandSoft, borderColor: `${c.primary}33` }
+          : { backgroundColor: c.surfaceSecondary, borderColor: c.borderLight },
+      ]}
+    >
+      <Text
+        style={{
+          fontSize: 13,
+          fontFamily: "Inter_600SemiBold",
+          color: active ? c.primaryDark : c.textLight,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -303,15 +314,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   sheet: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
+    borderTopLeftRadius: radius["3xl"],
+    borderTopRightRadius: radius["3xl"],
+    maxHeight: "85%",
   },
   handleWrap: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingTop: 10,
+    paddingBottom: 4,
   },
   handle: {
     width: 40,
@@ -321,48 +331,75 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  body: {
+    paddingHorizontal: spacing.xl,
+    maxHeight: 480,
+  },
+  bodyContent: {
+    paddingBottom: spacing.lg,
   },
   sectionLabel: {
-    marginTop: 12,
-    marginBottom: 8,
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: spacing.sm,
   },
   namesInput: {
     minHeight: 110,
-    padding: 12,
+    padding: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
   },
   namesText: {
     fontSize: 14,
-    fontFamily: "DMSans-Regular",
+    fontFamily: "Inter_400Regular",
     padding: 0,
     minHeight: 90,
   },
   chipsRow: {
-    gap: 6,
+    gap: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: 12,
+    paddingRight: spacing.md,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
     borderRadius: 999,
+    borderWidth: 1,
+  },
+  footer: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    borderTopWidth: 1,
   },
   submitBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-    marginTop: 16,
+    height: 48,
+    borderRadius: radius.lg,
   },
   submitText: {
     color: "#FFF",
-    fontSize: 14,
-    fontFamily: "DMSans-SemiBold",
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.2,
   },
 });

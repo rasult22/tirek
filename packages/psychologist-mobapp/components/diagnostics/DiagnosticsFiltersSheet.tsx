@@ -11,8 +11,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { testDefinitions, type Severity } from "@tirek/shared";
 import { Text, Button } from "../ui";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
-import { useThemeColors, radius } from "../../lib/theme";
+import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
+import { colors as ds } from "@tirek/shared/design-system";
 import type { DiagnosticsFilters } from "../../lib/api/diagnostics";
 
 interface Props {
@@ -86,21 +87,39 @@ export function DiagnosticsFiltersSheet({
       <View style={styles.wrapper}>
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View style={[styles.content, { backgroundColor: c.surface }]}>
-          <View style={styles.dragHandle}>
-            <View style={[styles.dragBar, { backgroundColor: c.border }]} />
+          <View style={styles.handleWrap}>
+            <View style={[styles.handle, { backgroundColor: c.borderLight }]} />
           </View>
+
           <View style={styles.header}>
-            <Text variant="h3" style={{ fontWeight: "700" }}>
+            <Text
+              style={{
+                fontSize: 18,
+                lineHeight: 24,
+                fontFamily: "Inter_700Bold",
+                color: c.text,
+                flex: 1,
+              }}
+            >
               {t.psychologist.filtersTitle}
             </Text>
             <Pressable
               onPress={onClose}
-              style={[styles.closeBtn, { backgroundColor: c.surfaceSecondary }]}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                { backgroundColor: c.surfaceSecondary },
+                pressed && { opacity: 0.7 },
+              ]}
             >
-              <Ionicons name="close" size={16} color={c.textLight} />
+              <Ionicons name="close" size={18} color={c.textLight} />
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={styles.body}>
+
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
+          >
             <Section
               title={t.psychologist.filtersTest}
               c={c}
@@ -133,7 +152,7 @@ export function DiagnosticsFiltersSheet({
             />
             <View style={styles.dateRow}>
               <View style={{ flex: 1 }}>
-                <Text variant="caption" style={styles.label}>
+                <Text style={[styles.label, { color: c.textLight }]}>
                   {t.psychologist.filtersDateFrom}
                 </Text>
                 <TextInput
@@ -144,12 +163,16 @@ export function DiagnosticsFiltersSheet({
                   maxLength={10}
                   style={[
                     styles.input,
-                    { borderColor: c.borderLight, color: c.text },
+                    {
+                      borderColor: c.borderLight,
+                      color: c.text,
+                      backgroundColor: c.bg,
+                    },
                   ]}
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text variant="caption" style={styles.label}>
+                <Text style={[styles.label, { color: c.textLight }]}>
                   {t.psychologist.filtersDateTo}
                 </Text>
                 <TextInput
@@ -160,30 +183,33 @@ export function DiagnosticsFiltersSheet({
                   maxLength={10}
                   style={[
                     styles.input,
-                    { borderColor: c.borderLight, color: c.text },
+                    {
+                      borderColor: c.borderLight,
+                      color: c.text,
+                      backgroundColor: c.bg,
+                    },
                   ]}
                 />
               </View>
             </View>
-            <View style={styles.actions}>
-              <View style={{ flex: 1 }}>
-                <Button
-                  title={t.psychologist.filtersReset}
-                  variant="secondary"
-                  size="md"
-                  onPress={reset}
-                />
-              </View>
-              <View style={{ flex: 2 }}>
-                <Button
-                  title={t.psychologist.filtersApply}
-                  variant="primary"
-                  size="md"
-                  onPress={apply}
-                />
-              </View>
-            </View>
           </ScrollView>
+
+          <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
+            <Button
+              title={t.psychologist.filtersReset}
+              variant="secondary"
+              size="md"
+              onPress={reset}
+              style={{ flex: 1 }}
+            />
+            <Button
+              title={t.psychologist.filtersApply}
+              variant="primary"
+              size="md"
+              onPress={apply}
+              style={{ flex: 2 }}
+            />
+          </View>
         </View>
       </View>
     </Modal>
@@ -202,63 +228,69 @@ interface SectionProps {
 function Section({ title, c, t, value, setValue, options }: SectionProps) {
   return (
     <View style={styles.section}>
-      <Text variant="caption" style={styles.label}>
-        {title}
-      </Text>
+      <Text style={[styles.label, { color: c.textLight }]}>{title}</Text>
       <View style={styles.chips}>
-        <Pressable
+        <Chip
+          label={t.psychologist.codeAny}
+          active={value === ""}
           onPress={() => {
             hapticLight();
             setValue("");
           }}
-          style={[
-            styles.chip,
-            value === ""
-              ? { backgroundColor: c.primary }
-              : { backgroundColor: c.surfaceSecondary },
-          ]}
-        >
-          <Text
-            variant="small"
-            style={{
-              fontWeight: "600",
-              color: value === "" ? "#FFF" : c.textLight,
-            }}
-          >
-            {t.psychologist.codeAny}
-          </Text>
-        </Pressable>
+          c={c}
+        />
         {options.map((opt) => {
           const active = value === opt.value;
           return (
-            <Pressable
+            <Chip
               key={opt.value}
+              label={opt.label}
+              active={active}
               onPress={() => {
                 hapticLight();
                 setValue(active ? "" : opt.value);
               }}
-              style={[
-                styles.chip,
-                active
-                  ? { backgroundColor: c.primary }
-                  : { backgroundColor: c.surfaceSecondary },
-              ]}
-            >
-              <Text
-                variant="small"
-                style={{
-                  fontWeight: "600",
-                  color: active ? "#FFF" : c.textLight,
-                }}
-                numberOfLines={1}
-              >
-                {opt.label}
-              </Text>
-            </Pressable>
+              c={c}
+            />
           );
         })}
       </View>
     </View>
+  );
+}
+
+function Chip({
+  label,
+  active,
+  onPress,
+  c,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  c: ReturnType<typeof useThemeColors>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.chip,
+        active
+          ? { backgroundColor: ds.brandSoft, borderColor: `${c.primary}33` }
+          : { backgroundColor: c.surfaceSecondary, borderColor: c.borderLight },
+      ]}
+    >
+      <Text
+        style={{
+          fontSize: 12,
+          fontFamily: "Inter_600SemiBold",
+          color: active ? c.primaryDark : c.textLight,
+        }}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -269,26 +301,27 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   content: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: radius["3xl"],
+    borderTopRightRadius: radius["3xl"],
     maxHeight: "85%",
   },
-  dragHandle: {
+  handleWrap: {
     alignItems: "center",
-    paddingTop: 12,
+    paddingTop: 10,
     paddingBottom: 4,
   },
-  dragBar: {
+  handle: {
     width: 40,
     height: 4,
     borderRadius: 2,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
   closeBtn: {
     width: 32,
@@ -298,42 +331,52 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   body: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-    gap: 16,
+    paddingHorizontal: spacing.xl,
+  },
+  bodyContent: {
+    paddingBottom: spacing.lg,
+    gap: spacing.lg,
   },
   section: {
-    gap: 6,
+    gap: spacing.sm,
   },
   label: {
-    fontWeight: "600",
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
     marginBottom: 4,
   },
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: spacing.sm,
   },
   chip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: 999,
+    borderWidth: 1,
   },
   dateRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: spacing.sm,
   },
   input: {
     height: 40,
     borderWidth: 1,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     paddingHorizontal: 10,
     fontFamily: "Inter_400Regular",
     fontSize: 13,
   },
-  actions: {
+  footer: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 8,
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    borderTopWidth: 1,
   },
 });

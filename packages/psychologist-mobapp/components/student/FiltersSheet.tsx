@@ -9,8 +9,9 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useT } from "../../lib/hooks/useLanguage";
 import { Text, Button } from "../ui";
-import { useThemeColors, radius } from "../../lib/theme";
+import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
+import { colors as ds } from "@tirek/shared/design-system";
 
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const CLASS_LETTERS = ["А", "Ә", "Б", "В", "Г", "Д", "Е", "Ж", "З"];
@@ -68,131 +69,103 @@ export function FiltersSheet({
           </View>
 
           <View style={styles.headerRow}>
-            <Text variant="h3">{t.common.filters}</Text>
+            <Text
+              style={{
+                fontSize: 18,
+                lineHeight: 24,
+                fontFamily: "Inter_700Bold",
+                color: c.text,
+                flex: 1,
+              }}
+            >
+              {t.common.filters}
+            </Text>
             <Pressable
               onPress={onClose}
-              hitSlop={8}
-              style={({ pressed }) => [pressed && { opacity: 0.6 }]}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                { backgroundColor: c.surfaceSecondary },
+                pressed && { opacity: 0.7 },
+              ]}
             >
-              <Ionicons name="close" size={22} color={c.textLight} />
+              <Ionicons name="close" size={18} color={c.textLight} />
             </Pressable>
           </View>
 
-          <Text variant="caption" style={styles.sectionLabel}>
-            {t.psychologist.studentClass}
-          </Text>
           <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsRow}
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
           >
-            <Pressable
-              onPress={() => {
-                hapticLight();
-                setDraftGrade(null);
-              }}
-              style={[
-                styles.chip,
-                draftGrade === null
-                  ? { backgroundColor: c.primary }
-                  : { backgroundColor: c.surfaceSecondary },
-              ]}
+            <Text style={[styles.sectionLabel, { color: c.textLight }]}>
+              {t.psychologist.studentClass}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsRow}
             >
-              <Text
-                variant="small"
-                style={{
-                  fontFamily: "DMSans-SemiBold",
-                  color: draftGrade === null ? "#FFF" : c.textLight,
-                }}
-              >
-                {t.psychologist.allGrades}
-              </Text>
-            </Pressable>
-            {GRADES.map((g) => (
-              <Pressable
-                key={g}
+              <Chip
+                label={t.psychologist.allGrades}
+                active={draftGrade === null}
                 onPress={() => {
                   hapticLight();
-                  setDraftGrade(draftGrade === g ? null : g);
+                  setDraftGrade(null);
                 }}
-                style={[
-                  styles.chip,
-                  draftGrade === g
-                    ? { backgroundColor: c.primary }
-                    : { backgroundColor: c.surfaceSecondary },
-                ]}
-              >
-                <Text
-                  variant="small"
-                  style={{
-                    fontFamily: "DMSans-SemiBold",
-                    color: draftGrade === g ? "#FFF" : c.textLight,
+                c={c}
+              />
+              {GRADES.map((g) => (
+                <Chip
+                  key={g}
+                  label={String(g)}
+                  active={draftGrade === g}
+                  onPress={() => {
+                    hapticLight();
+                    setDraftGrade(draftGrade === g ? null : g);
                   }}
-                >
-                  {g}
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+                  c={c}
+                />
+              ))}
+            </ScrollView>
 
-          <Text variant="caption" style={styles.sectionLabel}>
-            {t.psychologist.classLetterLabel}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsRow}
-          >
-            <Pressable
-              onPress={() => {
-                hapticLight();
-                setDraftLetter(null);
-              }}
+            <Text
               style={[
-                styles.chip,
-                draftLetter === null
-                  ? { backgroundColor: c.primary }
-                  : { backgroundColor: c.surfaceSecondary },
+                styles.sectionLabel,
+                { color: c.textLight, marginTop: spacing.lg },
               ]}
             >
-              <Text
-                variant="small"
-                style={{
-                  fontFamily: "DMSans-SemiBold",
-                  color: draftLetter === null ? "#FFF" : c.textLight,
-                }}
-              >
-                {t.psychologist.allClasses}
-              </Text>
-            </Pressable>
-            {CLASS_LETTERS.map((l) => (
-              <Pressable
-                key={l}
+              {t.psychologist.classLetterLabel}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsRow}
+            >
+              <Chip
+                label={t.psychologist.allClasses}
+                active={draftLetter === null}
                 onPress={() => {
                   hapticLight();
-                  setDraftLetter(draftLetter === l ? null : l);
+                  setDraftLetter(null);
                 }}
-                style={[
-                  styles.chip,
-                  draftLetter === l
-                    ? { backgroundColor: c.primary }
-                    : { backgroundColor: c.surfaceSecondary },
-                ]}
-              >
-                <Text
-                  variant="small"
-                  style={{
-                    fontFamily: "DMSans-SemiBold",
-                    color: draftLetter === l ? "#FFF" : c.textLight,
+                c={c}
+              />
+              {CLASS_LETTERS.map((l) => (
+                <Chip
+                  key={l}
+                  label={l}
+                  active={draftLetter === l}
+                  onPress={() => {
+                    hapticLight();
+                    setDraftLetter(draftLetter === l ? null : l);
                   }}
-                >
-                  {l}
-                </Text>
-              </Pressable>
-            ))}
+                  c={c}
+                />
+              ))}
+            </ScrollView>
           </ScrollView>
 
-          <View style={styles.actions}>
+          <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
             <Button
               title={t.common.reset}
               variant="secondary"
@@ -212,6 +185,40 @@ export function FiltersSheet({
   );
 }
 
+function Chip({
+  label,
+  active,
+  onPress,
+  c,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  c: ReturnType<typeof useThemeColors>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.chip,
+        active
+          ? { backgroundColor: ds.brandSoft, borderColor: `${c.primary}33` }
+          : { backgroundColor: c.surfaceSecondary, borderColor: c.borderLight },
+      ]}
+    >
+      <Text
+        style={{
+          fontSize: 13,
+          fontFamily: "Inter_600SemiBold",
+          color: active ? c.primaryDark : c.textLight,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -222,15 +229,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   sheet: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
+    borderTopLeftRadius: radius["3xl"],
+    borderTopRightRadius: radius["3xl"],
+    maxHeight: "85%",
   },
   handleWrap: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingTop: 10,
+    paddingBottom: 4,
   },
   handle: {
     width: 40,
@@ -240,27 +246,50 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  body: {
+    paddingHorizontal: spacing.xl,
+  },
+  bodyContent: {
+    paddingBottom: spacing.lg,
   },
   sectionLabel: {
-    marginTop: 12,
-    marginBottom: 8,
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: spacing.sm,
   },
   chipsRow: {
-    gap: 6,
+    gap: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
-    paddingRight: 12,
+    paddingRight: spacing.md,
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
     borderRadius: 999,
+    borderWidth: 1,
   },
-  actions: {
+  footer: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 20,
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    borderTopWidth: 1,
   },
 });

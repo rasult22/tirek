@@ -13,13 +13,14 @@ import { Text, Button } from "../ui";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
 import { validateIntervals } from "@tirek/shared/office-hours";
+import { colors as ds } from "@tirek/shared/design-system";
 import type { OfficeHoursInterval } from "@tirek/shared";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function todayIso(): string {
   const d = new Date();
-  const offset = 5 * 60 * 60 * 1000; // Almaty UTC+5
+  const offset = 5 * 60 * 60 * 1000;
   const a = new Date(d.getTime() + offset);
   return `${a.getUTCFullYear()}-${String(a.getUTCMonth() + 1).padStart(2, "0")}-${String(a.getUTCDate()).padStart(2, "0")}`;
 }
@@ -32,7 +33,6 @@ function addDaysIso(iso: string, days: number): string {
 
 export interface OverrideEditorSheetProps {
   open: boolean;
-  /** Если задан — режим редактирования: дата фиксирована, нельзя менять. */
   fixedDate?: string;
   initialIntervals: OfficeHoursInterval[];
   initialNotes: string | null;
@@ -103,153 +103,286 @@ export function OverrideEditorSheet({
           </View>
 
           <View style={styles.headerRow}>
-            <Text variant="h3">{fixedDate ? "Исключение" : "Новое исключение"}</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Ionicons name="close" size={22} color={c.textLight} />
+            <Text
+              style={{
+                fontSize: 18,
+                lineHeight: 24,
+                fontFamily: "Inter_700Bold",
+                color: c.text,
+                flex: 1,
+              }}
+            >
+              {fixedDate ? "Исключение" : "Новое исключение"}
+            </Text>
+            <Pressable
+              onPress={onClose}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                { backgroundColor: c.surfaceSecondary },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Ionicons name="close" size={18} color={c.textLight} />
             </Pressable>
           </View>
 
-          <Text variant="caption" style={styles.label}>
-            Дата
-          </Text>
-          {fixedDate ? (
-            <Text style={{ color: c.text, marginBottom: 8 }}>{fixedDate}</Text>
-          ) : (
-            <>
-              <TextInput
-                value={date}
-                onChangeText={(v) => {
-                  setDate(v);
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={[styles.label, { color: c.textLight }]}>Дата</Text>
+            {fixedDate ? (
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Inter_600SemiBold",
+                  color: c.text,
+                  marginBottom: spacing.lg,
+                }}
+              >
+                {fixedDate}
+              </Text>
+            ) : (
+              <>
+                <TextInput
+                  value={date}
+                  onChangeText={(v) => {
+                    setDate(v);
+                    setError(null);
+                  }}
+                  placeholder="2026-04-30"
+                  placeholderTextColor={c.textLight}
+                  style={[
+                    styles.input,
+                    {
+                      borderColor: c.borderLight,
+                      color: c.text,
+                      backgroundColor: c.bg,
+                    },
+                  ]}
+                  maxLength={10}
+                />
+                <View style={styles.quickRow}>
+                  {(
+                    [
+                      { label: "Сегодня", days: 0 },
+                      { label: "Завтра", days: 1 },
+                      { label: "+7 дней", days: 7 },
+                    ] as const
+                  ).map(({ label, days }) => {
+                    const target = addDaysIso(todayIso(), days);
+                    const active = date === target;
+                    return (
+                      <Pressable
+                        key={label}
+                        onPress={() => {
+                          hapticLight();
+                          setDate(target);
+                          setError(null);
+                        }}
+                        style={[
+                          styles.quickChip,
+                          active
+                            ? {
+                                backgroundColor: ds.brandSoft,
+                                borderColor: `${c.primary}33`,
+                              }
+                            : {
+                                backgroundColor: c.surfaceSecondary,
+                                borderColor: c.borderLight,
+                              },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontFamily: "Inter_600SemiBold",
+                            color: active ? c.primaryDark : c.textLight,
+                          }}
+                        >
+                          {label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+            <View
+              style={[
+                styles.dayOffRow,
+                {
+                  backgroundColor: c.surfaceSecondary,
+                  borderColor: c.borderLight,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Inter_600SemiBold",
+                  color: c.text,
+                  flex: 1,
+                }}
+              >
+                Выходной
+              </Text>
+              <Switch
+                value={dayOff}
+                onValueChange={(v) => {
+                  hapticLight();
+                  setDayOff(v);
                   setError(null);
                 }}
-                placeholder="2026-04-30"
-                placeholderTextColor={c.textLight}
-                style={[
-                  styles.input,
-                  { borderColor: c.border, color: c.text, backgroundColor: c.surfaceSecondary },
-                ]}
-                maxLength={10}
               />
-              <View style={styles.quickRow}>
-                <Pressable
-                  onPress={() => {
-                    hapticLight();
-                    setDate(todayIso());
-                    setError(null);
-                  }}
-                  style={[styles.quickChip, { backgroundColor: c.surfaceSecondary }]}
-                >
-                  <Text variant="small" style={{ color: c.textLight }}>
-                    Сегодня
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    hapticLight();
-                    setDate(addDaysIso(todayIso(), 1));
-                    setError(null);
-                  }}
-                  style={[styles.quickChip, { backgroundColor: c.surfaceSecondary }]}
-                >
-                  <Text variant="small" style={{ color: c.textLight }}>
-                    Завтра
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    hapticLight();
-                    setDate(addDaysIso(todayIso(), 7));
-                    setError(null);
-                  }}
-                  style={[styles.quickChip, { backgroundColor: c.surfaceSecondary }]}
-                >
-                  <Text variant="small" style={{ color: c.textLight }}>
-                    +7 дней
-                  </Text>
-                </Pressable>
-              </View>
-            </>
-          )}
+            </View>
 
-          <View style={styles.dayOffRow}>
-            <Text>Выходной</Text>
-            <Switch
-              value={dayOff}
-              onValueChange={(v) => {
-                hapticLight();
-                setDayOff(v);
-                setError(null);
-              }}
-            />
-          </View>
-
-          {!dayOff ? (
-            <ScrollView
-              style={{ maxHeight: 220 }}
-              contentContainerStyle={{ gap: spacing.sm }}
-            >
-              {intervals.map((iv, idx) => (
-                <View key={idx} style={styles.intervalRow}>
-                  <TextInput
-                    value={iv.start}
-                    onChangeText={(v) => updateInterval(idx, "start", v)}
-                    placeholder="09:00"
-                    placeholderTextColor={c.textLight}
-                    style={[styles.input, { borderColor: c.border, color: c.text, flex: 1 }]}
-                    maxLength={5}
-                  />
-                  <Text style={{ color: c.textLight }}>—</Text>
-                  <TextInput
-                    value={iv.end}
-                    onChangeText={(v) => updateInterval(idx, "end", v)}
-                    placeholder="17:00"
-                    placeholderTextColor={c.textLight}
-                    style={[styles.input, { borderColor: c.border, color: c.text, flex: 1 }]}
-                    maxLength={5}
-                  />
+            {!dayOff ? (
+              <>
+                <Text
+                  style={[
+                    styles.label,
+                    { color: c.textLight, marginTop: spacing.lg },
+                  ]}
+                >
+                  Интервалы
+                </Text>
+                <View style={{ gap: spacing.sm }}>
+                  {intervals.map((iv, idx) => (
+                    <View key={idx} style={styles.intervalRow}>
+                      <TextInput
+                        value={iv.start}
+                        onChangeText={(v) => updateInterval(idx, "start", v)}
+                        placeholder="09:00"
+                        placeholderTextColor={c.textLight}
+                        style={[
+                          styles.input,
+                          {
+                            borderColor: c.borderLight,
+                            color: c.text,
+                            backgroundColor: c.bg,
+                            flex: 1,
+                          },
+                        ]}
+                        maxLength={5}
+                      />
+                      <Text style={{ color: c.textLight }}>—</Text>
+                      <TextInput
+                        value={iv.end}
+                        onChangeText={(v) => updateInterval(idx, "end", v)}
+                        placeholder="17:00"
+                        placeholderTextColor={c.textLight}
+                        style={[
+                          styles.input,
+                          {
+                            borderColor: c.borderLight,
+                            color: c.text,
+                            backgroundColor: c.bg,
+                            flex: 1,
+                          },
+                        ]}
+                        maxLength={5}
+                      />
+                      <Pressable
+                        onPress={() => {
+                          hapticLight();
+                          setIntervals((arr) => arr.filter((_, i) => i !== idx));
+                        }}
+                        hitSlop={8}
+                        style={({ pressed }) => [
+                          styles.iconBtn,
+                          pressed && { opacity: 0.6 },
+                        ]}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={18}
+                          color={c.textLight}
+                        />
+                      </Pressable>
+                    </View>
+                  ))}
                   <Pressable
                     onPress={() => {
                       hapticLight();
-                      setIntervals((arr) => arr.filter((_, i) => i !== idx));
+                      setIntervals((arr) => [
+                        ...arr,
+                        { start: "09:00", end: "12:00" },
+                      ]);
                     }}
-                    hitSlop={8}
+                    style={({ pressed }) => [
+                      styles.addRow,
+                      { borderColor: `${c.primary}33` },
+                      pressed && { opacity: 0.85 },
+                    ]}
                   >
-                    <Ionicons name="trash-outline" size={20} color={c.textLight} />
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={18}
+                      color={c.primary}
+                    />
+                    <Text
+                      style={{
+                        color: c.primary,
+                        fontFamily: "Inter_600SemiBold",
+                        fontSize: 13,
+                      }}
+                    >
+                      Добавить интервал
+                    </Text>
                   </Pressable>
                 </View>
-              ))}
-              <Pressable
-                onPress={() => {
-                  hapticLight();
-                  setIntervals((arr) => [...arr, { start: "09:00", end: "12:00" }]);
-                }}
-                style={styles.addRow}
+              </>
+            ) : null}
+
+            <Text
+              style={[
+                styles.label,
+                { color: c.textLight, marginTop: spacing.lg },
+              ]}
+            >
+              Заметка (необязательно)
+            </Text>
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="напр. конференция"
+              placeholderTextColor={c.textLight}
+              style={[
+                styles.notesInput,
+                {
+                  borderColor: c.borderLight,
+                  color: c.text,
+                  backgroundColor: c.bg,
+                },
+              ]}
+            />
+
+            {error ? (
+              <View
+                style={[
+                  styles.errorBox,
+                  {
+                    backgroundColor: `${c.danger}14`,
+                    borderColor: `${c.danger}33`,
+                  },
+                ]}
               >
-                <Ionicons name="add-circle-outline" size={20} color={c.primary} />
-                <Text style={{ color: c.primary }}>Добавить интервал</Text>
-              </Pressable>
-            </ScrollView>
-          ) : null}
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={14}
+                  color={c.danger}
+                />
+                <Text style={{ fontSize: 13, color: c.danger, flex: 1 }}>
+                  {error}
+                </Text>
+              </View>
+            ) : null}
+          </ScrollView>
 
-          <Text variant="caption" style={styles.label}>
-            Заметка (необязательно)
-          </Text>
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="напр. конференция"
-            placeholderTextColor={c.textLight}
-            style={[
-              styles.input,
-              { borderColor: c.border, color: c.text, backgroundColor: c.surfaceSecondary },
-            ]}
-          />
-
-          {error ? (
-            <Text style={[styles.error, { color: c.danger }]}>{error}</Text>
-          ) : null}
-
-          <View style={styles.actions}>
+          <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
             <Button
               title="Отмена"
               variant="secondary"
@@ -277,60 +410,124 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   sheet: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
+    borderTopLeftRadius: radius["3xl"],
+    borderTopRightRadius: radius["3xl"],
+    maxHeight: "90%",
   },
-  handleWrap: { alignItems: "center", paddingVertical: 8 },
-  handle: { width: 40, height: 4, borderRadius: 2 },
+  handleWrap: {
+    alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
-  label: { marginTop: 12, marginBottom: 6 },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  body: {
+    paddingHorizontal: spacing.xl,
+  },
+  bodyContent: {
+    paddingBottom: spacing.lg,
+  },
+  label: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: spacing.sm,
+  },
   input: {
     borderWidth: 1,
     borderRadius: radius.md,
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 15,
+    fontFamily: "Inter_500Medium",
     fontVariant: ["tabular-nums"],
   },
   quickRow: {
     flexDirection: "row",
-    gap: 6,
-    marginTop: 8,
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
   },
   quickChip: {
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: 999,
+    borderWidth: 1,
   },
   dayOffRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
   },
   intervalRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
+  iconBtn: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   addRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    paddingVertical: 6,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: "dashed",
   },
-  error: { marginTop: 12, fontSize: 13 },
-  actions: {
+  notesInput: {
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    minHeight: 44,
+  },
+  errorBox: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 20,
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing.md,
+  },
+  footer: {
+    flexDirection: "row",
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    borderTopWidth: 1,
   },
 });
