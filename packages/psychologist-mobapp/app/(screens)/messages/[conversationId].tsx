@@ -13,16 +13,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../../lib/hooks/useLanguage";
-import { Text, Body, Input, Button } from "../../../components/ui";
+import { Text, Body, Input, Button, DayDivider } from "../../../components/ui";
 import { SkeletonList } from "../../../components/Skeleton";
-import { useThemeColors } from "../../../lib/theme";
+import { useThemeColors, spacing } from "../../../lib/theme";
 import { colors as ds } from "@tirek/shared/design-system";
 import { directChatApi } from "../../../lib/api/direct-chat";
 import { useAuthStore } from "../../../lib/store/auth-store";
 import { hapticLight } from "../../../lib/haptics";
 import type { DirectMessage } from "@tirek/shared";
 
-const TIME_GROUP_GAP_MS = 5 * 60 * 1000; // 5 minutes
+const TIME_GROUP_GAP_MS = 5 * 60 * 1000;
 
 function formatMessageTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString("ru-RU", {
@@ -31,42 +31,84 @@ function formatMessageTime(dateStr: string) {
   });
 }
 
-interface ChatItem {
-  type: "time" | "message";
-  // for time
-  timestamp?: string;
-  // for message
-  message?: DirectMessage;
-  showStatus?: boolean;
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 
-/**
- * Build flat list of chat items with sparse time separators.
- * A timestamp separator is inserted before the very first message and
- * before any message whose gap from the previous one exceeds 5 minutes.
- * Messages within a 5-minute window are grouped without timestamp.
- */
-function buildItems(messages: DirectMessage[], userId: string | undefined): ChatItem[] {
+function dayLabel(date: Date, todayLabel: string, yesterdayLabel: string) {
+  const now = new Date();
+  if (isSameDay(date, now)) return todayLabel;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (isSameDay(date, yesterday)) return yesterdayLabel;
+  return date.toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+  });
+}
+
+interface ChatItem {
+  type: "day" | "time" | "message";
+  dayLabel?: string;
+  timestamp?: string;
+  message?: DirectMessage;
+  showStatus?: boolean;
+  isFirstInGroup?: boolean;
+}
+
+function buildItems(
+  messages: DirectMessage[],
+  userId: string | undefined,
+  todayLabel: string,
+  yesterdayLabel: string,
+): ChatItem[] {
   const items: ChatItem[] = [];
+  let prevDate: Date | null = null;
   let prevTime = 0;
+
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
-    const t = new Date(msg.createdAt).getTime();
-    if (i === 0 || t - prevTime > TIME_GROUP_GAP_MS) {
+    const date = new Date(msg.createdAt);
+    const t = date.getTime();
+    const next = messages[i + 1];
+
+    // Day divider
+    if (!prevDate || !isSameDay(prevDate, date)) {
+      items.push({
+        type: "day",
+        dayLabel: dayLabel(date, todayLabel, yesterdayLabel),
+      });
+    }
+
+    // Time-separator on first-of-day OR after >5min gap
+    const newGroup =
+      !prevDate ||
+      !isSameDay(prevDate, date) ||
+      t - prevTime > TIME_GROUP_GAP_MS;
+
+    if (newGroup) {
       items.push({ type: "time", timestamp: msg.createdAt });
     }
-    // Show read-receipt only on the last "mine" message in a 5-min group.
-    const next = messages[i + 1];
+
     const isMine = msg.senderId === userId;
     const nextIsMineSameGroup =
       !!next &&
       next.senderId === userId &&
+      isSameDay(date, new Date(next.createdAt)) &&
       new Date(next.createdAt).getTime() - t <= TIME_GROUP_GAP_MS;
+
     items.push({
       type: "message",
       message: msg,
       showStatus: isMine && !nextIsMineSameGroup,
+      isFirstInGroup: newGroup,
     });
+
+    prevDate = date;
     prevTime = t;
   }
   return items;
@@ -112,9 +154,13 @@ export default function ChatScreen() {
 
   const conversation = convData?.data?.find((c) => c.id === conversationId);
   const messages = messagesData?.data ?? [];
-  const items = buildItems(messages, userId);
+  const items = buildItems(
+    messages,
+    userId,
+    t.directChat.today,
+    t.directChat.yesterday,
+  );
 
-  // Mark as read
   useEffect(() => {
     if (conversationId) {
       directChatApi.markRead(conversationId).then(() => {
@@ -128,7 +174,6 @@ export default function ChatScreen() {
     }
   }, [conversationId, messagesData]);
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (items.length > 0) {
       setTimeout(() => {
@@ -159,6 +204,9 @@ export default function ChatScreen() {
   }
 
   function renderItem({ item }: { item: ChatItem }) {
+    if (item.type === "day") {
+      return <DayDivider label={item.dayLabel!} marginY="md" />;
+    }
     if (item.type === "time") {
       return (
         <View style={styles.timeSeparator}>
@@ -197,7 +245,6 @@ export default function ChatScreen() {
           >
             {msg.content}
           </Text>
-          {/* Read receipt only on last mine message in a group. */}
           {isMine && item.showStatus && (
             <View style={styles.statusRow}>
               <Ionicons
@@ -259,7 +306,11 @@ export default function ChatScreen() {
               ref={flatListRef}
               data={items}
               keyExtractor={(it, idx) =>
-                it.type === "message" ? `m-${it.message!.id}` : `t-${idx}`
+                it.type === "message"
+                  ? `m-${it.message!.id}`
+                  : it.type === "day"
+                  ? `d-${idx}`
+                  : `t-${idx}`
               }
               renderItem={renderItem}
               contentContainerStyle={styles.messagesList}
@@ -315,8 +366,8 @@ const styles = StyleSheet.create({
   chatHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 12,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
     borderBottomWidth: 1,
   },
@@ -335,18 +386,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   messagesList: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 4,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: 3,
   },
   timeSeparator: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   timeSeparatorText: {
     fontSize: 11,
     lineHeight: 14,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "Inter_500Medium",
   },
   bubbleRow: {
     flexDirection: "row",
@@ -358,16 +410,16 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   bubble: {
-    maxWidth: "80%",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    maxWidth: "82%",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 18,
   },
   bubbleMine: {
-    borderBottomRightRadius: 6,
+    borderBottomRightRadius: 4,
   },
   bubbleOther: {
-    borderBottomLeftRadius: 6,
+    borderBottomLeftRadius: 4,
   },
   statusRow: {
     flexDirection: "row",
@@ -378,8 +430,8 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 8,
-    paddingHorizontal: 12,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
     borderTopWidth: 1,
   },

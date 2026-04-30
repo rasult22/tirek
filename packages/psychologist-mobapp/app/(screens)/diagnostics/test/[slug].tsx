@@ -4,10 +4,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { testDefinitions } from "@tirek/shared";
-import { Text, Button } from "../../../../components/ui";
+import { Text, Button, HelpSheet } from "../../../../components/ui";
 import { useT, useLanguage } from "../../../../lib/hooks/useLanguage";
-import { useThemeColors, radius } from "../../../../lib/theme";
+import { useThemeColors, radius, spacing } from "../../../../lib/theme";
 import { hapticLight } from "../../../../lib/haptics";
+import { colors as ds } from "@tirek/shared/design-system";
+
+type IconName = keyof typeof Ionicons.glyphMap;
+
+function iconForSlug(slug: string): IconName {
+  if (slug.startsWith("phq")) return "sad-outline";
+  if (slug.startsWith("gad")) return "pulse-outline";
+  if (slug.startsWith("scared")) return "shield-half-outline";
+  if (slug.startsWith("rcads")) return "happy-outline";
+  if (slug.startsWith("sdq")) return "people-outline";
+  return "clipboard-outline";
+}
 
 export default function TestDetailScreen() {
   const t = useT();
@@ -16,7 +28,7 @@ export default function TestDetailScreen() {
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
 
-  const [tipsOpen, setTipsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   if (!slug || !(slug in testDefinitions)) {
     return (
@@ -61,145 +73,156 @@ export default function TestDetailScreen() {
     >
       <Stack.Screen options={{ title: t.psychologist.diagnostics }} />
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text variant="h2" style={{ fontWeight: "700" }}>
-          {name}
-        </Text>
-        <Text variant="body" style={{ marginTop: 6 }}>
-          {description}
-        </Text>
+        {/* Hero — brand-tinted */}
+        <View
+          style={[
+            styles.hero,
+            { backgroundColor: ds.brandSoft, borderColor: `${c.primary}1A` },
+          ]}
+        >
+          <View style={styles.heroRow}>
+            <View
+              style={[styles.heroIcon, { backgroundColor: c.surface }]}
+            >
+              <Ionicons
+                name={iconForSlug(td.slug)}
+                size={22}
+                color={c.primaryDark}
+              />
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text
+                style={{
+                  fontSize: 20,
+                  lineHeight: 26,
+                  fontFamily: "Inter_700Bold",
+                  color: c.text,
+                }}
+              >
+                {name}
+              </Text>
+              <Text
+                variant="bodyLight"
+                style={{ marginTop: 4, lineHeight: 20 }}
+              >
+                {description}
+              </Text>
+            </View>
+          </View>
 
-        <View style={styles.metaRow}>
-          {td.durationMinutes != null && (
-            <View
-              style={[
-                styles.metaPill,
-                { backgroundColor: c.surfaceSecondary },
-              ]}
-            >
-              <Ionicons name="time-outline" size={12} color={c.textLight} />
-              <Text variant="caption">
-                {t.psychologist.testDurationMinutes.replace(
-                  "{n}",
-                  String(td.durationMinutes),
-                )}
+          <View style={styles.metaRow}>
+            {td.durationMinutes != null && (
+              <View
+                style={[styles.metaPill, { backgroundColor: c.surface }]}
+              >
+                <Ionicons name="time-outline" size={11} color={c.textLight} />
+                <Text style={[styles.metaPillText, { color: c.textLight }]}>
+                  {t.psychologist.testDurationMinutes.replace(
+                    "{n}",
+                    String(td.durationMinutes),
+                  )}
+                </Text>
+              </View>
+            )}
+            {td.ageRange && (
+              <View
+                style={[styles.metaPill, { backgroundColor: c.surface }]}
+              >
+                <Ionicons name="school-outline" size={11} color={c.textLight} />
+                <Text style={[styles.metaPillText, { color: c.textLight }]}>
+                  {t.psychologist.testAgeRangeGrades
+                    .replace("{from}", String(td.ageRange.minGrade))
+                    .replace("{to}", String(td.ageRange.maxGrade))}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.metaPill, { backgroundColor: c.surface }]}>
+              <Ionicons
+                name="help-circle-outline"
+                size={11}
+                color={c.textLight}
+              />
+              <Text style={[styles.metaPillText, { color: c.textLight }]}>
+                {td.questions.length}{" "}
+                {language === "kz" ? "сұрақ" : "вопр."}
               </Text>
             </View>
-          )}
-          {td.ageRange && (
-            <View
-              style={[
-                styles.metaPill,
-                { backgroundColor: c.surfaceSecondary },
-              ]}
-            >
-              <Ionicons name="school-outline" size={12} color={c.textLight} />
-              <Text variant="caption">
-                {t.psychologist.testAgeRangeGrades
-                  .replace("{from}", String(td.ageRange.minGrade))
-                  .replace("{to}", String(td.ageRange.maxGrade))}
-              </Text>
-            </View>
-          )}
-          <View
-            style={[
-              styles.metaPill,
-              { backgroundColor: c.surfaceSecondary },
-            ]}
-          >
-            <Text variant="caption">
-              {td.questions.length}{" "}
-              {language === "kz" ? "сұрақ" : "вопр."}
-            </Text>
           </View>
         </View>
 
+        {/* Inline CTAs — primary fill + outlined secondary */}
+        <View style={styles.ctaCol}>
+          <Button
+            title={t.psychologist.assignToStudentBtn}
+            variant="primary"
+            size="md"
+            onPress={() => goAssign("student")}
+          />
+          <Pressable
+            onPress={() => goAssign("class")}
+            style={({ pressed }) => [
+              styles.outlineBtn,
+              { borderColor: c.primary, backgroundColor: "transparent" },
+              pressed && { opacity: 0.85 },
+            ]}
+            accessibilityRole="button"
+          >
+            <Text
+              style={{
+                fontFamily: "Inter_600SemiBold",
+                fontSize: 15,
+                color: c.primary,
+              }}
+            >
+              {t.psychologist.assignToClassBtn}
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* When-to-assign tip — single-row trigger that opens HelpSheet */}
         {tips && (
-          <View
-            style={[
-              styles.tipsCard,
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              setHelpOpen(true);
+            }}
+            style={({ pressed }) => [
+              styles.tipsTrigger,
               {
                 backgroundColor: c.surface,
                 borderColor: c.borderLight,
               },
+              pressed && { opacity: 0.85 },
             ]}
           >
-            <Pressable
-              onPress={() => {
-                hapticLight();
-                setTipsOpen((v) => !v);
+            <Ionicons name="bulb-outline" size={16} color={c.warning} />
+            <Text
+              style={{
+                fontFamily: "Inter_600SemiBold",
+                fontSize: 13,
+                color: c.text,
+                flex: 1,
               }}
-              style={styles.tipsHeader}
             >
-              <Ionicons name="bulb-outline" size={18} color={c.warning} />
-              <Text
-                variant="body"
-                style={{
-                  fontWeight: "700",
-                  color: c.text,
-                  flex: 1,
-                }}
-              >
-                {t.psychologist.testWhenToAssign}
-              </Text>
-              <Ionicons
-                name={tipsOpen ? "chevron-up" : "chevron-down"}
-                size={18}
-                color={c.textLight}
-              />
-            </Pressable>
-            {tipsOpen && (
-              <Text
-                variant="body"
-                style={{
-                  color: c.text,
-                  marginTop: 10,
-                  lineHeight: 20,
-                }}
-              >
-                {tips}
-              </Text>
-            )}
-          </View>
+              {t.psychologist.testWhenToAssign}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={14}
+              color={c.textLight}
+            />
+          </Pressable>
         )}
       </ScrollView>
 
-      <View
-        style={[
-          styles.footer,
-          { backgroundColor: c.bg, borderTopColor: c.borderLight },
-        ]}
-      >
-        {/* Primary CTA — brand fill, full-width */}
-        <Button
-          title={t.psychologist.assignToStudentBtn}
-          variant="primary"
-          size="md"
-          onPress={() => goAssign("student")}
+      {tips && (
+        <HelpSheet
+          visible={helpOpen}
+          title={t.psychologist.testWhenToAssign}
+          description={tips}
+          onClose={() => setHelpOpen(false)}
         />
-        {/* Secondary CTA — outline (transparent fill + brand border) */}
-        <Pressable
-          onPress={() => goAssign("class")}
-          style={({ pressed }) => [
-            styles.outlineBtn,
-            {
-              borderColor: c.primary,
-              backgroundColor: "transparent",
-            },
-            pressed && { opacity: 0.85 },
-          ]}
-          accessibilityRole="button"
-        >
-          <Text
-            style={{
-              fontFamily: "Inter_600SemiBold",
-              fontSize: 16,
-              color: c.primary,
-            }}
-          >
-            {t.psychologist.assignToClassBtn}
-          </Text>
-        </Pressable>
-      </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -207,16 +230,38 @@ export default function TestDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 140,
-    gap: 4,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing["3xl"],
+    gap: spacing.lg,
+  },
+  hero: {
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    padding: spacing.lg,
+  },
+  heroRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
+  heroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
   },
   metaRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
-    marginTop: 12,
+    gap: spacing.sm,
+    marginTop: spacing.lg,
   },
   metaPill: {
     flexDirection: "row",
@@ -226,29 +271,13 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 999,
   },
-  tipsCard: {
-    marginTop: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+  metaPillText: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_500Medium",
   },
-  tipsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  footer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "column",
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-    borderTopWidth: 1,
+  ctaCol: {
+    gap: spacing.sm,
   },
   outlineBtn: {
     height: 50,
@@ -257,6 +286,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "stretch",
+  },
+  tipsTrigger: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
   },
   empty: {
     flex: 1,

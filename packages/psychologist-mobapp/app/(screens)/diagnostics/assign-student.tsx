@@ -13,8 +13,8 @@ import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { testDefinitions } from "@tirek/shared";
 import { useT, useLanguage } from "../../../lib/hooks/useLanguage";
-import { Text, Input, Button } from "../../../components/ui";
-import { useThemeColors, radius } from "../../../lib/theme";
+import { Text, Input, Button, Stepper, type StepperStep } from "../../../components/ui";
+import { useThemeColors, radius, spacing } from "../../../lib/theme";
 import { diagnosticsApi } from "../../../lib/api/diagnostics";
 import { studentsApi } from "../../../lib/api/students";
 import { hapticLight } from "../../../lib/haptics";
@@ -41,11 +41,18 @@ export default function AssignToStudentScreen() {
       : null;
   const testName = td ? (language === "kz" ? td.nameKz : td.nameRu) : testSlug;
 
+  const [step, setStep] = useState(0);
   const [studentId, setStudentId] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
   const [dueDate, setDueDate] = useState(defaultDueDate());
   const [studentMessage, setStudentMessage] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const steps: StepperStep[] = [
+    { id: "student", label: t.psychologist.assignSelectStudent },
+    { id: "details", label: t.psychologist.assignDueDateLabel },
+    { id: "preview", label: t.psychologist.assignSuccessTitle },
+  ];
 
   const { data: students } = useQuery({
     queryKey: ["students"],
@@ -80,6 +87,7 @@ export default function AssignToStudentScreen() {
   });
 
   const canSubmit = !!testSlug && !!studentId && !mutation.isPending;
+  const canGoNext = (step === 0 && !!studentId) || step === 1;
 
   const submitLabel = selectedStudent
     ? t.psychologist.assignSubmitForStudent.replace(
@@ -125,194 +133,358 @@ export default function AssignToStudentScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {td && (
-            <Text variant="bodyLight" style={{ marginBottom: 8 }}>
+            <Text variant="bodyLight" style={{ marginBottom: spacing.sm }}>
               {testName}
             </Text>
           )}
 
-          {/* Student search */}
-          <Text variant="body" style={styles.fieldLabel}>
-            {t.psychologist.assignSelectStudent}
-          </Text>
-          <Input
-            icon="search-outline"
-            value={studentSearch}
-            onChangeText={setStudentSearch}
-            placeholder={`${t.common.search}...`}
-          />
+          {/* Stepper */}
+          <View style={styles.stepperWrap}>
+            <Stepper steps={steps} current={step} />
+          </View>
+
+          {/* Step content */}
           <View
             style={[
-              styles.studentList,
-              { borderColor: c.borderLight, backgroundColor: c.surface },
+              styles.card,
+              { backgroundColor: c.surface, borderColor: c.borderLight },
             ]}
           >
-            {filteredStudents.length > 0 ? (
-              <ScrollView
-                style={styles.studentScroll}
-                nestedScrollEnabled
-                keyboardShouldPersistTaps="handled"
-              >
-                {filteredStudents.map((s) => {
-                  const isSelected = studentId === s.id;
-                  return (
+            {step === 0 && (
+              <>
+                <Text style={[styles.fieldLabel, { color: c.text }]}>
+                  {t.psychologist.assignSelectStudent}
+                </Text>
+                <Input
+                  icon="search-outline"
+                  value={studentSearch}
+                  onChangeText={setStudentSearch}
+                  placeholder={`${t.common.search}...`}
+                />
+                <View
+                  style={[
+                    styles.studentList,
+                    { borderColor: c.borderLight, backgroundColor: c.bg },
+                  ]}
+                >
+                  {filteredStudents.length > 0 ? (
+                    <ScrollView
+                      style={styles.studentScroll}
+                      nestedScrollEnabled
+                      keyboardShouldPersistTaps="handled"
+                    >
+                      {filteredStudents.map((s) => {
+                        const isSelected = studentId === s.id;
+                        return (
+                          <Pressable
+                            key={s.id}
+                            onPress={() => {
+                              hapticLight();
+                              setStudentId(s.id);
+                            }}
+                            style={[
+                              styles.studentRow,
+                              {
+                                backgroundColor: isSelected
+                                  ? `${c.primary}0D`
+                                  : "transparent",
+                                borderBottomColor: c.borderLight,
+                              },
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.miniAvatar,
+                                { backgroundColor: `${c.primary}1A` },
+                              ]}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: "600",
+                                  color: c.primary,
+                                }}
+                              >
+                                {s.name.charAt(0).toUpperCase()}
+                              </Text>
+                            </View>
+                            <Text
+                              variant="body"
+                              style={{ flex: 1 }}
+                              numberOfLines={1}
+                            >
+                              {s.name}
+                            </Text>
+                            <Text variant="caption">
+                              {s.grade ?? ""}
+                              {s.classLetter ?? ""}
+                            </Text>
+                            {isSelected && (
+                              <Ionicons
+                                name="checkmark"
+                                size={16}
+                                color={c.primary}
+                              />
+                            )}
+                          </Pressable>
+                        );
+                      })}
+                    </ScrollView>
+                  ) : (
+                    <Text
+                      variant="bodyLight"
+                      style={{ textAlign: "center", padding: spacing.lg }}
+                    >
+                      {t.psychologist.assignSelectStudentEmpty}
+                    </Text>
+                  )}
+                </View>
+              </>
+            )}
+
+            {step === 1 && (
+              <>
+                <Text style={[styles.fieldLabel, { color: c.text }]}>
+                  {t.psychologist.assignDueDateLabel}
+                </Text>
+                <View style={styles.dueDateRow}>
+                  <View
+                    style={[
+                      styles.dateInput,
+                      { borderColor: c.borderLight, backgroundColor: c.bg },
+                    ]}
+                  >
+                    <Ionicons
+                      name="calendar-outline"
+                      size={16}
+                      color={c.textLight}
+                    />
+                    <TextInput
+                      value={dueDate}
+                      onChangeText={setDueDate}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={c.textLight}
+                      style={[styles.dateText, { color: c.text }]}
+                      maxLength={10}
+                    />
+                  </View>
+                  {!!dueDate && (
                     <Pressable
-                      key={s.id}
                       onPress={() => {
                         hapticLight();
-                        setStudentId(s.id);
+                        setDueDate("");
                       }}
                       style={[
-                        styles.studentRow,
-                        {
-                          backgroundColor: isSelected
-                            ? `${c.primary}0D`
-                            : "transparent",
-                          borderBottomColor: c.borderLight,
-                        },
+                        styles.clearBtn,
+                        { borderColor: c.borderLight, backgroundColor: c.bg },
                       ]}
                     >
-                      <View
-                        style={[
-                          styles.miniAvatar,
-                          { backgroundColor: `${c.primary}1A` },
-                        ]}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 10,
-                            fontWeight: "600",
-                            color: c.primary,
-                          }}
-                        >
-                          {s.name.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                      <Text
-                        variant="body"
-                        style={{ flex: 1 }}
-                        numberOfLines={1}
-                      >
-                        {s.name}
+                      <Ionicons name="close" size={14} color={c.textLight} />
+                      <Text variant="caption" style={{ color: c.textLight }}>
+                        {t.psychologist.assignDueDateClear}
                       </Text>
-                      <Text variant="caption">
-                        {s.grade ?? ""}
-                        {s.classLetter ?? ""}
-                      </Text>
-                      {isSelected && (
-                        <Ionicons
-                          name="checkmark"
-                          size={16}
-                          color={c.primary}
-                        />
-                      )}
                     </Pressable>
-                  );
-                })}
-              </ScrollView>
-            ) : (
-              <Text
-                variant="bodyLight"
-                style={{ textAlign: "center", padding: 16 }}
-              >
-                {t.psychologist.assignSelectStudentEmpty}
-              </Text>
+                  )}
+                </View>
+
+                <Text
+                  style={[
+                    styles.fieldLabel,
+                    { color: c.text, marginTop: spacing.lg },
+                  ]}
+                >
+                  {t.psychologist.studentMessageLabel}
+                </Text>
+                <TextInput
+                  value={studentMessage}
+                  onChangeText={(v) =>
+                    setStudentMessage(v.slice(0, STUDENT_MESSAGE_MAX))
+                  }
+                  placeholder={t.psychologist.studentMessagePlaceholder}
+                  placeholderTextColor={c.textLight}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={STUDENT_MESSAGE_MAX}
+                  style={[
+                    styles.messageInput,
+                    {
+                      borderColor: c.borderLight,
+                      color: c.text,
+                      backgroundColor: c.bg,
+                    },
+                  ]}
+                />
+                <Text
+                  variant="caption"
+                  style={{ marginTop: 4, color: c.textLight }}
+                >
+                  {studentMessage.length} / {STUDENT_MESSAGE_MAX} —{" "}
+                  {t.psychologist.studentMessageMaxHint}
+                </Text>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <Text
+                  style={[
+                    styles.previewTitle,
+                    { color: c.text },
+                  ]}
+                >
+                  {t.psychologist.assignSuccessTitle}
+                </Text>
+                <PreviewRow
+                  icon="clipboard-outline"
+                  label={t.psychologist.diagnostics}
+                  value={testName}
+                  c={c}
+                />
+                <PreviewRow
+                  icon="person-outline"
+                  label={t.psychologist.assignSelectStudent}
+                  value={
+                    selectedStudent
+                      ? `${selectedStudent.name}${
+                          selectedStudent.grade
+                            ? ` · ${selectedStudent.grade}${selectedStudent.classLetter ?? ""}`
+                            : ""
+                        }`
+                      : "—"
+                  }
+                  c={c}
+                />
+                <PreviewRow
+                  icon="calendar-outline"
+                  label={t.psychologist.assignDueDateLabel}
+                  value={dueDate || "—"}
+                  c={c}
+                />
+                {studentMessage.trim() && (
+                  <PreviewRow
+                    icon="chatbubble-outline"
+                    label={t.psychologist.studentMessageLabel}
+                    value={studentMessage.trim()}
+                    c={c}
+                    last
+                  />
+                )}
+                {mutation.isError && (
+                  <View
+                    style={[
+                      styles.errorBanner,
+                      { backgroundColor: `${c.danger}1A` },
+                    ]}
+                  >
+                    <Text variant="body" style={{ color: c.danger }}>
+                      {t.common.error}
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
           </View>
 
-          {/* Due date */}
-          <Text variant="body" style={styles.fieldLabel}>
-            {t.psychologist.assignDueDateLabel}
-          </Text>
-          <View style={styles.dueDateRow}>
-            <View
+          {/* Step navigation */}
+          <View style={styles.navRow}>
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                setStep((s) => Math.max(0, s - 1));
+              }}
+              disabled={step === 0}
               style={[
-                styles.dateInput,
+                styles.navBack,
                 { borderColor: c.borderLight, backgroundColor: c.surface },
+                step === 0 && { opacity: 0.4 },
               ]}
             >
-              <Ionicons
-                name="calendar-outline"
-                size={16}
-                color={c.textLight}
-              />
-              <TextInput
-                value={dueDate}
-                onChangeText={setDueDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={c.textLight}
-                style={[styles.dateText, { color: c.text }]}
-                maxLength={10}
-              />
-            </View>
-            {!!dueDate && (
-              <Pressable
-                onPress={() => {
-                  hapticLight();
-                  setDueDate("");
+              <Text
+                style={{
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 14,
+                  color: c.textLight,
                 }}
-                style={[
-                  styles.clearBtn,
-                  { borderColor: c.borderLight, backgroundColor: c.surface },
-                ]}
               >
-                <Ionicons name="close" size={14} color={c.textLight} />
-                <Text variant="caption" style={{ color: c.textLight }}>
-                  {t.psychologist.assignDueDateClear}
-                </Text>
-              </Pressable>
+                {t.common.back}
+              </Text>
+            </Pressable>
+            {step < steps.length - 1 ? (
+              <Button
+                title={t.common.next}
+                variant="primary"
+                size="md"
+                onPress={() => setStep((s) => Math.min(steps.length - 1, s + 1))}
+                disabled={!canGoNext}
+                fullWidth={false}
+                style={{ flex: 1 }}
+              />
+            ) : (
+              <Button
+                title={submitLabel}
+                variant="primary"
+                size="md"
+                onPress={() => mutation.mutate()}
+                disabled={!canSubmit}
+                loading={mutation.isPending}
+                fullWidth={false}
+                style={{ flex: 1 }}
+              />
             )}
           </View>
-
-          {/* Student message */}
-          <Text variant="body" style={styles.fieldLabel}>
-            {t.psychologist.studentMessageLabel}
-          </Text>
-          <TextInput
-            value={studentMessage}
-            onChangeText={(v) =>
-              setStudentMessage(v.slice(0, STUDENT_MESSAGE_MAX))
-            }
-            placeholder={t.psychologist.studentMessagePlaceholder}
-            placeholderTextColor={c.textLight}
-            multiline
-            numberOfLines={3}
-            maxLength={STUDENT_MESSAGE_MAX}
-            style={[
-              styles.messageInput,
-              {
-                borderColor: c.borderLight,
-                color: c.text,
-                backgroundColor: c.surface,
-              },
-            ]}
-          />
-          <Text variant="caption" style={{ marginTop: 4 }}>
-            {studentMessage.length} / {STUDENT_MESSAGE_MAX} —{" "}
-            {t.psychologist.studentMessageMaxHint}
-          </Text>
-
-          {mutation.isError && (
-            <View
-              style={[styles.errorBanner, { backgroundColor: `${c.danger}1A` }]}
-            >
-              <Text variant="body" style={{ color: c.danger }}>
-                {t.common.error}
-              </Text>
-            </View>
-          )}
-
-          <Button
-            title={submitLabel}
-            variant="primary"
-            size="lg"
-            onPress={() => mutation.mutate()}
-            disabled={!canSubmit}
-            loading={mutation.isPending}
-            style={{ marginTop: 16 }}
-          />
         </ScrollView>
       </KeyboardAvoidingView>
     </>
+  );
+}
+
+function PreviewRow({
+  icon,
+  label,
+  value,
+  c,
+  last = false,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  c: ReturnType<typeof useThemeColors>;
+  last?: boolean;
+}) {
+  return (
+    <View
+      style={[
+        styles.previewRow,
+        !last && { borderBottomColor: c.borderLight, borderBottomWidth: 1 },
+      ]}
+    >
+      <Ionicons name={icon} size={14} color={c.textLight} style={{ marginTop: 2 }} />
+      <View style={{ flex: 1 }}>
+        <Text
+          style={{
+            fontSize: 11,
+            lineHeight: 14,
+            color: c.textLight,
+            textTransform: "uppercase",
+            letterSpacing: 0.4,
+            fontFamily: "Inter_500Medium",
+          }}
+        >
+          {label}
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            lineHeight: 20,
+            color: c.text,
+            fontFamily: "Inter_500Medium",
+            marginTop: 2,
+          }}
+        >
+          {value}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -321,14 +493,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    padding: 20,
-    paddingBottom: 40,
-    gap: 8,
+    padding: spacing.xl,
+    paddingBottom: spacing["3xl"],
+    gap: spacing.md,
+  },
+  stepperWrap: {
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  card: {
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    gap: spacing.md,
   },
   fieldLabel: {
-    fontWeight: "600",
-    marginBottom: 4,
-    marginTop: 8,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
   },
   studentList: {
     borderWidth: 1,
@@ -337,13 +518,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   studentScroll: {
-    maxHeight: 280,
+    maxHeight: 300,
   },
   studentRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 12,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
@@ -357,14 +538,14 @@ const styles = StyleSheet.create({
   dueDateRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   dateInput: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
     height: 44,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
     flex: 1,
@@ -388,22 +569,45 @@ const styles = StyleSheet.create({
     minHeight: 80,
     borderWidth: 1,
     borderRadius: radius.md,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
     textAlignVertical: "top",
   },
+  previewTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 14,
+  },
+  previewRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingVertical: 10,
+  },
   errorBanner: {
-    padding: 12,
+    padding: spacing.md,
     borderRadius: radius.sm,
-    marginTop: 8,
+    marginTop: spacing.sm,
+  },
+  navRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  navBack: {
+    height: 44,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   successContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: spacing.xl,
   },
   successIcon: {
     width: 64,
@@ -411,6 +615,6 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
 });
