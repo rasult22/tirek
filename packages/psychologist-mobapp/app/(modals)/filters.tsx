@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useT } from "../../lib/hooks/useLanguage";
@@ -15,7 +15,9 @@ export default function FiltersModal() {
   const t = useT();
   const c = useThemeColors();
   const router = useRouter();
-  const { payload, onApply, close } = useFiltersSheetStore();
+  const payload = useFiltersSheetStore((s) => s.payload);
+  const onApply = useFiltersSheetStore((s) => s.onApply);
+  const close = useFiltersSheetStore((s) => s.close);
 
   const [draftGrade, setDraftGrade] = useState<number | null>(
     payload?.grade ?? null,
@@ -24,9 +26,17 @@ export default function FiltersModal() {
     payload?.classLetter ?? null,
   );
 
-  useEffect(() => {
-    if (!payload) router.back();
-  }, [payload, router]);
+  if (!payload) {
+    return (
+      <View style={[styles.root, { backgroundColor: c.surface }]}>
+        <View style={styles.headerRow}>
+          <Text style={{ color: c.text }}>
+            DEBUG: filters payload is null — store empty when route mounted
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   function handleApply() {
     onApply?.({ grade: draftGrade, classLetter: draftLetter });
