@@ -37,17 +37,27 @@ function ThemedApp() {
       <NetworkStatus />
       <OnlineManager />
       <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
-        <Stack.Screen
-          name="(modals)"
-          options={{
-            presentation: "formSheet",
-            headerShown: false,
-            sheetAllowedDetents: [0.5, 0.95],
-            sheetGrabberVisible: true,
-            sheetCornerRadius: 24,
-            animation: "default",
-          }}
-        />
+        {[
+          "(modals)/filters",
+          "(modals)/generate-codes",
+          "(modals)/diagnostics-filters",
+          "(modals)/intervals-editor",
+          "(modals)/override-editor",
+          "(modals)/help",
+        ].map((name) => (
+          <Stack.Screen
+            key={name}
+            name={name}
+            options={{
+              presentation: "formSheet",
+              headerShown: false,
+              sheetAllowedDetents: [0.5, 0.95],
+              sheetGrabberVisible: true,
+              sheetCornerRadius: 24,
+              animation: "default",
+            }}
+          />
+        ))}
       </Stack>
     </>
   );
