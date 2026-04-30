@@ -11,12 +11,12 @@ import { useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Constants from "expo-constants";
-import { Text, Card, Button, Input, Body, H2, H3 } from "../../components/ui";
+import { Text, Button, Input, Body } from "../../components/ui";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { authApi } from "../../lib/api/auth";
-import { useThemeColors, radius } from "../../lib/theme";
+import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { colors as ds } from "@tirek/shared/design-system";
 import { checkForUpdate } from "../../lib/updates";
 import { hapticLight } from "../../lib/haptics";
@@ -63,163 +63,286 @@ export default function ProfileScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        style={{ backgroundColor: c.bg }}
-      >
-        {/* User card */}
-        {!editing ? (
-          <Card variant="floating" style={styles.userCard}>
-            <View style={[styles.avatarWrap, { backgroundColor: ds.brandSoft }]}>
-              <Ionicons name="person" size={36} color={c.primaryDark} />
-            </View>
-            <H2 style={styles.userName}>{user?.name}</H2>
-            <Body style={{ color: c.textLight }}>{user?.email}</Body>
-            <View style={[styles.roleBadge, { backgroundColor: ds.brandSoft }]}>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: c.primaryDark }}>
-                {t.psychologist.role}
-              </Text>
-            </View>
-            <Pressable
-              onPress={startEdit}
-              style={({ pressed }) => [
-                styles.editBtn,
-                { backgroundColor: ds.brandSoft },
-                pressed && { opacity: 0.8 },
-              ]}
-            >
-              <Ionicons name="pencil" size={14} color={c.primaryDark} />
-              <Text style={{ fontSize: 14, fontWeight: "700", color: c.primaryDark }}>
-                {t.common.edit}
-              </Text>
-            </Pressable>
-          </Card>
-        ) : (
-          <Card variant="floating" style={styles.editCard}>
-            <H3 style={{ marginBottom: 16 }}>{t.common.edit}</H3>
-
-            <Text variant="caption" style={{ marginBottom: 6 }}>
-              {t.auth.name}
-            </Text>
-            <Input value={editName} onChangeText={setEditName} />
-
-            <View style={styles.editActions}>
-              <Button
-                title={t.common.cancel}
-                variant="secondary"
-                onPress={() => setEditing(false)}
-                size="md"
-                style={{ flex: 1 }}
-              />
-              <Button
-                title={t.common.save}
-                variant="primary"
-                onPress={() => saveMutation.mutate()}
-                disabled={saveMutation.isPending || !editName.trim()}
-                loading={saveMutation.isPending}
-                size="md"
-                style={{ flex: 1 }}
-              />
-            </View>
-          </Card>
-        )}
-
-        {/* My schedule */}
-        <Pressable
-          onPress={() => {
-            hapticLight();
-            router.push("/(screens)/office-hours");
-          }}
-          style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          style={{ backgroundColor: c.bg }}
         >
-          <Card style={styles.sectionCard}>
-            <View style={styles.scheduleRow}>
-              <View style={[styles.sectionIcon, { backgroundColor: ds.brandSoft }]}>
-                <Ionicons name="calendar-outline" size={18} color={c.primaryDark} />
+          {/* Identity hero */}
+          {!editing ? (
+            <View style={styles.hero}>
+              <View
+                style={[styles.avatarWrap, { backgroundColor: ds.brandSoft }]}
+              >
+                <Ionicons name="person" size={36} color={c.primaryDark} />
               </View>
-              <Body style={{ fontWeight: "700", flex: 1 }}>
-                {t.officeHours.pageTitle}
-              </Body>
-              <Ionicons name="chevron-forward" size={18} color={c.textLight} />
-            </View>
-          </Card>
-        </Pressable>
-
-        {/* Language switcher */}
-        <Card style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIcon, { backgroundColor: ds.brandSoft }]}>
-              <Ionicons name="globe-outline" size={18} color={c.primaryDark} />
-            </View>
-            <Body style={{ fontWeight: "700", flex: 1 }}>
-              {t.profile.language}
-            </Body>
-          </View>
-          <View style={styles.langBtns}>
-            {(["ru", "kz"] as Language[]).map((lang) => (
-              <Pressable
-                key={lang}
-                onPress={() => setLanguage(lang)}
-                style={[
-                  styles.langBtn,
-                  {
-                    backgroundColor:
-                      language === lang ? c.primary : c.surfaceSecondary,
-                  },
-                ]}
+              <Text
+                style={{
+                  fontSize: 20,
+                  lineHeight: 26,
+                  fontFamily: "Inter_700Bold",
+                  color: c.text,
+                  marginTop: spacing.md,
+                }}
+              >
+                {user?.name}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  lineHeight: 18,
+                  color: c.textLight,
+                  marginTop: 2,
+                }}
+              >
+                {user?.email}
+              </Text>
+              <View
+                style={[styles.roleBadge, { backgroundColor: ds.brandSoft }]}
               >
                 <Text
                   style={{
-                    fontSize: 14,
-                    fontWeight: "700",
-                    color: language === lang ? "#FFFFFF" : c.textLight,
+                    fontSize: 11,
+                    fontFamily: "Inter_700Bold",
+                    color: c.primaryDark,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.6,
                   }}
                 >
-                  {lang === "ru" ? "Русский" : "Қазақша"}
+                  {t.psychologist.role}
+                </Text>
+              </View>
+              <Pressable
+                onPress={startEdit}
+                style={({ pressed }) => [
+                  styles.editBtn,
+                  { borderColor: c.borderLight },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <Ionicons name="pencil-outline" size={14} color={c.text} />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontFamily: "Inter_600SemiBold",
+                    color: c.text,
+                  }}
+                >
+                  {t.common.edit}
                 </Text>
               </Pressable>
-            ))}
-          </View>
-        </Card>
-
-        {/* App version & updates */}
-        <Card style={styles.sectionCard}>
-          <View style={styles.versionRow}>
-            <View style={{ flex: 1 }}>
-              <Body style={{ fontWeight: "600" }}>{t.common.appName}</Body>
-              <Text variant="bodyXs" style={{ color: c.textLight, marginTop: 2 }}>
-                v{Constants.expoConfig?.version ?? "1.0.0"}
-              </Text>
             </View>
+          ) : (
+            <View
+              style={[
+                styles.editCard,
+                { backgroundColor: c.surface, borderColor: c.borderLight },
+              ]}
+            >
+              <Text style={[styles.editTitle, { color: c.text }]}>
+                {t.common.edit}
+              </Text>
+              <Text
+                style={[styles.fieldLabel, { color: c.textLight }]}
+              >
+                {t.auth.name}
+              </Text>
+              <Input value={editName} onChangeText={setEditName} />
+              <View style={styles.editActions}>
+                <Button
+                  title={t.common.cancel}
+                  variant="secondary"
+                  onPress={() => setEditing(false)}
+                  size="md"
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title={t.common.save}
+                  variant="primary"
+                  onPress={() => saveMutation.mutate()}
+                  disabled={saveMutation.isPending || !editName.trim()}
+                  loading={saveMutation.isPending}
+                  size="md"
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Settings list */}
+          <Text style={[styles.sectionEyebrow, { color: c.textLight }]}>
+            {t.profile.title}
+          </Text>
+          <View
+            style={[
+              styles.settingsCard,
+              { backgroundColor: c.surface, borderColor: c.borderLight },
+            ]}
+          >
             <Pressable
               onPress={() => {
                 hapticLight();
-                checkForUpdate();
+                router.push("/(screens)/office-hours");
               }}
               style={({ pressed }) => [
-                styles.updateBtn,
-                { backgroundColor: ds.brandSoft },
+                styles.row,
+                { borderBottomColor: c.borderLight, borderBottomWidth: 1 },
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <Ionicons name="cloud-download-outline" size={16} color={c.primary} />
-              <Text variant="bodyXs" style={{ color: c.primary, fontWeight: "600" }}>
-                {t.profile.update}
-              </Text>
+              <View
+                style={[styles.rowIcon, { backgroundColor: ds.brandSoft }]}
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={18}
+                  color={c.primaryDark}
+                />
+              </View>
+              <Body style={{ fontFamily: "Inter_600SemiBold", flex: 1 }}>
+                {t.officeHours.pageTitle}
+              </Body>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={c.textLight}
+              />
             </Pressable>
-          </View>
-        </Card>
 
-        {/* Logout */}
-        <Button
-          title={t.auth.logout}
-          variant="danger"
-          onPress={() => setShowLogout(true)}
-          style={styles.logoutBtn}
-        />
-      </ScrollView>
+            <View
+              style={[
+                styles.row,
+                { borderBottomColor: c.borderLight, borderBottomWidth: 1 },
+              ]}
+            >
+              <View
+                style={[styles.rowIcon, { backgroundColor: ds.brandSoft }]}
+              >
+                <Ionicons
+                  name="globe-outline"
+                  size={18}
+                  color={c.primaryDark}
+                />
+              </View>
+              <Body style={{ fontFamily: "Inter_600SemiBold", flex: 1 }}>
+                {t.profile.language}
+              </Body>
+              <View style={styles.langBtns}>
+                {(["ru", "kz"] as Language[]).map((lang) => (
+                  <Pressable
+                    key={lang}
+                    onPress={() => {
+                      hapticLight();
+                      setLanguage(lang);
+                    }}
+                    style={[
+                      styles.langBtn,
+                      {
+                        backgroundColor:
+                          language === lang
+                            ? c.primary
+                            : c.surfaceSecondary,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontFamily: "Inter_700Bold",
+                        color:
+                          language === lang ? "#FFFFFF" : c.textLight,
+                      }}
+                    >
+                      {lang === "ru" ? "RU" : "KZ"}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View
+                style={[styles.rowIcon, { backgroundColor: ds.brandSoft }]}
+              >
+                <Ionicons
+                  name="information-circle-outline"
+                  size={18}
+                  color={c.primaryDark}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Body style={{ fontFamily: "Inter_600SemiBold" }}>
+                  {t.common.appName}
+                </Body>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    lineHeight: 14,
+                    color: c.textLight,
+                    marginTop: 2,
+                  }}
+                >
+                  v{Constants.expoConfig?.version ?? "1.0.0"}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => {
+                  hapticLight();
+                  checkForUpdate();
+                }}
+                style={({ pressed }) => [
+                  styles.updateBtn,
+                  { borderColor: c.borderLight },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Ionicons
+                  name="cloud-download-outline"
+                  size={14}
+                  color={c.text}
+                />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: "Inter_600SemiBold",
+                    color: c.text,
+                  }}
+                >
+                  {t.profile.update}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Logout — at the bottom, danger-styled */}
+          <View style={{ height: spacing.lg }} />
+          <Pressable
+            onPress={() => setShowLogout(true)}
+            style={({ pressed }) => [
+              styles.dangerRow,
+              {
+                backgroundColor: c.surface,
+                borderColor: `${c.danger}33`,
+              },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <View
+              style={[styles.rowIcon, { backgroundColor: `${c.danger}1A` }]}
+            >
+              <Ionicons name="log-out-outline" size={18} color={c.danger} />
+            </View>
+            <Body style={{ fontFamily: "Inter_600SemiBold", flex: 1, color: c.danger }}>
+              {t.auth.logout}
+            </Body>
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={c.danger}
+            />
+          </Pressable>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       <ConfirmDialog
@@ -237,67 +360,88 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-    paddingTop: 12,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing["3xl"],
+    paddingTop: spacing.md,
   },
 
-  // User card
-  userCard: {
+  // Identity hero
+  hero: {
     alignItems: "center",
-    paddingVertical: 28,
+    paddingVertical: spacing.lg,
   },
   avatarWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.lg,
+    width: 80,
+    height: 80,
+    borderRadius: radius.xl,
     alignItems: "center",
     justifyContent: "center",
   },
-  userName: {
-    marginTop: 16,
-  },
   roleBadge: {
-    marginTop: 8,
+    marginTop: 10,
     borderRadius: radius.full,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
   },
   editBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 20,
+    marginTop: spacing.lg,
     borderRadius: radius.md,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    borderWidth: 1,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 8,
   },
 
   // Edit card
   editCard: {
-    marginBottom: 0,
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    gap: spacing.sm,
+  },
+  editTitle: {
+    fontSize: 16,
+    fontFamily: "Inter_700Bold",
+    marginBottom: spacing.sm,
+  },
+  fieldLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   editActions: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 24,
+    gap: spacing.md,
+    marginTop: spacing.md,
   },
 
   // Sections
-  sectionCard: {
-    marginTop: 16,
+  sectionEyebrow: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
-  sectionHeader: {
+  settingsCard: {
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
   },
-  scheduleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  sectionIcon: {
+  rowIcon: {
     width: 36,
     height: 36,
     borderRadius: radius.md,
@@ -305,36 +449,36 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // Language
   langBtns: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 14,
+    gap: 4,
   },
   langBtn: {
-    flex: 1,
-    borderRadius: radius.md,
-    paddingVertical: 10,
+    width: 36,
+    height: 28,
+    borderRadius: radius.sm,
     alignItems: "center",
+    justifyContent: "center",
   },
 
-  // Version
-  versionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
   updateBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     borderRadius: radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
 
-  // Logout
-  logoutBtn: {
-    marginTop: 16,
+  // Danger
+  dangerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
+    borderRadius: radius.xl,
+    borderWidth: 1,
   },
 });

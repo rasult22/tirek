@@ -76,32 +76,33 @@ export function GenerateCodesSheet({
 
   if (!open) return null;
 
+  const canSubmit =
+    !generateMutation.isPending &&
+    studentNames.length >= 1 &&
+    studentNames.length <= 100;
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-      />
-      <div className="relative bg-surface rounded-t-2xl px-5 pt-2 pb-6 max-h-[90dvh] overflow-y-auto animate-fade-in-up">
-        <div className="flex justify-center py-2">
-          <div className="w-10 h-1 rounded-full bg-border-light" />
-        </div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-bold text-text-main">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-2xl bg-surface shadow-xl animate-fade-in-up flex flex-col max-h-[85dvh]">
+        {/* Header */}
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border-light">
+          <h3 className="text-lg font-bold text-text-main">
             {t.psychologist.generateCodes}
           </h3>
           <button
             onClick={onClose}
             aria-label={t.common.cancel}
-            className="p-1.5 rounded-md hover:bg-surface-hover text-text-light"
+            className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-secondary hover:bg-surface-hover text-text-light"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        <div className="space-y-3">
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-text-main mb-1">
+            <label className="block text-[11px] font-semibold uppercase tracking-wide text-text-light mb-1.5">
               {t.psychologist.studentNamesLabel}
             </label>
             <textarea
@@ -112,91 +113,60 @@ export function GenerateCodesSheet({
               className="w-full px-3 py-2 rounded-lg border border-input-border bg-surface text-sm text-text-main
                 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-y"
             />
-            <p className="text-[11px] text-text-light mt-1">
+            <p className="text-[11px] text-text-light mt-1 tabular-nums">
               {studentNames.length} / 100
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-text-main mb-1">
+            <label className="block text-[11px] font-semibold uppercase tracking-wide text-text-light mb-1.5">
               {t.auth.selectGrade}
             </label>
             <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
+              <Chip
+                active={grade === null}
                 onClick={() => setGrade(null)}
-                className={clsx(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                  grade === null
-                    ? "bg-primary text-white"
-                    : "bg-surface-secondary text-text-light hover:bg-surface-hover",
-                )}
-              >
-                {t.psychologist.codeAny}
-              </button>
+                label={t.psychologist.codeAny}
+              />
               {GRADES.map((g) => (
-                <button
+                <Chip
                   key={g}
-                  type="button"
+                  active={grade === g}
                   onClick={() => setGrade(grade === g ? null : g)}
-                  className={clsx(
-                    "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                    grade === g
-                      ? "bg-primary text-white"
-                      : "bg-surface-secondary text-text-light hover:bg-surface-hover",
-                  )}
-                >
-                  {g} {language === "kz" ? "сынып" : "класс"}
-                </button>
+                  label={`${g} ${language === "kz" ? "сынып" : "класс"}`}
+                />
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-text-main mb-1">
+            <label className="block text-[11px] font-semibold uppercase tracking-wide text-text-light mb-1.5">
               {t.auth.selectClass}
             </label>
             <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
+              <Chip
+                active={classLetter === null}
                 onClick={() => setClassLetter(null)}
-                className={clsx(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                  classLetter === null
-                    ? "bg-primary text-white"
-                    : "bg-surface-secondary text-text-light hover:bg-surface-hover",
-                )}
-              >
-                {t.psychologist.codeAny}
-              </button>
+                label={t.psychologist.codeAny}
+              />
               {CLASS_LETTERS.map((l) => (
-                <button
+                <Chip
                   key={l}
-                  type="button"
-                  onClick={() =>
-                    setClassLetter(classLetter === l ? null : l)
-                  }
-                  className={clsx(
-                    "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                    classLetter === l
-                      ? "bg-primary text-white"
-                      : "bg-surface-secondary text-text-light hover:bg-surface-hover",
-                  )}
-                >
-                  {l}
-                </button>
+                  active={classLetter === l}
+                  onClick={() => setClassLetter(classLetter === l ? null : l)}
+                  label={l}
+                />
               ))}
             </div>
           </div>
+        </div>
 
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-border-light">
           <button
             onClick={() => generateMutation.mutate()}
-            disabled={
-              generateMutation.isPending ||
-              studentNames.length < 1 ||
-              studentNames.length > 100
-            }
-            className="w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark disabled:opacity-50 transition-colors"
+            disabled={!canSubmit}
+            className="btn-press w-full flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark disabled:opacity-50 transition-colors"
           >
             {generateMutation.isPending && (
               <Loader2 size={14} className="animate-spin" />
@@ -206,5 +176,30 @@ export function GenerateCodesSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors border",
+        active
+          ? "bg-brand-soft text-brand-deep border-brand/30"
+          : "bg-surface-secondary text-text-light border-border-light hover:bg-surface-hover",
+      )}
+    >
+      {label}
+    </button>
   );
 }

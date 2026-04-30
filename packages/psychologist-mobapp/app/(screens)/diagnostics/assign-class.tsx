@@ -13,8 +13,8 @@ import { useRouter, Stack, useLocalSearchParams } from "expo-router";
 import { useMutation } from "@tanstack/react-query";
 import { testDefinitions } from "@tirek/shared";
 import { useT, useLanguage } from "../../../lib/hooks/useLanguage";
-import { Text, Button } from "../../../components/ui";
-import { useThemeColors, radius } from "../../../lib/theme";
+import { Text, Button, Stepper, type StepperStep } from "../../../components/ui";
+import { useThemeColors, radius, spacing } from "../../../lib/theme";
 import { diagnosticsApi } from "../../../lib/api/diagnostics";
 import { hapticLight } from "../../../lib/haptics";
 
@@ -42,11 +42,18 @@ export default function AssignToClassScreen() {
       : null;
   const testName = td ? (language === "kz" ? td.nameKz : td.nameRu) : testSlug;
 
+  const [step, setStep] = useState(0);
   const [grade, setGrade] = useState<number | null>(null);
   const [classLetter, setClassLetter] = useState<string>("");
   const [dueDate, setDueDate] = useState(defaultDueDate());
   const [studentMessage, setStudentMessage] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const steps: StepperStep[] = [
+    { id: "class", label: t.psychologist.assignSelectGrade },
+    { id: "details", label: t.psychologist.assignDueDateLabel },
+    { id: "preview", label: t.psychologist.assignSuccessTitle },
+  ];
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -68,6 +75,7 @@ export default function AssignToClassScreen() {
   });
 
   const canSubmit = !!testSlug && grade !== null && !mutation.isPending;
+  const canGoNext = (step === 0 && grade !== null) || step === 1;
   const classLabel = grade !== null ? `${grade}${classLetter}` : "";
   const submitLabel =
     grade !== null
@@ -111,205 +119,377 @@ export default function AssignToClassScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {td && (
-            <Text variant="bodyLight" style={{ marginBottom: 8 }}>
+            <Text variant="bodyLight" style={{ marginBottom: spacing.sm }}>
               {testName}
             </Text>
           )}
 
-          {/* Grade chips */}
-          <Text variant="body" style={styles.fieldLabel}>
-            {t.psychologist.assignSelectGrade}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsContainer}
-          >
-            {GRADES.map((g) => {
-              const active = grade === g;
-              return (
-                <Pressable
-                  key={g}
-                  onPress={() => {
-                    hapticLight();
-                    setGrade(g);
-                  }}
-                  style={[
-                    styles.chip,
-                    active
-                      ? { backgroundColor: c.primary }
-                      : { backgroundColor: c.surfaceSecondary },
-                  ]}
-                >
-                  <Text
-                    variant="small"
-                    style={{
-                      fontWeight: "600",
-                      color: active ? "#FFF" : c.textLight,
-                    }}
-                  >
-                    {g}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          {/* Stepper */}
+          <View style={styles.stepperWrap}>
+            <Stepper steps={steps} current={step} />
+          </View>
 
-          {/* Class letter chips */}
-          <Text variant="body" style={[styles.fieldLabel, { marginTop: 12 }]}>
-            {t.psychologist.assignSelectClassLetter}
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsContainer}
+          {/* Step content */}
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: c.surface, borderColor: c.borderLight },
+            ]}
           >
-            <Pressable
-              onPress={() => {
-                hapticLight();
-                setClassLetter("");
-              }}
-              style={[
-                styles.chip,
-                classLetter === ""
-                  ? { backgroundColor: c.primary }
-                  : { backgroundColor: c.surfaceSecondary },
-              ]}
-            >
-              <Text
-                variant="small"
-                style={{
-                  fontWeight: "600",
-                  color: classLetter === "" ? "#FFF" : c.textLight,
-                }}
-              >
-                {t.psychologist.allClasses}
-              </Text>
-            </Pressable>
-            {CLASS_LETTERS.map((l) => {
-              const active = classLetter === l;
-              return (
-                <Pressable
-                  key={l}
-                  onPress={() => {
-                    hapticLight();
-                    setClassLetter(l);
-                  }}
-                  style={[
-                    styles.chip,
-                    active
-                      ? { backgroundColor: c.primary }
-                      : { backgroundColor: c.surfaceSecondary },
-                  ]}
-                >
-                  <Text
-                    variant="small"
-                    style={{
-                      fontWeight: "600",
-                      color: active ? "#FFF" : c.textLight,
-                    }}
-                  >
-                    {l}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          {/* Due date */}
-          <Text variant="body" style={styles.fieldLabel}>
-            {t.psychologist.assignDueDateLabel}
-          </Text>
-          <View style={styles.dueDateRow}>
-            <View
-              style={[
-                styles.dateInput,
-                { borderColor: c.borderLight, backgroundColor: c.surface },
-              ]}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={16}
-                color={c.textLight}
-              />
-              <TextInput
-                value={dueDate}
-                onChangeText={setDueDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={c.textLight}
-                style={[styles.dateText, { color: c.text }]}
-                maxLength={10}
-              />
-            </View>
-            {!!dueDate && (
-              <Pressable
-                onPress={() => {
-                  hapticLight();
-                  setDueDate("");
-                }}
-                style={[
-                  styles.clearBtn,
-                  { borderColor: c.borderLight, backgroundColor: c.surface },
-                ]}
-              >
-                <Ionicons name="close" size={14} color={c.textLight} />
-                <Text variant="caption" style={{ color: c.textLight }}>
-                  {t.psychologist.assignDueDateClear}
+            {step === 0 && (
+              <>
+                <Text style={[styles.fieldLabel, { color: c.text }]}>
+                  {t.psychologist.assignSelectGrade}
                 </Text>
-              </Pressable>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chipsContainer}
+                >
+                  {GRADES.map((g) => {
+                    const active = grade === g;
+                    return (
+                      <Pressable
+                        key={g}
+                        onPress={() => {
+                          hapticLight();
+                          setGrade(g);
+                        }}
+                        style={[
+                          styles.chip,
+                          active
+                            ? { backgroundColor: c.primary }
+                            : {
+                                backgroundColor: c.surfaceSecondary,
+                                borderColor: c.borderLight,
+                                borderWidth: 1,
+                              },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontFamily: "Inter_600SemiBold",
+                            color: active ? "#FFF" : c.text,
+                          }}
+                        >
+                          {g}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
+                <Text
+                  style={[
+                    styles.fieldLabel,
+                    { color: c.text, marginTop: spacing.lg },
+                  ]}
+                >
+                  {t.psychologist.assignSelectClassLetter}
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chipsContainer}
+                >
+                  <Pressable
+                    onPress={() => {
+                      hapticLight();
+                      setClassLetter("");
+                    }}
+                    style={[
+                      styles.chip,
+                      classLetter === ""
+                        ? { backgroundColor: c.primary }
+                        : {
+                            backgroundColor: c.surfaceSecondary,
+                            borderColor: c.borderLight,
+                            borderWidth: 1,
+                          },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontFamily: "Inter_600SemiBold",
+                        color: classLetter === "" ? "#FFF" : c.text,
+                      }}
+                    >
+                      {t.psychologist.allClasses}
+                    </Text>
+                  </Pressable>
+                  {CLASS_LETTERS.map((l) => {
+                    const active = classLetter === l;
+                    return (
+                      <Pressable
+                        key={l}
+                        onPress={() => {
+                          hapticLight();
+                          setClassLetter(l);
+                        }}
+                        style={[
+                          styles.chip,
+                          active
+                            ? { backgroundColor: c.primary }
+                            : {
+                                backgroundColor: c.surfaceSecondary,
+                                borderColor: c.borderLight,
+                                borderWidth: 1,
+                              },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontFamily: "Inter_600SemiBold",
+                            color: active ? "#FFF" : c.text,
+                          }}
+                        >
+                          {l}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </>
+            )}
+
+            {step === 1 && (
+              <>
+                <Text style={[styles.fieldLabel, { color: c.text }]}>
+                  {t.psychologist.assignDueDateLabel}
+                </Text>
+                <View style={styles.dueDateRow}>
+                  <View
+                    style={[
+                      styles.dateInput,
+                      { borderColor: c.borderLight, backgroundColor: c.bg },
+                    ]}
+                  >
+                    <Ionicons
+                      name="calendar-outline"
+                      size={16}
+                      color={c.textLight}
+                    />
+                    <TextInput
+                      value={dueDate}
+                      onChangeText={setDueDate}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={c.textLight}
+                      style={[styles.dateText, { color: c.text }]}
+                      maxLength={10}
+                    />
+                  </View>
+                  {!!dueDate && (
+                    <Pressable
+                      onPress={() => {
+                        hapticLight();
+                        setDueDate("");
+                      }}
+                      style={[
+                        styles.clearBtn,
+                        { borderColor: c.borderLight, backgroundColor: c.bg },
+                      ]}
+                    >
+                      <Ionicons name="close" size={14} color={c.textLight} />
+                      <Text variant="caption" style={{ color: c.textLight }}>
+                        {t.psychologist.assignDueDateClear}
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+
+                <Text
+                  style={[
+                    styles.fieldLabel,
+                    { color: c.text, marginTop: spacing.lg },
+                  ]}
+                >
+                  {t.psychologist.assignMessageOptionalLabel}
+                </Text>
+                <TextInput
+                  value={studentMessage}
+                  onChangeText={(v) =>
+                    setStudentMessage(v.slice(0, STUDENT_MESSAGE_MAX))
+                  }
+                  placeholder={t.psychologist.assignMessageClassPlaceholder}
+                  placeholderTextColor={c.textLight}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={STUDENT_MESSAGE_MAX}
+                  style={[
+                    styles.messageInput,
+                    {
+                      borderColor: c.borderLight,
+                      color: c.text,
+                      backgroundColor: c.bg,
+                    },
+                  ]}
+                />
+                <Text
+                  variant="caption"
+                  style={{ marginTop: 4, color: c.textLight }}
+                >
+                  {studentMessage.length} / {STUDENT_MESSAGE_MAX} —{" "}
+                  {t.psychologist.studentMessageMaxHint}
+                </Text>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <Text style={[styles.previewTitle, { color: c.text }]}>
+                  {t.psychologist.assignSuccessTitle}
+                </Text>
+                <PreviewRow
+                  icon="clipboard-outline"
+                  label={t.psychologist.diagnostics}
+                  value={testName}
+                  c={c}
+                />
+                <PreviewRow
+                  icon="people-outline"
+                  label={t.psychologist.assignSelectGrade}
+                  value={
+                    classLabel ||
+                    (classLetter
+                      ? `— · ${classLetter}`
+                      : t.psychologist.allClasses)
+                  }
+                  c={c}
+                />
+                <PreviewRow
+                  icon="calendar-outline"
+                  label={t.psychologist.assignDueDateLabel}
+                  value={dueDate || "—"}
+                  c={c}
+                />
+                {studentMessage.trim() && (
+                  <PreviewRow
+                    icon="chatbubble-outline"
+                    label={t.psychologist.assignMessageOptionalLabel}
+                    value={studentMessage.trim()}
+                    c={c}
+                    last
+                  />
+                )}
+                {mutation.isError && (
+                  <View
+                    style={[
+                      styles.errorBanner,
+                      { backgroundColor: `${c.danger}1A` },
+                    ]}
+                  >
+                    <Text variant="body" style={{ color: c.danger }}>
+                      {t.common.error}
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
           </View>
 
-          {/* Class message */}
-          <Text variant="body" style={styles.fieldLabel}>
-            {t.psychologist.assignMessageOptionalLabel}
-          </Text>
-          <TextInput
-            value={studentMessage}
-            onChangeText={(v) =>
-              setStudentMessage(v.slice(0, STUDENT_MESSAGE_MAX))
-            }
-            placeholder={t.psychologist.assignMessageClassPlaceholder}
-            placeholderTextColor={c.textLight}
-            multiline
-            numberOfLines={3}
-            maxLength={STUDENT_MESSAGE_MAX}
-            style={[
-              styles.messageInput,
-              {
-                borderColor: c.borderLight,
-                color: c.text,
-                backgroundColor: c.surface,
-              },
-            ]}
-          />
-          <Text variant="caption" style={{ marginTop: 4 }}>
-            {studentMessage.length} / {STUDENT_MESSAGE_MAX} —{" "}
-            {t.psychologist.studentMessageMaxHint}
-          </Text>
-
-          {mutation.isError && (
-            <View
-              style={[styles.errorBanner, { backgroundColor: `${c.danger}1A` }]}
+          {/* Step navigation */}
+          <View style={styles.navRow}>
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                setStep((s) => Math.max(0, s - 1));
+              }}
+              disabled={step === 0}
+              style={[
+                styles.navBack,
+                { borderColor: c.borderLight, backgroundColor: c.surface },
+                step === 0 && { opacity: 0.4 },
+              ]}
             >
-              <Text variant="body" style={{ color: c.danger }}>
-                {t.common.error}
+              <Text
+                style={{
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 14,
+                  color: c.textLight,
+                }}
+              >
+                {t.common.back}
               </Text>
-            </View>
-          )}
-
-          <Button
-            title={submitLabel}
-            variant="primary"
-            size="lg"
-            onPress={() => mutation.mutate()}
-            disabled={!canSubmit}
-            loading={mutation.isPending}
-            style={{ marginTop: 16 }}
-          />
+            </Pressable>
+            {step < steps.length - 1 ? (
+              <Button
+                title={t.common.next}
+                variant="primary"
+                size="md"
+                onPress={() => setStep((s) => Math.min(steps.length - 1, s + 1))}
+                disabled={!canGoNext}
+                fullWidth={false}
+                style={{ flex: 1 }}
+              />
+            ) : (
+              <Button
+                title={submitLabel}
+                variant="primary"
+                size="md"
+                onPress={() => mutation.mutate()}
+                disabled={!canSubmit}
+                loading={mutation.isPending}
+                fullWidth={false}
+                style={{ flex: 1 }}
+              />
+            )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </>
+  );
+}
+
+function PreviewRow({
+  icon,
+  label,
+  value,
+  c,
+  last = false,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+  c: ReturnType<typeof useThemeColors>;
+  last?: boolean;
+}) {
+  return (
+    <View
+      style={[
+        styles.previewRow,
+        !last && { borderBottomColor: c.borderLight, borderBottomWidth: 1 },
+      ]}
+    >
+      <Ionicons name={icon} size={14} color={c.textLight} style={{ marginTop: 2 }} />
+      <View style={{ flex: 1 }}>
+        <Text
+          style={{
+            fontSize: 11,
+            lineHeight: 14,
+            color: c.textLight,
+            textTransform: "uppercase",
+            letterSpacing: 0.4,
+            fontFamily: "Inter_500Medium",
+          }}
+        >
+          {label}
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            lineHeight: 20,
+            color: c.text,
+            fontFamily: "Inter_500Medium",
+            marginTop: 2,
+          }}
+        >
+          {value}
+        </Text>
+      </View>
+    </View>
   );
 }
 
@@ -318,23 +498,33 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scroll: {
-    padding: 20,
-    paddingBottom: 40,
-    gap: 8,
+    padding: spacing.xl,
+    paddingBottom: spacing["3xl"],
+    gap: spacing.md,
+  },
+  stepperWrap: {
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  card: {
+    padding: spacing.lg,
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    gap: spacing.md,
   },
   fieldLabel: {
-    fontWeight: "600",
-    marginBottom: 4,
-    marginTop: 8,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
   },
   chipsContainer: {
-    gap: 6,
+    gap: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
+    paddingVertical: 2,
   },
   chip: {
     minWidth: 36,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 8,
     borderRadius: 999,
     alignItems: "center",
@@ -343,14 +533,14 @@ const styles = StyleSheet.create({
   dueDateRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   dateInput: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
     height: 44,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
     flex: 1,
@@ -374,22 +564,45 @@ const styles = StyleSheet.create({
     minHeight: 80,
     borderWidth: 1,
     borderRadius: radius.md,
-    paddingHorizontal: 12,
+    paddingHorizontal: spacing.md,
     paddingVertical: 10,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
     textAlignVertical: "top",
   },
+  previewTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 14,
+  },
+  previewRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingVertical: 10,
+  },
   errorBanner: {
-    padding: 12,
+    padding: spacing.md,
     borderRadius: radius.sm,
-    marginTop: 8,
+    marginTop: spacing.sm,
+  },
+  navRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  navBack: {
+    height: 44,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   successContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: spacing.xl,
   },
   successIcon: {
     width: 64,
@@ -397,6 +610,6 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
 });

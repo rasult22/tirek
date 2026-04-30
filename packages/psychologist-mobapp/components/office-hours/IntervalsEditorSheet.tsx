@@ -95,85 +95,188 @@ export function IntervalsEditorSheet({
           </View>
 
           <View style={styles.headerRow}>
-            <Text variant="h3">{title}</Text>
-            <Pressable onPress={onClose} hitSlop={8}>
-              <Ionicons name="close" size={22} color={c.textLight} />
+            <Text
+              style={{
+                fontSize: 18,
+                lineHeight: 24,
+                fontFamily: "Inter_700Bold",
+                color: c.text,
+                flex: 1,
+              }}
+            >
+              {title}
+            </Text>
+            <Pressable
+              onPress={onClose}
+              style={({ pressed }) => [
+                styles.closeBtn,
+                { backgroundColor: c.surfaceSecondary },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <Ionicons name="close" size={18} color={c.textLight} />
             </Pressable>
           </View>
 
-          {showDayOffToggle ? (
-            <View style={styles.dayOffRow}>
-              <Text>Выходной</Text>
-              <Switch
-                value={dayOff}
-                onValueChange={(v) => {
-                  hapticLight();
-                  setDayOff(v);
-                  setError(null);
-                }}
-              />
-            </View>
-          ) : null}
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {showDayOffToggle ? (
+              <View
+                style={[
+                  styles.dayOffRow,
+                  {
+                    backgroundColor: c.surfaceSecondary,
+                    borderColor: c.borderLight,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontFamily: "Inter_600SemiBold",
+                    color: c.text,
+                    flex: 1,
+                  }}
+                >
+                  Выходной
+                </Text>
+                <Switch
+                  value={dayOff}
+                  onValueChange={(v) => {
+                    hapticLight();
+                    setDayOff(v);
+                    setError(null);
+                  }}
+                />
+              </View>
+            ) : null}
 
-          {!dayOff ? (
-            <ScrollView
-              style={{ maxHeight: 280 }}
-              contentContainerStyle={{ gap: spacing.sm }}
-            >
-              {intervals.map((iv, idx) => (
-                <View key={idx} style={styles.intervalRow}>
-                  <TextInput
-                    value={iv.start}
-                    onChangeText={(v) => updateInterval(idx, "start", v)}
-                    placeholder="09:00"
-                    placeholderTextColor={c.textLight}
-                    style={[styles.input, { borderColor: c.border, color: c.text }]}
-                    maxLength={5}
-                  />
-                  <Text style={{ color: c.textLight }}>—</Text>
-                  <TextInput
-                    value={iv.end}
-                    onChangeText={(v) => updateInterval(idx, "end", v)}
-                    placeholder="17:00"
-                    placeholderTextColor={c.textLight}
-                    style={[styles.input, { borderColor: c.border, color: c.text }]}
-                    maxLength={5}
-                  />
+            {!dayOff ? (
+              <>
+                <Text style={[styles.label, { color: c.textLight }]}>
+                  Интервалы
+                </Text>
+                <View style={{ gap: spacing.sm }}>
+                  {intervals.map((iv, idx) => (
+                    <View key={idx} style={styles.intervalRow}>
+                      <TextInput
+                        value={iv.start}
+                        onChangeText={(v) => updateInterval(idx, "start", v)}
+                        placeholder="09:00"
+                        placeholderTextColor={c.textLight}
+                        style={[
+                          styles.input,
+                          {
+                            borderColor: c.borderLight,
+                            color: c.text,
+                            backgroundColor: c.bg,
+                          },
+                        ]}
+                        maxLength={5}
+                      />
+                      <Text style={{ color: c.textLight }}>—</Text>
+                      <TextInput
+                        value={iv.end}
+                        onChangeText={(v) => updateInterval(idx, "end", v)}
+                        placeholder="17:00"
+                        placeholderTextColor={c.textLight}
+                        style={[
+                          styles.input,
+                          {
+                            borderColor: c.borderLight,
+                            color: c.text,
+                            backgroundColor: c.bg,
+                          },
+                        ]}
+                        maxLength={5}
+                      />
+                      <Pressable
+                        onPress={() => removeInterval(idx)}
+                        hitSlop={8}
+                        style={({ pressed }) => [
+                          styles.iconBtn,
+                          pressed && { opacity: 0.6 },
+                        ]}
+                      >
+                        <Ionicons
+                          name="trash-outline"
+                          size={18}
+                          color={c.textLight}
+                        />
+                      </Pressable>
+                    </View>
+                  ))}
                   <Pressable
-                    onPress={() => removeInterval(idx)}
-                    hitSlop={8}
-                    style={({ pressed }) => [pressed && { opacity: 0.6 }]}
+                    onPress={addInterval}
+                    style={({ pressed }) => [
+                      styles.addRow,
+                      { borderColor: `${c.primary}33` },
+                      pressed && { opacity: 0.85 },
+                    ]}
                   >
-                    <Ionicons name="trash-outline" size={20} color={c.textLight} />
+                    <Ionicons
+                      name="add-circle-outline"
+                      size={18}
+                      color={c.primary}
+                    />
+                    <Text
+                      style={{
+                        color: c.primary,
+                        fontFamily: "Inter_600SemiBold",
+                        fontSize: 13,
+                      }}
+                    >
+                      Добавить интервал
+                    </Text>
                   </Pressable>
                 </View>
-              ))}
-              <Pressable onPress={addInterval} style={styles.addRow}>
-                <Ionicons name="add-circle-outline" size={20} color={c.primary} />
-                <Text style={{ color: c.primary }}>Добавить интервал</Text>
-              </Pressable>
-            </ScrollView>
-          ) : null}
+              </>
+            ) : null}
 
-          <Text variant="caption" style={styles.notesLabel}>
-            Заметка (необязательно)
-          </Text>
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="напр. конференция"
-            placeholderTextColor={c.textLight}
-            style={[
-              styles.notesInput,
-              { borderColor: c.border, color: c.text, backgroundColor: c.surfaceSecondary },
-            ]}
-          />
+            <Text style={[styles.label, { color: c.textLight, marginTop: spacing.lg }]}>
+              Заметка (необязательно)
+            </Text>
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="напр. конференция"
+              placeholderTextColor={c.textLight}
+              style={[
+                styles.notesInput,
+                {
+                  borderColor: c.borderLight,
+                  color: c.text,
+                  backgroundColor: c.bg,
+                },
+              ]}
+            />
 
-          {error ? (
-            <Text style={[styles.error, { color: c.danger }]}>{error}</Text>
-          ) : null}
+            {error ? (
+              <View
+                style={[
+                  styles.errorBox,
+                  {
+                    backgroundColor: `${c.danger}14`,
+                    borderColor: `${c.danger}33`,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={14}
+                  color={c.danger}
+                />
+                <Text style={{ fontSize: 13, color: c.danger, flex: 1 }}>
+                  {error}
+                </Text>
+              </View>
+            ) : null}
+          </ScrollView>
 
-          <View style={styles.actions}>
+          <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
             <Button
               title="Отмена"
               variant="secondary"
@@ -201,26 +304,58 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   sheet: {
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
+    borderTopLeftRadius: radius["3xl"],
+    borderTopRightRadius: radius["3xl"],
+    maxHeight: "85%",
   },
-  handleWrap: { alignItems: "center", paddingVertical: 8 },
-  handle: { width: 40, height: 4, borderRadius: 2 },
+  handleWrap: {
+    alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+  },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  body: {
+    paddingHorizontal: spacing.xl,
+  },
+  bodyContent: {
+    paddingBottom: spacing.lg,
   },
   dayOffRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    marginBottom: 8,
+    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginBottom: spacing.lg,
+  },
+  label: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontFamily: "Inter_600SemiBold",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: spacing.sm,
   },
   intervalRow: {
     flexDirection: "row",
@@ -234,29 +369,49 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     fontSize: 15,
+    fontFamily: "Inter_500Medium",
     fontVariant: ["tabular-nums"],
+  },
+  iconBtn: {
+    width: 32,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
   },
   addRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
-    paddingVertical: 6,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderStyle: "dashed",
   },
-  notesLabel: { marginTop: 16, marginBottom: 6 },
   notesInput: {
     borderWidth: 1,
     borderRadius: radius.md,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: 10,
     fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    minHeight: 44,
   },
-  error: {
-    marginTop: 12,
-    fontSize: 13,
-  },
-  actions: {
+  errorBox: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 20,
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    marginTop: spacing.md,
+  },
+  footer: {
+    flexDirection: "row",
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xl,
+    borderTopWidth: 1,
   },
 });

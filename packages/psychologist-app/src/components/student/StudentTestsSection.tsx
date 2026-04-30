@@ -54,10 +54,10 @@ export function StudentTestsSection({ testResults }: StudentTestsSectionProps) {
                 className="w-full text-left p-3.5 flex items-start justify-between gap-3 disabled:cursor-default"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-ink truncate">
+                  <p className="text-sm font-semibold text-text-main truncate">
                     {result.testName ?? result.testSlug ?? result.testId}
                   </p>
-                  <p className="text-xs text-ink-muted mt-0.5">
+                  <p className="text-[11px] text-text-light mt-0.5 tabular-nums">
                     {result.completedAt
                       ? new Date(result.completedAt).toLocaleDateString()
                       : "—"}
@@ -65,7 +65,7 @@ export function StudentTestsSection({ testResults }: StudentTestsSectionProps) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {result.totalScore != null && (
-                    <span className="text-sm font-bold text-ink">
+                    <span className="text-sm font-bold text-text-main tabular-nums">
                       {result.totalScore}/{result.maxScore ?? "?"}
                     </span>
                   )}

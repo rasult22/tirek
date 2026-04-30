@@ -38,37 +38,27 @@ const RISK_STYLES: Record<string, { bg: string; text: string; label: string }> =
 
 const RECOMMENDATION_META: Record<
   AiReportRecommendationType,
-  { icon: typeof Stethoscope; label: string; bg: string; color: string }
+  { icon: typeof Stethoscope; label: string }
 > = {
   therapy: {
     icon: Users,
     label: "Индивидуальная беседа",
-    bg: "bg-blue-50",
-    color: "text-blue-700",
   },
   exercise: {
     icon: Wind,
     label: "Упражнение",
-    bg: "bg-teal-50",
-    color: "text-teal-700",
   },
   referral: {
     icon: Stethoscope,
     label: "Направление",
-    bg: "bg-purple-50",
-    color: "text-purple-700",
   },
   monitoring: {
     icon: LineChart,
     label: "Наблюдение",
-    bg: "bg-slate-50",
-    color: "text-slate-700",
   },
   conversation: {
     icon: Users,
     label: "Разговор",
-    bg: "bg-indigo-50",
-    color: "text-indigo-700",
   },
 };
 
@@ -90,7 +80,6 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
   const { data: report, isLoading } = useQuery({
     queryKey: ["diagnostics", "report", sessionId],
     queryFn: () => getReport(sessionId),
-    // Poll while the report is still being generated.
     refetchInterval: (q) => {
       const d = q.state.data;
       if (!d) return 3000;
@@ -129,7 +118,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
 
   if (isLoading || !report) {
     return (
-      <div className="rounded-2xl border border-border-light bg-white p-5">
+      <div className="rounded-2xl border border-border-light bg-surface p-5">
         <SkeletonReport />
       </div>
     );
@@ -163,24 +152,23 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
   }
 
   if (!isReadyReport(report)) {
-    // pending
     return (
-      <div className="rounded-2xl border border-border-light bg-white p-5">
+      <div className="rounded-2xl border border-border-light bg-surface p-5">
         <SkeletonReport />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-border-light bg-white p-5">
-      {/* Header */}
+    <div className="space-y-4 rounded-2xl border border-border-light bg-surface p-5">
+      {/* Header — neutral surface with brand-soft accent */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100">
-            <Bot size={18} className="text-indigo-600" />
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-soft">
+            <Bot size={18} className="text-brand-deep" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-brand-deep">
               AI-анализ результата
             </p>
             {report.generatedAt && (
@@ -212,9 +200,9 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
         </button>
       </div>
 
-      {/* Summary */}
+      {/* Summary — most important, larger */}
       {report.summary && (
-        <p className="text-sm font-bold leading-snug text-text-main">
+        <p className="text-base font-semibold leading-snug text-text-main">
           {report.summary}
         </p>
       )}
@@ -238,7 +226,7 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
               Динамика
             </p>
           </div>
-          <p className="mt-1 text-xs text-text-main">{report.trend}</p>
+          <p className="mt-1 text-sm text-text-main">{report.trend}</p>
         </div>
       )}
 
@@ -294,21 +282,11 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
                   key={idx}
                   className="flex gap-3 rounded-xl border border-border-light p-3"
                 >
-                  <div
-                    className={clsx(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                      meta.bg,
-                    )}
-                  >
-                    <Icon size={16} className={meta.color} />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-secondary">
+                    <Icon size={16} className="text-text-light" />
                   </div>
                   <div className="flex-1">
-                    <p
-                      className={clsx(
-                        "text-[10px] font-bold uppercase tracking-wider",
-                        meta.color,
-                      )}
-                    >
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-text-light">
                       {meta.label}
                     </p>
                     <p className="mt-0.5 text-sm text-text-main">{r.text}</p>
@@ -389,12 +367,12 @@ function SectionTitle({
 function SkeletonReport() {
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-100 to-indigo-100">
-          <Loader2 size={18} className="animate-spin text-indigo-600" />
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-soft">
+          <Loader2 size={18} className="animate-spin text-brand-deep" />
         </div>
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-brand-deep">
             AI-анализ результата
           </p>
           <p className="text-[11px] text-text-light">Генерируется…</p>

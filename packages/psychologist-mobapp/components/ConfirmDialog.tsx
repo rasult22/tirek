@@ -1,7 +1,8 @@
 import { View, Modal, Pressable, StyleSheet } from "react-native";
-import { Text, Button } from "./ui";
+import { Ionicons } from "@expo/vector-icons";
+import { Text } from "./ui";
 import { useT } from "../lib/hooks/useLanguage";
-import { useThemeColors, radius } from "../lib/theme";
+import { useThemeColors, radius, spacing } from "../lib/theme";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -25,6 +26,13 @@ export function ConfirmDialog({
   const t = useT();
   const c = useThemeColors();
 
+  const isDanger = variant === "danger";
+  const accent = isDanger ? c.danger : c.primary;
+  const accentSoft = isDanger ? `${c.danger}1A` : `${c.primary}1A`;
+  const icon: keyof typeof Ionicons.glyphMap = isDanger
+    ? "alert-circle-outline"
+    : "help-circle-outline";
+
   return (
     <Modal
       visible={open}
@@ -35,8 +43,30 @@ export function ConfirmDialog({
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={onCancel} />
         <View style={[styles.dialog, { backgroundColor: c.surface }]}>
-          <Text variant="h3">{title ?? t.common.confirmDelete}</Text>
-          <Text variant="bodyLight" style={styles.desc}>
+          <View style={[styles.iconWrap, { backgroundColor: accentSoft }]}>
+            <Ionicons name={icon} size={24} color={accent} />
+          </View>
+          <Text
+            style={{
+              fontSize: 18,
+              lineHeight: 24,
+              fontFamily: "Inter_700Bold",
+              color: c.text,
+              textAlign: "center",
+              marginTop: spacing.md,
+            }}
+          >
+            {title ?? t.common.confirmDelete}
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              lineHeight: 20,
+              color: c.textLight,
+              textAlign: "center",
+              marginTop: 6,
+            }}
+          >
             {description ?? t.common.confirmDeleteDescription}
           </Text>
           <View style={styles.actions}>
@@ -44,11 +74,17 @@ export function ConfirmDialog({
               onPress={onCancel}
               style={({ pressed }) => [
                 styles.cancelBtn,
-                { borderColor: c.border },
+                { borderColor: c.borderLight },
                 pressed && { opacity: 0.85 },
               ]}
             >
-              <Text style={{ fontSize: 14, fontWeight: "700", color: c.text }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: "Inter_600SemiBold",
+                  color: c.text,
+                }}
+              >
                 {t.common.cancel}
               </Text>
             </Pressable>
@@ -56,10 +92,7 @@ export function ConfirmDialog({
               onPress={onConfirm}
               style={({ pressed }) => [
                 styles.confirmBtn,
-                {
-                  backgroundColor:
-                    variant === "danger" ? c.danger : c.primary,
-                },
+                { backgroundColor: accent },
                 pressed && { opacity: 0.85 },
               ]}
             >
@@ -79,42 +112,49 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: spacing["2xl"],
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
   dialog: {
     width: "100%",
     maxWidth: 360,
-    borderRadius: radius.lg,
-    padding: 24,
+    borderRadius: radius.xl,
+    padding: spacing["2xl"],
+    alignItems: "center",
   },
-  desc: {
-    marginTop: 8,
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
   },
   actions: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 20,
+    gap: spacing.md,
+    marginTop: spacing.xl,
+    width: "100%",
   },
   cancelBtn: {
     flex: 1,
     borderWidth: 1,
     borderRadius: radius.md,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
   },
   confirmBtn: {
     flex: 1,
     borderRadius: radius.md,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
   },
   confirmText: {
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
     color: "#FFFFFF",
+    letterSpacing: 0.2,
   },
 });

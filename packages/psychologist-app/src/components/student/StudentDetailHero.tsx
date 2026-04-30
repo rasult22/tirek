@@ -30,11 +30,11 @@ export function StudentDetailHero({ student, status, reason }: StudentDetailHero
       : "";
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-brand-soft via-surface to-surface p-5">
+    <div className="relative overflow-hidden rounded-2xl border border-border-light bg-surface p-5">
       <div className="flex items-center gap-4">
         <div
           className={clsx(
-            "w-16 h-16 rounded-full bg-brand text-brand-fg flex items-center justify-center text-2xl font-bold shrink-0 ring-4 ring-surface shadow-sm",
+            "w-16 h-16 rounded-full bg-brand-soft text-brand-deep flex items-center justify-center text-2xl font-bold shrink-0",
             status === "crisis" && "animate-pulse-border",
           )}
         >
@@ -42,12 +42,12 @@ export function StudentDetailHero({ student, status, reason }: StudentDetailHero
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-bold tracking-tight text-ink truncate">
+            <h1 className="text-xl font-bold tracking-tight text-text-main truncate">
               {student.name}
             </h1>
             <span
               className={clsx(
-                "inline-block w-2.5 h-2.5 rounded-full ring-2 ring-surface",
+                "inline-block w-2 h-2 rounded-full",
                 statusDotColor[status],
                 status === "crisis" && "animate-pulse-border",
               )}
@@ -55,7 +55,7 @@ export function StudentDetailHero({ student, status, reason }: StudentDetailHero
             />
             <StatusBadge status={status} size="sm" />
           </div>
-          <p className="text-sm text-ink-muted mt-1 truncate">
+          <p className="text-sm text-text-light mt-1 truncate">
             {classLabel}
             {classLabel && student.email ? " · " : ""}
             {student.email}

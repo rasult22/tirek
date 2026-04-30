@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,7 +18,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { useT } from "../../../../lib/hooks/useLanguage";
-import { Text, Body, Button } from "../../../../components/ui";
+import { Text, Body } from "../../../../components/ui";
 import { useThemeColors, spacing, radius } from "../../../../lib/theme";
 import { crisisApi } from "../../../../lib/api/crisis";
 import { hapticLight, hapticSuccess } from "../../../../lib/haptics";
@@ -44,7 +45,6 @@ export default function ResolveSignalScreen() {
     documented: false,
   });
 
-  // Find signal in cached red+yellow feeds — no extra round-trip required.
   const { data: redData } = useQuery({
     queryKey: ["crisis", "feed", "red"],
     queryFn: () => crisisApi.getFeed("red"),
@@ -109,6 +109,7 @@ export default function ResolveSignalScreen() {
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
           >
+            {/* Student hero — bigger with subtitle */}
             {signal && (
               <View
                 style={[
@@ -121,7 +122,7 @@ export default function ResolveSignalScreen() {
                 >
                   <Text
                     style={{
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: "700",
                       color: accent,
                     }}
@@ -130,15 +131,36 @@ export default function ResolveSignalScreen() {
                   </Text>
                 </View>
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Body style={{ fontWeight: "600" }} numberOfLines={1}>
-                    {signal.studentName}
-                  </Body>
                   <Text
                     style={{
-                      fontSize: 14,
-                      lineHeight: 20,
+                      fontSize: 17,
+                      lineHeight: 22,
+                      fontFamily: "Inter_700Bold",
+                      color: c.text,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {signal.studentName}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      lineHeight: 14,
                       color: c.textLight,
+                      textTransform: "uppercase",
+                      letterSpacing: 0.4,
+                      fontFamily: "Inter_500Medium",
                       marginTop: 2,
+                    }}
+                  >
+                    {t.psychologist.resolveSignalTitle}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      lineHeight: 18,
+                      color: c.textLight,
+                      marginTop: 6,
                     }}
                     numberOfLines={3}
                   >
@@ -148,87 +170,111 @@ export default function ResolveSignalScreen() {
               </View>
             )}
 
-            <View style={styles.checklist}>
-              {(
-                [
-                  {
-                    key: "contactedStudent" as const,
-                    icon: "call-outline" as const,
-                    label: t.psychologist.contactStudent,
-                  },
-                  {
-                    key: "contactedParent" as const,
-                    icon: "people-outline" as const,
-                    label: t.psychologist.contactParent,
-                  },
-                  {
-                    key: "documented" as const,
-                    icon: "document-text-outline" as const,
-                    label: t.psychologist.documentActions,
-                  },
-                ] as const
-              ).map(({ key, icon, label }) => {
-                const checked = state[key];
-                return (
-                  <Pressable
-                    key={key}
-                    onPress={() => {
-                      hapticLight();
-                      update({ [key]: !checked });
-                    }}
-                    style={[
-                      styles.checkItem,
-                      {
-                        backgroundColor: checked
-                          ? `${c.success}14`
-                          : c.surfaceSecondary,
-                        borderColor: checked
-                          ? `${c.success}33`
-                          : "transparent",
-                      },
-                    ]}
-                  >
-                    <View
+            {/* Actions section */}
+            <View>
+              <Text style={[styles.sectionEyebrow, { color: c.textLight }]}>
+                {t.psychologist.actionsTaken}
+              </Text>
+              <View style={styles.checklist}>
+                {(
+                  [
+                    {
+                      key: "contactedStudent" as const,
+                      icon: "call-outline" as const,
+                      label: t.psychologist.contactStudent,
+                    },
+                    {
+                      key: "contactedParent" as const,
+                      icon: "people-outline" as const,
+                      label: t.psychologist.contactParent,
+                    },
+                    {
+                      key: "documented" as const,
+                      icon: "document-text-outline" as const,
+                      label: t.psychologist.documentActions,
+                    },
+                  ] as const
+                ).map(({ key, icon, label }) => {
+                  const checked = state[key];
+                  return (
+                    <Pressable
+                      key={key}
+                      onPress={() => {
+                        hapticLight();
+                        update({ [key]: !checked });
+                      }}
                       style={[
-                        styles.checkbox,
+                        styles.checkItem,
                         {
-                          backgroundColor: checked ? c.success : "transparent",
-                          borderColor: checked ? c.success : c.border,
+                          backgroundColor: checked
+                            ? `${c.success}14`
+                            : c.surface,
+                          borderColor: checked
+                            ? `${c.success}33`
+                            : c.borderLight,
                         },
                       ]}
                     >
-                      {checked && (
-                        <Ionicons name="checkmark" size={14} color="#FFF" />
-                      )}
-                    </View>
-                    <Ionicons
-                      name={icon}
-                      size={18}
-                      color={checked ? c.success : c.textLight}
-                    />
-                    <Text style={{ color: c.text, flex: 1 }}>{label}</Text>
-                  </Pressable>
-                );
-              })}
+                      <View
+                        style={[
+                          styles.checkbox,
+                          {
+                            backgroundColor: checked
+                              ? c.success
+                              : "transparent",
+                            borderColor: checked ? c.success : c.border,
+                          },
+                        ]}
+                      >
+                        {checked && (
+                          <Ionicons name="checkmark" size={14} color="#FFF" />
+                        )}
+                      </View>
+                      <Ionicons
+                        name={icon}
+                        size={18}
+                        color={checked ? c.success : c.textLight}
+                      />
+                      <Text
+                        style={{
+                          color: c.text,
+                          flex: 1,
+                          fontSize: 14,
+                          fontFamily: "Inter_500Medium",
+                        }}
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
             </View>
 
-            <TextInput
-              value={state.notes}
-              onChangeText={(text) => update({ notes: text })}
-              placeholder={t.psychologist.resolveNotesPlaceholder}
-              placeholderTextColor={c.textLight}
-              multiline
-              style={[
-                styles.notesInput,
-                {
-                  backgroundColor: c.surfaceSecondary,
-                  borderColor: c.border,
-                  color: c.text,
-                },
-              ]}
-            />
+            {/* Notes section */}
+            <View>
+              <Text style={[styles.sectionEyebrow, { color: c.textLight }]}>
+                {t.psychologist.resolveSignalNotes}
+              </Text>
+              <TextInput
+                value={state.notes}
+                onChangeText={(text) => update({ notes: text })}
+                placeholder={t.psychologist.resolveNotesPlaceholder}
+                placeholderTextColor={c.textLight}
+                multiline
+                style={[
+                  styles.notesInput,
+                  {
+                    backgroundColor: c.surface,
+                    borderColor: c.borderLight,
+                    color: c.text,
+                  },
+                ]}
+              />
+            </View>
           </ScrollView>
 
+          {/* Success CTA */}
           <View
             style={[
               styles.footer,
@@ -238,12 +284,30 @@ export default function ResolveSignalScreen() {
               },
             ]}
           >
-            <Button
-              title={t.psychologist.resolveSignal}
-              variant="primary"
-              onPress={() => resolveMutation.mutate()}
-              loading={resolveMutation.isPending}
-            />
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                resolveMutation.mutate();
+              }}
+              disabled={resolveMutation.isPending}
+              style={({ pressed }) => [
+                styles.successCta,
+                { backgroundColor: c.success },
+                pressed && !resolveMutation.isPending && { opacity: 0.92 },
+                resolveMutation.isPending && { opacity: 0.6 },
+              ]}
+            >
+              {resolveMutation.isPending ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle" size={18} color="#FFF" />
+                  <Text style={styles.successCtaText}>
+                    {t.psychologist.resolveSignal}
+                  </Text>
+                </>
+              )}
+            </Pressable>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -257,7 +321,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
@@ -273,30 +337,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   studentRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 12,
+    alignItems: "flex-start",
+    gap: spacing.md,
+    padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sectionEyebrow: {
+    fontSize: 11,
+    lineHeight: 14,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    fontFamily: "Inter_600SemiBold",
+    marginBottom: spacing.sm,
   },
   checklist: { gap: 8 },
   checkItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: spacing.md,
     padding: 14,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     borderWidth: 1,
   },
   checkbox: {
@@ -309,11 +381,11 @@ const styles = StyleSheet.create({
   },
   notesInput: {
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     padding: 14,
     fontSize: 14,
     fontFamily: "Inter_400Regular",
-    minHeight: 100,
+    minHeight: 96,
     textAlignVertical: "top",
   },
   footer: {
@@ -321,5 +393,19 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.sm,
     borderTopWidth: 1,
+  },
+  successCta: {
+    height: 52,
+    borderRadius: radius.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  successCtaText: {
+    fontSize: 15,
+    fontFamily: "Inter_700Bold",
+    color: "#FFF",
+    letterSpacing: 0.2,
   },
 });

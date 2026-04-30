@@ -13,22 +13,23 @@ export function AchievementsStack({ achievements, loading }: AchievementsStackPr
   const { language } = useLanguage();
 
   return (
-    <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
+    <div className="bg-surface rounded-xl border border-border-light p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-ink">{t.achievements.title}</h3>
         {achievements && (
-          <span className="text-xs font-bold text-warning">
-            {achievements.earnedCount}/{achievements.totalCount}
+          <span className="text-[11px] font-bold tabular-nums text-text-light">
+            {achievements.earnedCount}
+            <span className="text-text-light/60">/{achievements.totalCount}</span>
           </span>
         )}
       </div>
       {loading ? (
         <div className="flex justify-center py-3">
-          <Loader2 size={18} className="animate-spin text-ink-muted" />
+          <Loader2 size={18} className="animate-spin text-text-light" />
         </div>
       ) : !achievements || achievements.achievements.length === 0 ? (
-        <div className="flex items-center gap-2 py-3 text-sm text-ink-muted">
-          <Award size={16} />
+        <div className="flex items-center gap-2 py-3 text-xs text-text-light">
+          <Award size={14} />
           {t.common.noData}
         </div>
       ) : (
@@ -48,20 +49,22 @@ export function AchievementsStack({ achievements, loading }: AchievementsStackPr
               <li
                 key={item.achievement.slug}
                 className={clsx(
-                  "flex items-center gap-3 rounded-lg px-2.5 py-2 border transition-colors",
+                  "flex items-center gap-2.5 rounded-lg px-2.5 py-2 transition-colors",
                   item.earned
-                    ? "border-warning/30 bg-warning/10"
-                    : "border-border-light bg-surface-secondary/40 opacity-60",
+                    ? "bg-warning/8 border border-warning/20"
+                    : "bg-surface-secondary/40 border border-transparent opacity-60",
                 )}
               >
-                <span className="text-xl shrink-0">{item.achievement.emoji}</span>
-                <span className="flex-1 text-xs font-medium text-ink leading-tight truncate">
+                <span className="text-lg shrink-0">{item.achievement.emoji}</span>
+                <span className="flex-1 text-xs font-medium text-text-main leading-tight truncate">
                   {name}
                 </span>
                 {item.earned && earnedDate ? (
-                  <span className="text-[10px] text-warning shrink-0">{earnedDate}</span>
+                  <span className="text-[10px] tabular-nums text-text-light shrink-0">
+                    {earnedDate}
+                  </span>
                 ) : (
-                  <Lock size={11} className="text-ink-muted shrink-0" />
+                  <Lock size={11} className="text-text-light/60 shrink-0" />
                 )}
               </li>
             );
