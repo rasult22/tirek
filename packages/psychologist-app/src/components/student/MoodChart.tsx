@@ -1,4 +1,5 @@
-import { useT } from "../../hooks/useLanguage.js";
+import { useState, useRef } from "react";
+import { useT, useLanguage } from "../../hooks/useLanguage.js";
 import type { MoodEntry } from "@tirek/shared";
 
 const moodEmojis: Record<number, string> = {
@@ -24,7 +25,7 @@ const SIZE: Record<
   { width: number; height: number; padX: number; padY: number; dotR: number; strokeW: number; maxHeight: number }
 > = {
   inline: { width: 320, height: 72, padX: 12, padY: 10, dotR: 3.5, strokeW: 2, maxHeight: 80 },
-  hero: { width: 640, height: 200, padX: 16, padY: 16, dotR: 5, strokeW: 2.5, maxHeight: 240 },
+  hero: { width: 640, height: 220, padX: 16, padY: 20, dotR: 5, strokeW: 2.5, maxHeight: 260 },
 };
 
 interface MoodChartProps {
@@ -45,7 +46,10 @@ export function MoodChart({
   rangeLabel,
 }: MoodChartProps) {
   const t = useT();
+  const { language } = useLanguage();
   const dims = SIZE[size];
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
 
   if (data.length === 0) {
     return (
@@ -77,6 +81,48 @@ export function MoodChart({
   ].join(" ");
 
   const headerSizeClass = size === "hero" ? "text-base" : "text-sm";
+  const hoverable = size === "hero";
+
+  function handleMove(evt: React.MouseEvent<SVGSVGElement>) {
+    if (!hoverable || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const xRatio = (evt.clientX - rect.left) / rect.width;
+    const xInVb = xRatio * width;
+    let nearestIdx = 0;
+    let nearestDist = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const d = Math.abs(points[i].x - xInVb);
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestIdx = i;
+      }
+    }
+    setHoverIdx(nearestIdx);
+  }
+
+  function handleLeave() {
+    setHoverIdx(null);
+  }
+
+  const hoverPoint = hoverIdx != null ? points[hoverIdx] : null;
+  const locale = language === "kz" ? "kk-KZ" : "ru-RU";
+  const hoverDateLabel = hoverPoint
+    ? new Date(hoverPoint.date).toLocaleDateString(locale, {
+        day: "numeric",
+        month: "short",
+      })
+    : null;
+
+  const tipW = 110;
+  const tipH = 38;
+  let tipX = hoverPoint ? hoverPoint.x - tipW / 2 : 0;
+  if (tipX < padX) tipX = padX;
+  if (tipX + tipW > width - padX) tipX = width - padX - tipW;
+  const tipY = hoverPoint
+    ? hoverPoint.y - tipH - 10 < padY
+      ? hoverPoint.y + 12
+      : hoverPoint.y - tipH - 10
+    : 0;
 
   return (
     <div className="bg-surface rounded-xl border border-border shadow-sm p-4">
@@ -91,10 +137,13 @@ export function MoodChart({
       </div>
 
       <svg
+        ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
         className="w-full"
         style={{ maxHeight: dims.maxHeight }}
         preserveAspectRatio="xMidYMid meet"
+        onMouseMove={handleMove}
+        onMouseLeave={handleLeave}
       >
         <defs>
           <linearGradient id={`moodFill-${size}`} x1="0" y1="0" x2="0" y2="1">
@@ -141,6 +190,60 @@ export function MoodChart({
             strokeWidth="1.5"
           />
         ))}
+
+        {hoverPoint && (
+          <>
+            <line
+              x1={hoverPoint.x}
+              x2={hoverPoint.x}
+              y1={padY}
+              y2={padY + chartH}
+              stroke="var(--brand)"
+              strokeWidth="1"
+              strokeDasharray="2,2"
+              opacity="0.5"
+            />
+            <circle
+              cx={hoverPoint.x}
+              cy={hoverPoint.y}
+              r={dims.dotR + 3}
+              fill="none"
+              stroke="var(--brand)"
+              strokeWidth="1.5"
+              opacity="0.5"
+            />
+            <g pointerEvents="none">
+              <rect
+                x={tipX}
+                y={tipY}
+                width={tipW}
+                height={tipH}
+                rx="6"
+                fill="var(--ink)"
+                opacity="0.92"
+              />
+              <text
+                x={tipX + tipW / 2}
+                y={tipY + 15}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="600"
+                fill="var(--on-dark)"
+              >
+                {hoverDateLabel}
+              </text>
+              <text
+                x={tipX + tipW / 2}
+                y={tipY + 30}
+                textAnchor="middle"
+                fontSize="11"
+                fill="var(--on-dark-mute)"
+              >
+                {moodEmojis[hoverPoint.mood]} {hoverPoint.mood}/5
+              </text>
+            </g>
+          </>
+        )}
       </svg>
 
       {latestEntry && (
