@@ -35,8 +35,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing["2xl"],
-    paddingBottom: spacing.md,
+    paddingTop: 28,
+    paddingBottom: spacing.lg,
     gap: spacing.md,
   },
   body: {
