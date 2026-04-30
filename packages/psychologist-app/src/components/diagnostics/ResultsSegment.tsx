@@ -13,6 +13,8 @@ import { getResults, type DiagnosticsFilters } from "../../api/diagnostics.js";
 import { SeverityBadge } from "../ui/SeverityBadge.js";
 import { AiReportCard } from "./AiReportCard.js";
 import { ErrorState } from "../ui/ErrorState.js";
+import { DataTable, type DataTableColumn } from "../ui/DataTable.js";
+import type { DiagnosticResultRow } from "../../api/diagnostics.js";
 
 interface Props {
   filters: DiagnosticsFilters;
@@ -46,81 +48,117 @@ export function ResultsSegment({ filters }: Props) {
 
   if (!results || results.data.length === 0) {
     return (
-      <div className="flex flex-col items-center py-12">
-        <ClipboardList size={36} className="text-text-light mb-2" />
+      <div className="flex flex-col items-center py-12 rounded-xl bg-surface border border-border-light">
+        <ClipboardList size={28} className="text-text-light mb-2" />
         <p className="text-sm text-text-light">{t.common.noData}</p>
       </div>
     );
   }
 
+  const columns: DataTableColumn<DiagnosticResultRow>[] = [
+    {
+      key: "student",
+      header: t.psychologist.assignSelectStudent,
+      width: "30%",
+      cell: (row) => (
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-7 h-7 rounded-full bg-brand-soft text-brand-deep flex items-center justify-center text-[11px] font-semibold shrink-0">
+            {(row.studentName ?? "S").charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="font-semibold text-text-main truncate text-sm">
+              {row.studentName ?? "Student"}
+            </div>
+            {row.studentGrade && (
+              <div className="text-[11px] text-text-light tabular-nums">
+                {row.studentGrade}
+                {row.studentClass ?? ""}
+              </div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: "test",
+      header: t.psychologist.diagnostics,
+      cell: (row) => (
+        <span className="text-text-light text-sm truncate block">
+          {row.testName ?? row.testSlug ?? row.testId}
+        </span>
+      ),
+      hideOnSmall: true,
+    },
+    {
+      key: "completedAt",
+      header: "",
+      width: "100px",
+      hideOnSmall: true,
+      cell: (row) => (
+        <span className="text-xs text-text-light tabular-nums">
+          {row.completedAt
+            ? new Date(row.completedAt).toLocaleDateString()
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "score",
+      header: "",
+      width: "90px",
+      align: "right",
+      cell: (row) => (
+        <div className="flex flex-col items-end gap-0.5">
+          {row.totalScore != null && (
+            <span className="text-xs font-bold text-text-main tabular-nums">
+              {row.totalScore}/{row.maxScore ?? "?"}
+            </span>
+          )}
+          {row.severity && <SeverityBadge severity={row.severity} />}
+        </div>
+      ),
+    },
+    {
+      key: "ai",
+      header: "",
+      width: "110px",
+      align: "right",
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setReportSession({
+              sessionId: row.sessionId,
+              studentName: row.studentName,
+              testName: row.testName,
+            });
+          }}
+          className="inline-flex items-center gap-1 rounded-md border border-brand/20 bg-brand-soft px-2 py-1 text-[11px] font-bold text-brand-deep hover:bg-brand/15 transition-colors"
+        >
+          <Sparkles size={11} />
+          AI-анализ
+        </button>
+      ),
+    },
+    {
+      key: "chevron",
+      header: "",
+      width: "24px",
+      align: "right",
+      cell: () => <ChevronRight size={14} className="text-text-light/40" />,
+    },
+  ];
+
   return (
     <>
-      <div className="space-y-2">
-        {results.data.map((row) => (
-          <div
-            key={row.sessionId}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-surface border border-border shadow-sm transition-all hover:shadow-md"
-          >
-            <button
-              type="button"
-              onClick={() => navigate(`/students/${row.studentId}`)}
-              className="btn-press flex flex-1 min-w-0 items-center gap-3 text-left"
-            >
-              <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
-                {(row.studentName ?? "S").charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-text-main truncate">
-                    {row.studentName ?? "Student"}
-                  </span>
-                  {row.studentGrade && (
-                    <span className="text-xs text-text-light shrink-0">
-                      {row.studentGrade}
-                      {row.studentClass ?? ""}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-text-light truncate">
-                    {row.testName ?? row.testSlug ?? row.testId}
-                  </span>
-                  <span className="text-xs text-text-light">&middot;</span>
-                  <span className="text-xs text-text-light">
-                    {row.completedAt
-                      ? new Date(row.completedAt).toLocaleDateString()
-                      : "—"}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                {row.totalScore != null && (
-                  <span className="text-xs font-bold text-text-main">
-                    {row.totalScore}/{row.maxScore ?? "?"}
-                  </span>
-                )}
-                {row.severity && <SeverityBadge severity={row.severity} />}
-              </div>
-              <ChevronRight size={14} className="text-text-light/40 shrink-0" />
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setReportSession({
-                  sessionId: row.sessionId,
-                  studentName: row.studentName,
-                  testName: row.testName,
-                })
-              }
-              className="shrink-0 inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100"
-              title="AI-анализ"
-            >
-              <Sparkles size={12} />
-              AI-анализ
-            </button>
-          </div>
-        ))}
-      </div>
+      <DataTable
+        data={results.data}
+        columns={columns}
+        getRowKey={(row) => row.sessionId}
+        density="compact"
+        onRowClick={(row) => navigate(`/students/${row.studentId}`)}
+      />
 
       {reportSession && (
         <div
@@ -131,9 +169,9 @@ export function ResultsSegment({ filters }: Props) {
             className="bg-surface w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-border bg-surface px-5 py-3">
+            <div className="sticky top-0 flex items-center justify-between gap-3 border-b border-border-light bg-surface px-5 py-3">
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-indigo-700">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-brand-deep">
                   AI-анализ
                 </p>
                 <p className="truncate text-sm font-semibold text-text-main">

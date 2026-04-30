@@ -130,10 +130,10 @@ export function StudentTimeline({
               key={f.key}
               onClick={() => onFilterChange(f.key)}
               className={clsx(
-                "px-3 py-1.5 rounded-full border text-xs font-medium transition-colors btn-press",
+                "px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors btn-press",
                 active
-                  ? "bg-brand text-brand-fg border-brand"
-                  : "bg-surface text-ink border-border-light hover:bg-surface-hover",
+                  ? "bg-brand-soft text-brand-deep border-brand/30"
+                  : "bg-surface text-text-light border-border-light hover:bg-surface-hover",
               )}
             >
               {f.label}

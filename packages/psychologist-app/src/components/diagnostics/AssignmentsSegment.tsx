@@ -11,6 +11,7 @@ import {
   type TestAssignmentStatus,
 } from "../../api/diagnostics.js";
 import { useT, useLanguage } from "../../hooks/useLanguage.js";
+import { DataTable, type DataTableColumn } from "../ui/DataTable.js";
 
 const STATUSES: { key: TestAssignmentStatus; labelKey: keyof Translations }[] = [
   { key: "pending", labelKey: "assignmentStatusPending" },
@@ -89,38 +90,104 @@ export function AssignmentsSegment() {
     cancelMutation.mutate(id);
   }
 
+  const columns: DataTableColumn<TestAssignmentRow>[] = [
+    {
+      key: "target",
+      header: t.psychologist.assignSelectStudent,
+      width: "26%",
+      cell: (row) => (
+        <span className="font-semibold text-text-main truncate block">
+          {targetLabel(row)}
+        </span>
+      ),
+    },
+    {
+      key: "test",
+      header: t.psychologist.diagnostics,
+      cell: (row) => (
+        <span className="text-text-light text-sm truncate block">
+          {testNameForRow(row)}
+        </span>
+      ),
+      hideOnSmall: true,
+    },
+    {
+      key: "status",
+      header: "",
+      width: "140px",
+      cell: (row) => (
+        <span
+          className={clsx(
+            "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap",
+            statusColor(row.status),
+          )}
+        >
+          {(t.psychologist as unknown as Translations)[
+            STATUSES.find((s) => s.key === row.status)?.labelKey ??
+              "assignmentStatusPending"
+          ]}
+        </span>
+      ),
+    },
+    {
+      key: "due",
+      header: t.psychologist.assignmentDueDate,
+      width: "110px",
+      hideOnSmall: true,
+      cell: (row) =>
+        row.dueDate ? (
+          <span className="inline-flex items-center gap-1 text-xs text-text-light tabular-nums">
+            <Calendar size={11} />
+            {new Date(row.dueDate).toLocaleDateString()}
+          </span>
+        ) : (
+          <span className="text-xs text-text-light">—</span>
+        ),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      width: "100px",
+      cell: (row) => {
+        const canCancel =
+          row.status === "pending" || row.status === "in_progress";
+        if (!canCancel) return null;
+        return (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCancel(row.id);
+            }}
+            disabled={cancelMutation.isPending}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-[11px] font-semibold text-text-light hover:bg-surface-hover disabled:opacity-50"
+          >
+            {t.psychologist.cancelAssignment}
+          </button>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto -mx-4 px-4">
         <div className="flex gap-1.5 min-w-max">
-          <button
-            type="button"
+          <FilterChip
+            active={statusFilter === null}
             onClick={() => setStatusFilter(null)}
-            className={clsx(
-              "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors shrink-0",
-              statusFilter === null
-                ? "bg-primary text-white"
-                : "bg-surface-secondary text-text-light hover:bg-surface-hover",
-            )}
-          >
-            {t.psychologist.codeAny}
-          </button>
+            label={t.psychologist.codeAny}
+          />
           {STATUSES.map(({ key, labelKey }) => (
-            <button
+            <FilterChip
               key={key}
-              type="button"
+              active={statusFilter === key}
               onClick={() =>
                 setStatusFilter((prev) => (prev === key ? null : key))
               }
-              className={clsx(
-                "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors shrink-0",
-                statusFilter === key
-                  ? "bg-primary text-white"
-                  : "bg-surface-secondary text-text-light hover:bg-surface-hover",
-              )}
-            >
-              {(t.psychologist as unknown as Translations)[labelKey]}
-            </button>
+              label={(t.psychologist as unknown as Translations)[labelKey]}
+            />
           ))}
         </div>
       </div>
@@ -130,70 +197,64 @@ export function AssignmentsSegment() {
           <Loader2 size={24} className="animate-spin text-text-light" />
         </div>
       ) : !data || data.length === 0 ? (
-        <div className="flex flex-col items-center py-12">
-          <ClipboardList size={36} className="text-text-light mb-2" />
+        <div className="flex flex-col items-center py-12 rounded-xl bg-surface border border-border-light">
+          <ClipboardList size={28} className="text-text-light mb-2" />
           <p className="text-sm text-text-light">
             {t.psychologist.assignmentsEmpty}
           </p>
         </div>
       ) : (
-        <ul className="space-y-2">
-          {data.map((row) => {
-            const canCancel =
-              row.status === "pending" || row.status === "in_progress";
-            return (
+        <DataTable
+          data={data}
+          columns={columns}
+          getRowKey={(row) => row.id}
+          density="compact"
+        />
+      )}
+
+      {/* Inline message rows below the table for assignments with student-message */}
+      {data && data.length > 0 && (
+        <ul className="space-y-1.5">
+          {data
+            .filter((row) => row.studentMessage)
+            .map((row) => (
               <li
-                key={row.id}
-                className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border shadow-sm"
+                key={`msg-${row.id}`}
+                className="flex items-start gap-2 px-3 py-2 rounded-lg bg-surface-secondary text-[11px] text-text-light"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-text-main truncate">
-                      {targetLabel(row)}
-                    </span>
-                    <span
-                      className={clsx(
-                        "shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border",
-                        statusColor(row.status),
-                      )}
-                    >
-                      {(t.psychologist as unknown as Translations)[
-                        STATUSES.find((s) => s.key === row.status)?.labelKey ??
-                          "assignmentStatusPending"
-                      ]}
-                    </span>
-                  </div>
-                  <div className="mt-0.5 text-xs text-text-light truncate">
-                    {testNameForRow(row)}
-                  </div>
-                  {row.dueDate && (
-                    <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-text-light">
-                      <Calendar size={10} />
-                      {t.psychologist.assignmentDueDate}:{" "}
-                      {new Date(row.dueDate).toLocaleDateString()}
-                    </div>
-                  )}
-                  {row.studentMessage && (
-                    <div className="mt-1.5 px-2 py-1 rounded-md bg-surface-secondary text-[11px] text-text-main">
-                      “{row.studentMessage}”
-                    </div>
-                  )}
-                </div>
-                {canCancel && (
-                  <button
-                    type="button"
-                    onClick={() => handleCancel(row.id)}
-                    disabled={cancelMutation.isPending}
-                    className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-light hover:bg-surface-hover disabled:opacity-50"
-                  >
-                    {t.psychologist.cancelAssignment}
-                  </button>
-                )}
+                <span className="font-semibold text-text-main shrink-0">
+                  {targetLabel(row)}:
+                </span>
+                <span className="italic">"{row.studentMessage}"</span>
               </li>
-            );
-          })}
+            ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors shrink-0 border",
+        active
+          ? "bg-brand-soft text-brand-deep border-brand/30"
+          : "bg-surface-secondary text-text-light border-border-light hover:bg-surface-hover",
+      )}
+    >
+      {label}
+    </button>
   );
 }

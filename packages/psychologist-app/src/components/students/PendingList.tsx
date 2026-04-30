@@ -71,8 +71,8 @@ export function PendingList({ onGenerateNew }: PendingListProps) {
 
   if (visible.length === 0) {
     return (
-      <div className="flex flex-col items-center py-12">
-        <KeyRound size={36} className="text-text-light mb-2" />
+      <div className="flex flex-col items-center py-12 rounded-xl bg-surface border border-border-light">
+        <KeyRound size={28} className="text-text-light mb-2" />
         <p className="text-sm text-text-light">{t.psychologist.pendingEmpty}</p>
       </div>
     );
@@ -88,49 +88,52 @@ export function PendingList({ onGenerateNew }: PendingListProps) {
         }}
         onCancel={() => setRevokeId(null)}
       />
-      <div className="space-y-2">
+      <ul className="space-y-1.5">
         {visible.map((code) => {
           const status = getCodeStatus(code);
           const isExpired = status === "expired";
           return (
-            <div
+            <li
               key={code.id}
-              className="bg-surface rounded-xl border border-border shadow-sm p-4"
+              className="bg-surface rounded-xl border border-border-light p-3"
             >
-              <div className="flex items-start justify-between mb-2 gap-2">
-                <div className="flex flex-col gap-1 min-w-0 flex-1">
-                  <code className="text-sm font-mono font-medium text-text-main bg-surface-secondary px-2 py-1 rounded self-start">
+              <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Name — primary 14/600 */}
+                    <span className="text-sm font-semibold text-text-main truncate">
+                      {code.studentRealName}
+                    </span>
+                    <span
+                      className={clsx(
+                        "inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded-full whitespace-nowrap border",
+                        isExpired
+                          ? "bg-surface-secondary text-text-light border-border-light"
+                          : "bg-success/10 text-success border-success/30",
+                      )}
+                    >
+                      {isExpired
+                        ? t.psychologist.codeExpired
+                        : t.psychologist.codeAvailable}
+                    </span>
+                  </div>
+                  {/* Code — mono, 13/500 */}
+                  <code className="inline-block mt-1.5 text-[13px] font-mono font-medium text-text-main bg-surface-secondary px-2 py-0.5 rounded">
                     {code.code}
                   </code>
-                  <div className="text-xs font-medium text-text-main truncate">
-                    {code.studentRealName}
+                  {/* Meta — 11/light */}
+                  <div className="text-[11px] text-text-light mt-1.5 tabular-nums">
+                    {code.grade ? `${code.grade}${code.classLetter ?? ""}` : "—"}
+                    {!isExpired && (
+                      <>
+                        {" · "}
+                        {t.psychologist.expiresInDays.replace(
+                          "{days}",
+                          String(daysUntil(code.expiresAt)),
+                        )}
+                      </>
+                    )}
                   </div>
-                </div>
-                <span
-                  className={clsx(
-                    "inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full whitespace-nowrap",
-                    isExpired
-                      ? "bg-text-light/15 text-text-light"
-                      : "bg-success/15 text-success",
-                  )}
-                >
-                  {isExpired
-                    ? t.psychologist.codeExpired
-                    : t.psychologist.codeAvailable}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-xs text-text-light">
-                  {code.grade ? `${code.grade}${code.classLetter ?? ""}` : "—"}
-                  {!isExpired && (
-                    <>
-                      {" · "}
-                      {t.psychologist.expiresInDays.replace(
-                        "{days}",
-                        String(daysUntil(code.expiresAt)),
-                      )}
-                    </>
-                  )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {isExpired ? (
@@ -142,9 +145,9 @@ export function PendingList({ onGenerateNew }: PendingListProps) {
                           classLetter: code.classLetter ?? null,
                         })
                       }
-                      className="btn-press flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors"
+                      className="btn-press flex items-center gap-1 px-2 py-1 rounded-md bg-brand-soft text-brand-deep text-[11px] font-semibold hover:bg-brand/15 transition-colors"
                     >
-                      <RefreshCw size={12} />
+                      <RefreshCw size={11} />
                       {t.psychologist.generateNewCode}
                     </button>
                   ) : (
@@ -152,7 +155,7 @@ export function PendingList({ onGenerateNew }: PendingListProps) {
                       <button
                         onClick={() => copyCode(code.code, code.id)}
                         aria-label={t.common.copied}
-                        className="p-1.5 rounded-md hover:bg-surface-hover text-text-light hover:text-primary transition-colors"
+                        className="p-1.5 rounded-md hover:bg-surface-hover text-text-light hover:text-text-main transition-colors"
                       >
                         {copiedId === code.id ? (
                           <Check size={14} className="text-success" />
@@ -172,10 +175,10 @@ export function PendingList({ onGenerateNew }: PendingListProps) {
                   )}
                 </div>
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </>
   );
 }
