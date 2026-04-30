@@ -7,6 +7,7 @@ import Svg, {
   Defs,
   LinearGradient,
   Stop,
+  Text as SvgText,
 } from "react-native-svg";
 import { useT } from "../../lib/hooks/useLanguage";
 import { Text, Card } from "../ui";
@@ -29,13 +30,57 @@ function dotColor(mood: number, c: ThemeColors): string {
 
 export type MoodChartSize = "inline" | "hero";
 
-const SIZE: Record<
-  MoodChartSize,
-  { width: number; height: number; padX: number; padY: number; dotR: number; strokeW: number; svgHeight: number }
-> = {
-  inline: { width: 320, height: 72, padX: 12, padY: 10, dotR: 3.5, strokeW: 2, svgHeight: 80 },
-  hero: { width: 640, height: 200, padX: 16, padY: 16, dotR: 5, strokeW: 2.5, svgHeight: 220 },
+interface SizeConfig {
+  width: number;
+  height: number;
+  padX: number;
+  padY: number;
+  padBottom: number;
+  padLeft: number;
+  dotR: number;
+  strokeW: number;
+  svgHeight: number;
+  showAxisLabels: boolean;
+  axisFontSize: number;
+}
+
+const SIZE: Record<MoodChartSize, SizeConfig> = {
+  inline: {
+    width: 320,
+    height: 72,
+    padX: 12,
+    padY: 10,
+    padBottom: 10,
+    padLeft: 12,
+    dotR: 3.5,
+    strokeW: 2,
+    svgHeight: 80,
+    showAxisLabels: false,
+    axisFontSize: 0,
+  },
+  hero: {
+    width: 360,
+    height: 130,
+    padX: 8,
+    padY: 12,
+    padBottom: 22,
+    padLeft: 22,
+    dotR: 3.5,
+    strokeW: 2,
+    svgHeight: 120,
+    showAxisLabels: true,
+    axisFontSize: 9,
+  },
 };
+
+function formatAxisDate(iso: string): string {
+  // Returns "DD.MM" — compact, locale-agnostic
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(5).replace("-", ".");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  return `${dd}.${mm}`;
+}
 
 interface MoodChartProps {
   data: { date: string; mood: number }[];
@@ -69,15 +114,17 @@ export function MoodChart({
     );
   }
 
-  const { width, height, padX, padY } = dims;
-  const chartW = width - padX * 2;
-  const chartH = height - padY * 2;
+  const { width, height, padX, padY, padBottom, padLeft, showAxisLabels, axisFontSize } = dims;
+  const leftPad = showAxisLabels ? padLeft : padX;
+  const bottomPad = showAxisLabels ? padBottom : padY;
+  const chartW = width - leftPad - padX;
+  const chartH = height - padY - bottomPad;
 
   const points = data.map((item, i) => {
     const x =
       data.length === 1
-        ? padX + chartW / 2
-        : padX + (i / (data.length - 1)) * chartW;
+        ? leftPad + chartW / 2
+        : leftPad + (i / (data.length - 1)) * chartW;
     const y = padY + chartH - ((item.mood - 1) / 4) * chartH;
     return { x, y, mood: item.mood, date: item.date };
   });
@@ -92,6 +139,13 @@ export function MoodChart({
   ].join(" ");
 
   const gradientId = `moodFill-${size}`;
+
+  // X-axis tick selection — first, middle, last (only for hero)
+  const xTickIndices = showAxisLabels
+    ? data.length <= 3
+      ? data.map((_, i) => i)
+      : [0, Math.floor((data.length - 1) / 2), data.length - 1]
+    : [];
 
   return (
     <Card>
@@ -121,7 +175,7 @@ export function MoodChart({
           return (
             <Line
               key={level}
-              x1={padX}
+              x1={leftPad}
               x2={width - padX}
               y1={y}
               y2={y}
@@ -131,6 +185,41 @@ export function MoodChart({
             />
           );
         })}
+
+        {showAxisLabels &&
+          [1, 3, 5].map((level) => {
+            const y = padY + chartH - ((level - 1) / 4) * chartH;
+            return (
+              <SvgText
+                key={`y-${level}`}
+                x={leftPad - 6}
+                y={y + axisFontSize / 3}
+                fontSize={axisFontSize}
+                fill={c.textLight}
+                textAnchor="end"
+              >
+                {String(level)}
+              </SvgText>
+            );
+          })}
+
+        {showAxisLabels &&
+          xTickIndices.map((idx) => {
+            const p = points[idx];
+            if (!p) return null;
+            return (
+              <SvgText
+                key={`x-${idx}`}
+                x={p.x}
+                y={padY + chartH + axisFontSize + 6}
+                fontSize={axisFontSize}
+                fill={c.textLight}
+                textAnchor="middle"
+              >
+                {formatAxisDate(p.date)}
+              </SvgText>
+            );
+          })}
 
         <Path d={areaPath} fill={`url(#${gradientId})`} />
 

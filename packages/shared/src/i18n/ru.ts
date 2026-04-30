@@ -660,6 +660,8 @@ export const ru = {
       eventMessageFromStudent: "Сообщение от ученика",
       eventMessageFromPsychologist: "Ваше сообщение",
       eventCrisis: "Кризисный сигнал",
+      today: "Сегодня",
+      yesterday: "Вчера",
     },
     riskReason: {
       severeTestResult: "Тяжёлый результат: {testName}, {date}",

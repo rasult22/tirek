@@ -662,6 +662,8 @@ export const kz: TranslationKeys = {
       eventMessageFromStudent: "Оқушыдан хабарлама",
       eventMessageFromPsychologist: "Сіздің хабарламаңыз",
       eventCrisis: "Дағдарыс сигналы",
+      today: "Бүгін",
+      yesterday: "Кеше",
     },
     riskReason: {
       severeTestResult: "Ауыр нәтиже: {testName}, {date}",

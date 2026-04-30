@@ -20,12 +20,22 @@ import {
   renderPrintProfileHtml,
 } from "@tirek/shared/format-print-profile";
 import { useT, useLanguage } from "../../../lib/hooks/useLanguage";
-import { Text, Button, Card, SeverityBadge, H3, Body } from "../../../components/ui";
+import {
+  Text,
+  Button,
+  Card,
+  SeverityBadge,
+  H3,
+  Body,
+  EmptyState,
+  HorizontalScrollList,
+  DayDivider,
+} from "../../../components/ui";
 import { SkeletonList } from "../../../components/Skeleton";
 import { ErrorState } from "../../../components/ErrorState";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { StudentHeroCard } from "../../../components/student/StudentHeroCard";
-import { MoodSparkline } from "../../../components/student/MoodSparkline";
+import { MoodChart } from "../../../components/student/MoodChart";
 import { useThemeColors, spacing, radius } from "../../../lib/theme";
 import { studentsApi } from "../../../lib/api/students";
 import { schoolsApi } from "../../../lib/api/schools";
@@ -38,13 +48,84 @@ import type {
   TimelineEvent,
   TimelineEventType,
 } from "../../../lib/api/timeline";
-import {
-  calculateMoodTrend,
-  calculateEngagement,
-} from "../../../lib/utils/mood-analytics";
-import type { ThoughtDiaryData } from "@tirek/shared";
+import { calculateMoodTrend } from "../../../lib/utils/mood-analytics";
+import type { Language } from "@tirek/shared/i18n";
 
 type Filter = "all" | TimelineEventType;
+
+/** Visual hierarchy: crisis > test > cbt > message > mood (muted). */
+type Tone = "loud" | "normal" | "muted";
+
+const EVENT_TONE: Record<TimelineEventType, Tone> = {
+  crisis: "loud",
+  test: "loud",
+  cbt: "normal",
+  message: "normal",
+  mood: "muted",
+};
+
+const EVENT_ICON: Record<TimelineEventType, keyof typeof Ionicons.glyphMap> = {
+  crisis: "alert-circle",
+  test: "document-text",
+  cbt: "bulb-outline",
+  message: "chatbubble-outline",
+  mood: "happy-outline",
+};
+
+function dayKey(iso: string): string {
+  return new Date(iso).toISOString().slice(0, 10);
+}
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function yesterdayKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDayLabel(
+  iso: string,
+  language: Language,
+  todayLabel: string,
+  yesterdayLabel: string,
+): string {
+  const today = todayKey();
+  const yest = yesterdayKey();
+  if (iso === today) return todayLabel;
+  if (iso === yest) return yesterdayLabel;
+  const d = new Date(iso);
+  const locale = language === "kz" ? "kk-KZ" : "ru-RU";
+  return d.toLocaleDateString(locale, { day: "numeric", month: "long" });
+}
+
+function formatTime(iso: string, language: Language): string {
+  const locale = language === "kz" ? "kk-KZ" : "ru-RU";
+  return new Date(iso).toLocaleTimeString(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function groupTimelineByDay(events: TimelineEvent[]): {
+  day: string;
+  items: TimelineEvent[];
+}[] {
+  // Events come ordered desc by occurredAt from the API.
+  const groups: { day: string; items: TimelineEvent[] }[] = [];
+  for (const ev of events) {
+    const day = dayKey(ev.occurredAt);
+    const existing = groups[groups.length - 1];
+    if (existing && existing.day === day) {
+      existing.items.push(ev);
+    } else {
+      groups.push({ day, items: [ev] });
+    }
+  }
+  return groups;
+}
 
 export default function StudentDetailScreen() {
   const t = useT();
@@ -83,10 +164,7 @@ export default function StudentDetailScreen() {
   const timelineType: TimelineEventType | undefined =
     filter === "all" ? undefined : filter;
 
-  const {
-    data: timeline,
-    isLoading: timelineLoading,
-  } = useQuery({
+  const { data: timeline, isLoading: timelineLoading } = useQuery({
     queryKey: ["timeline", id, filter],
     queryFn: () =>
       timelineApi.getStudentTimeline(id!, { type: timelineType, limit: 50 }),
@@ -106,14 +184,9 @@ export default function StudentDetailScreen() {
     [data?.moodHistory],
   );
 
-  const engagement = useMemo(
-    () =>
-      calculateEngagement(
-        data?.moodHistory ?? [],
-        data?.testResults ?? [],
-        cbtEntries?.data,
-      ),
-    [data?.moodHistory, data?.testResults, cbtEntries?.data],
+  const timelineGroups = useMemo(
+    () => groupTimelineByDay(timeline?.data ?? []),
+    [timeline?.data],
   );
 
   async function handleRefresh() {
@@ -151,7 +224,7 @@ export default function StudentDetailScreen() {
   const earnedAchievements = (studentAchievements?.achievements ?? []).filter(
     (a) => a.earned,
   );
-  const recentEarned = earnedAchievements.slice(-3).reverse();
+  const recentEarned = earnedAchievements.slice(-8).reverse();
   const recentTests = testResults.slice(-3).reverse();
 
   const filters: { key: Filter; label: string }[] = [
@@ -248,23 +321,23 @@ export default function StudentDetailScreen() {
             </View>
           </View>
 
-          {/* Hero */}
+          {/* Hero — fullname + class + last mood scale, ring only on attention/crisis */}
           <StudentHeroCard
             student={student}
             status={status}
             reason={reason}
-            moodTrend={moodTrend}
-            engagement={engagement}
+            latestMood={latestMood}
           />
 
-          {/* Overview: Mood sparkline */}
-          <MoodSparkline
+          {/* Mood chart — hero of the screen, last 14 days with axis labels */}
+          <MoodChart
             data={moodTrend.data}
             average={moodTrend.average}
             latestEntry={latestMood}
+            size="hero"
           />
 
-          {/* Overview: Recent tests */}
+          {/* Recent tests */}
           <Card>
             <View style={styles.sectionHeader}>
               <H3>{d.recentTests}</H3>
@@ -311,17 +384,19 @@ export default function StudentDetailScreen() {
             )}
           </Card>
 
-          {/* Overview: Achievements compact */}
-          <Card>
-            <View style={styles.sectionHeader}>
+          {/* Achievements — horizontal scroll row */}
+          <View style={styles.achievementsBlock}>
+            <View
+              style={[
+                styles.sectionHeader,
+                { paddingHorizontal: spacing.lg, marginBottom: 0 },
+              ]}
+            >
               <H3>{t.achievements.title}</H3>
               {studentAchievements && (
                 <Body
                   size="xs"
-                  style={{
-                    fontWeight: "700",
-                    color: c.warning,
-                  }}
+                  style={{ fontWeight: "700", color: c.warning }}
                 >
                   {studentAchievements.earnedCount}/
                   {studentAchievements.totalCount}
@@ -333,42 +408,63 @@ export default function StudentDetailScreen() {
                 <ActivityIndicator color={c.textLight} />
               </View>
             ) : recentEarned.length === 0 ? (
-              <View style={styles.emptyRow}>
-                <Ionicons
-                  name="trophy-outline"
-                  size={16}
-                  color={c.textLight}
-                />
-                <Text variant="bodyLight">{t.common.noData}</Text>
+              <View style={{ paddingHorizontal: spacing.lg }}>
+                <View style={styles.emptyRow}>
+                  <Ionicons
+                    name="trophy-outline"
+                    size={16}
+                    color={c.textLight}
+                  />
+                  <Text variant="bodyLight">{t.common.noData}</Text>
+                </View>
               </View>
             ) : (
-              <View style={styles.achievementsRow}>
-                {recentEarned.map((item) => (
-                  <View
-                    key={item.achievement.slug}
-                    style={[
-                      styles.achievementCard,
-                      {
-                        borderColor: `${c.warning}33`,
-                        backgroundColor: `${c.warning}14`,
-                      },
-                    ]}
-                  >
-                    <Text style={styles.achievementEmoji}>
-                      {item.achievement.emoji}
-                    </Text>
-                    <Body style={styles.achievementName} numberOfLines={2}>
-                      {language === "kz" && item.achievement.nameKz
-                        ? item.achievement.nameKz
-                        : item.achievement.nameRu}
-                    </Body>
-                  </View>
-                ))}
-              </View>
+              <HorizontalScrollList padX="lg" gap="sm">
+                {recentEarned.map((item) => {
+                  const earnedDate = item.earnedAt
+                    ? new Date(item.earnedAt).toLocaleDateString(
+                        language === "kz" ? "kk-KZ" : "ru-RU",
+                        { day: "numeric", month: "short" },
+                      )
+                    : null;
+                  return (
+                    <View
+                      key={item.achievement.slug}
+                      style={[
+                        styles.achievementCard,
+                        {
+                          borderColor: `${c.warning}33`,
+                          backgroundColor: `${c.warning}14`,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.achievementEmoji}>
+                        {item.achievement.emoji}
+                      </Text>
+                      <Body style={styles.achievementName} numberOfLines={2}>
+                        {language === "kz" && item.achievement.nameKz
+                          ? item.achievement.nameKz
+                          : item.achievement.nameRu}
+                      </Body>
+                      {earnedDate && (
+                        <Body
+                          size="xs"
+                          style={[
+                            styles.achievementDate,
+                            { color: c.textLight },
+                          ]}
+                        >
+                          {earnedDate}
+                        </Body>
+                      )}
+                    </View>
+                  );
+                })}
+              </HorizontalScrollList>
             )}
-          </Card>
+          </View>
 
-          {/* Timeline */}
+          {/* Timeline — chronological with day dividers */}
           <View style={styles.timelineSection}>
             <H3>{d.timeline}</H3>
             <ScrollView
@@ -407,17 +503,35 @@ export default function StudentDetailScreen() {
               <View style={styles.centered}>
                 <ActivityIndicator color={c.textLight} />
               </View>
-            ) : (timeline?.data.length ?? 0) === 0 ? (
-              <Card>
-                <View style={styles.emptyRow}>
-                  <Ionicons name="time-outline" size={16} color={c.textLight} />
-                  <Text variant="bodyLight">{d.timelineEmpty}</Text>
-                </View>
-              </Card>
+            ) : timelineGroups.length === 0 ? (
+              <EmptyState
+                variant="no-data"
+                icon="time-outline"
+                title={d.timelineEmpty}
+              />
             ) : (
-              <View style={styles.listGap}>
-                {(timeline?.data ?? []).map((event) => (
-                  <TimelineRow key={event.id} event={event} />
+              <View>
+                {timelineGroups.map((group, gi) => (
+                  <View key={group.day}>
+                    <DayDivider
+                      label={formatDayLabel(
+                        group.day,
+                        language,
+                        d.today,
+                        d.yesterday,
+                      )}
+                      marginY={gi === 0 ? "sm" : "lg"}
+                    />
+                    <View style={styles.timelineGroup}>
+                      {group.items.map((event) => (
+                        <TimelineRow
+                          key={event.id}
+                          event={event}
+                          language={language}
+                        />
+                      ))}
+                    </View>
+                  </View>
                 ))}
               </View>
             )}
@@ -468,63 +582,101 @@ export default function StudentDetailScreen() {
   );
 }
 
-function TimelineRow({ event }: { event: TimelineEvent }) {
+function TimelineRow({
+  event,
+  language,
+}: {
+  event: TimelineEvent;
+  language: Language;
+}) {
   const t = useT();
   const c = useThemeColors();
   const d = t.psychologist.studentDetail;
 
-  const date = new Date(event.occurredAt).toLocaleDateString();
+  const time = formatTime(event.occurredAt, language);
+  const tone = EVENT_TONE[event.type];
+  const icon = EVENT_ICON[event.type];
 
-  let icon: keyof typeof import("@expo/vector-icons").Ionicons.glyphMap =
-    "time-outline";
   let title = "";
   let subtitle: string | null = null;
   let accent = c.textLight;
 
   if (event.type === "test") {
-    icon = "document-text-outline";
     title = `${d.eventTest}: ${event.payload.testName}`;
     subtitle = event.payload.severity ?? null;
+    accent = c.primary;
   } else if (event.type === "mood") {
-    icon = "happy-outline";
     title = `${d.eventMood}: ${event.payload.mood}/5`;
     subtitle = event.payload.note;
+    accent = c.textLight;
   } else if (event.type === "cbt") {
-    icon = "bulb-outline";
     title = d.eventCbt;
     subtitle = event.payload.summary;
+    accent = c.primary;
   } else if (event.type === "message") {
-    icon = "chatbubble-outline";
     title =
       event.payload.direction === "from_student"
         ? d.eventMessageFromStudent
         : d.eventMessageFromPsychologist;
     subtitle = event.payload.preview;
+    accent = c.text;
   } else if (event.type === "crisis") {
-    icon = "alert-circle-outline";
     title = d.eventCrisis;
     subtitle = event.payload.summary;
     accent = event.payload.severity === "high" ? c.danger : c.warning;
   }
 
+  // Visual hierarchy by tone:
+  // - loud:    surface bg, full-weight title, accent icon w/ tinted bg
+  // - normal:  surface bg, normal title, neutral icon
+  // - muted:   no background, light title, faint icon
+  const bg =
+    tone === "loud"
+      ? c.surface
+      : tone === "normal"
+        ? c.surface
+        : "transparent";
+  const titleVariant: "body" | "bodyLight" =
+    tone === "muted" ? "bodyLight" : "body";
+  const titleWeight: "700" | "600" | "400" =
+    tone === "loud" ? "700" : tone === "normal" ? "600" : "400";
+  const iconBg =
+    tone === "loud"
+      ? `${accent}1F`
+      : tone === "normal"
+        ? c.surfaceSecondary
+        : "transparent";
+  const borderWidth = tone === "muted" ? 0 : 1;
+  const paddingV = tone === "muted" ? 4 : 10;
+
   return (
     <View
       style={[
         styles.timelineRow,
-        { backgroundColor: c.surface, borderColor: c.borderLight },
+        {
+          backgroundColor: bg,
+          borderColor: c.borderLight,
+          borderWidth,
+          paddingVertical: paddingV,
+        },
       ]}
     >
-      <View
-        style={[styles.timelineIcon, { backgroundColor: c.surfaceSecondary }]}
-      >
+      <View style={[styles.timelineIcon, { backgroundColor: iconBg }]}>
         <Ionicons name={icon} size={14} color={accent} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={styles.timelineRowHeader}>
-          <Text variant="body" numberOfLines={1} style={{ flex: 1 }}>
+          <Text
+            variant={titleVariant}
+            numberOfLines={1}
+            style={[
+              { flex: 1, fontWeight: titleWeight },
+              tone === "loud" && { color: accent },
+            ]}
+          >
             {title}
           </Text>
-          <Text variant="caption">{date}</Text>
+          <Text variant="caption">{time}</Text>
         </View>
         {subtitle ? (
           <Text variant="bodyLight" numberOfLines={2}>
@@ -583,26 +735,32 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     flexShrink: 0,
   },
-  achievementsRow: {
-    flexDirection: "row",
+  achievementsBlock: {
+    // Negate parent horizontal padding so the scroll list is true edge-to-edge.
+    marginHorizontal: -20,
     gap: spacing.sm,
   },
   achievementCard: {
     alignItems: "center",
-    borderRadius: 12,
-    padding: 8,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderWidth: 1,
-    minWidth: 64,
+    width: 96,
   },
   achievementEmoji: {
-    fontSize: 22,
+    fontSize: 24,
   },
   achievementName: {
-    marginTop: 2,
+    marginTop: 4,
     textAlign: "center",
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "600",
-    lineHeight: 12,
+    lineHeight: 13,
+  },
+  achievementDate: {
+    marginTop: 2,
+    fontSize: 9,
   },
   timelineSection: {
     gap: spacing.sm,
@@ -617,13 +775,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
   },
+  timelineGroup: {
+    gap: 6,
+  },
   timelineRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.sm,
-    padding: 12,
+    paddingHorizontal: 12,
     borderRadius: radius.md,
-    borderWidth: 1,
   },
   timelineIcon: {
     width: 28,

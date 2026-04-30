@@ -1,89 +1,45 @@
 import { View, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
-import { Card, StatusBadge, H2, Body } from "../ui";
+import { Card, StatusBadge, H2, Body, MoodScale, type MoodValue } from "../ui";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
-import {
-  statusToRiskLevel,
-  type MoodTrendResult,
-  type EngagementResult,
-} from "../../lib/utils/mood-analytics";
 import { formatRiskReason } from "@tirek/shared";
 import type { RiskReason } from "@tirek/shared/api";
-import type { User } from "@tirek/shared";
+import type { User, MoodEntry } from "@tirek/shared";
 
 interface StudentHeroCardProps {
   student: User;
   status: "normal" | "attention" | "crisis";
   reason: RiskReason | null;
-  moodTrend: MoodTrendResult;
-  engagement: EngagementResult;
+  /** Latest mood entry — surfaced as a compact MoodScale next to the name. */
+  latestMood?: MoodEntry;
 }
-
-const trendIconNames: Record<string, keyof typeof Ionicons.glyphMap> = {
-  improving: "trending-up",
-  stable: "remove-outline",
-  declining: "trending-down",
-};
-
-const trendColorMap = {
-  improving: "success",
-  stable: "textLight",
-  declining: "danger",
-} as const;
-
-const riskColorMap = {
-  low: "success",
-  medium: "warning",
-  high: "danger",
-} as const;
-
-const engagementColorMap = {
-  high: "success",
-  medium: "warning",
-  low: "textLight",
-} as const;
 
 export function StudentHeroCard({
   student,
   status,
   reason,
-  moodTrend,
-  engagement,
+  latestMood,
 }: StudentHeroCardProps) {
   const t = useT();
   const { language } = useLanguage();
   const c = useThemeColors();
   const d = t.psychologist.studentDetail;
-  const riskLevel = statusToRiskLevel(status);
-  const reasonText = status !== "normal" ? formatRiskReason({ reason, t, language }) : null;
+  const reasonText =
+    status !== "normal" ? formatRiskReason({ reason, t, language }) : null;
   const reasonColor = status === "crisis" ? c.danger : c.warning;
+  const showRing = status !== "normal";
+  const ringColor = status === "crisis" ? c.danger : c.warning;
 
-  const statusRingColors: Record<typeof status, string> = {
-    normal: c.success,
-    attention: c.warning,
-    crisis: c.danger,
-  };
+  const classText =
+    student.grade != null
+      ? `${student.grade}${student.classLetter ?? ""} ${d.class}`
+      : null;
 
-  const trendLabels = {
-    improving: d.improving,
-    stable: d.stable,
-    declining: d.declining,
-  };
-  const riskLabels = {
-    low: d.riskLow,
-    medium: d.riskMedium,
-    high: d.riskHigh,
-  };
-  const engagementLabels = {
-    high: d.engagementHigh,
-    medium: d.engagementMedium,
-    low: d.engagementLow,
-  };
-
-  const trendColor = c[trendColorMap[moodTrend.trend]];
-  const riskColor = c[riskColorMap[riskLevel]];
-  const engColor = c[engagementColorMap[engagement.level]];
+  const moodValue: MoodValue | null =
+    latestMood && latestMood.mood >= 1 && latestMood.mood <= 5
+      ? (latestMood.mood as MoodValue)
+      : null;
 
   return (
     <Card variant="floating">
@@ -93,7 +49,8 @@ export function StudentHeroCard({
             styles.avatar,
             {
               backgroundColor: `${c.primary}1A`,
-              borderColor: statusRingColors[status],
+              borderColor: showRing ? ringColor : "transparent",
+              borderWidth: showRing ? 3 : 0,
             },
           ]}
         >
@@ -106,8 +63,13 @@ export function StudentHeroCard({
             <H2 style={styles.nameText} numberOfLines={1}>
               {student.name}
             </H2>
-            <StatusBadge status={status} size="sm" />
+            {status !== "normal" && <StatusBadge status={status} size="sm" />}
           </View>
+          {classText && (
+            <Body size="xs" numberOfLines={1} style={{ color: c.textLight }}>
+              {classText}
+            </Body>
+          )}
           {reasonText && (
             <View style={styles.reasonRow}>
               <Ionicons name="warning-outline" size={12} color={reasonColor} />
@@ -120,78 +82,20 @@ export function StudentHeroCard({
               </Body>
             </View>
           )}
-          <Body size="xs" numberOfLines={1} style={{ color: c.textLight }}>
-            {student.grade != null
-              ? `${student.grade}${student.classLetter ?? ""} ${d.class}`
-              : ""}{" "}
-            · {student.email}
-          </Body>
-        </View>
-      </View>
-
-      <View style={styles.metricsRow}>
-        {/* Mood Trend */}
-        <View
-          style={[
-            styles.metricPill,
-            { backgroundColor: c.surfaceSecondary },
-          ]}
-        >
-          <View style={styles.metricValue}>
-            <Body style={[styles.metricNumber, { color: c.text }]}>
-              {moodTrend.average > 0 ? moodTrend.average.toFixed(1) : "—"}
-            </Body>
-            <Ionicons
-              name={trendIconNames[moodTrend.trend]}
-              size={14}
-              color={trendColor}
-            />
-          </View>
-          <Body style={[styles.metricLabel, { color: trendColor }]}>
-            {trendLabels[moodTrend.trend]}
-          </Body>
-          <Body style={[styles.metricSub, { color: c.textLight }]}>
-            {d.moodTrend}
-          </Body>
-        </View>
-
-        {/* Risk Level */}
-        <View
-          style={[
-            styles.metricPill,
-            { backgroundColor: c.surfaceSecondary },
-          ]}
-        >
-          <View style={styles.metricValue}>
-            <Ionicons name="shield-checkmark" size={14} color={riskColor} />
-            <Body style={[styles.metricLabelBold, { color: riskColor }]}>
-              {riskLabels[riskLevel]}
-            </Body>
-          </View>
-          <Body style={[styles.metricSub, { color: c.textLight, marginTop: 4 }]}>
-            {d.riskLevel}
-          </Body>
-        </View>
-
-        {/* Engagement */}
-        <View
-          style={[
-            styles.metricPill,
-            { backgroundColor: c.surfaceSecondary },
-          ]}
-        >
-          <View style={styles.metricValue}>
-            <Ionicons name="pulse" size={14} color={engColor} />
-            <Body style={[styles.metricNumber, { color: c.text }]}>
-              {engagement.activeDays}/{engagement.totalDays}
-            </Body>
-          </View>
-          <Body style={[styles.metricLabel, { color: engColor }]}>
-            {engagementLabels[engagement.level]}
-          </Body>
-          <Body style={[styles.metricSub, { color: c.textLight }]}>
-            {d.engagement}
-          </Body>
+          {moodValue != null && (
+            <View style={styles.moodRow}>
+              <Body size="xs" style={{ color: c.textLight }}>
+                {d.currentMood}
+              </Body>
+              <MoodScale
+                value={moodValue}
+                accessibilityLabel={`${d.currentMood} ${moodValue}/5`}
+              />
+              <Body size="xs" style={{ color: c.textLight }}>
+                {moodValue}/5
+              </Body>
+            </View>
+          )}
         </View>
       </View>
     </Card>
@@ -207,10 +111,9 @@ const styles = StyleSheet.create({
   avatar: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 3,
   },
   avatarText: {
     fontSize: 20,
@@ -219,6 +122,7 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     minWidth: 0,
+    gap: 2,
   },
   nameRow: {
     flexDirection: "row",
@@ -238,37 +142,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     fontWeight: "600",
   },
-  metricsRow: {
+  moodRow: {
     flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
-    marginTop: 12,
-  },
-  metricPill: {
-    flex: 1,
-    borderRadius: radius.md,
-    padding: 10,
-    alignItems: "center",
-  },
-  metricValue: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  metricNumber: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  metricLabelBold: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  metricLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  metricSub: {
-    fontSize: 9,
-    fontWeight: "400",
+    marginTop: 4,
   },
 });
