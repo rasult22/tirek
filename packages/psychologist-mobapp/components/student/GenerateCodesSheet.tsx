@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Modal,
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
 } from "react-native";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+  type BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
@@ -44,6 +47,8 @@ export function GenerateCodesSheet({
   const t = useT();
   const c = useThemeColors();
   const queryClient = useQueryClient();
+  const ref = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["75%", "92%"], []);
 
   const [namesText, setNamesText] = useState("");
   const [grade, setGrade] = useState<number | null>(null);
@@ -54,6 +59,9 @@ export function GenerateCodesSheet({
       setNamesText(prefill?.name ?? "");
       setGrade(prefill?.grade ?? null);
       setClassLetter(prefill?.classLetter ?? null);
+      ref.current?.present();
+    } else {
+      ref.current?.dismiss();
     }
   }, [open, prefill]);
 
@@ -87,186 +95,188 @@ export function GenerateCodesSheet({
     studentNames.length >= 1 &&
     studentNames.length <= 100;
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.4}
+      />
+    ),
+    [],
+  );
+
   return (
-    <Modal
-      visible={open}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={ref}
+      snapPoints={snapPoints}
+      index={0}
+      onDismiss={onClose}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: c.surface }}
+      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      enablePanDownToClose
     >
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      <View style={styles.headerRow}>
+        <Text
+          style={{
+            fontSize: 18,
+            lineHeight: 24,
+            fontFamily: "Inter_700Bold",
+            color: c.text,
+            flex: 1,
+          }}
+        >
+          {t.psychologist.generateCodes}
+        </Text>
+        <Pressable
+          onPress={onClose}
+          style={({ pressed }) => [
+            styles.closeBtn,
+            { backgroundColor: c.surfaceSecondary },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Ionicons name="close" size={18} color={c.textLight} />
+        </Pressable>
+      </View>
+
+      <BottomSheetScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.root}>
-          <Pressable style={styles.backdrop} onPress={onClose} />
-          <View style={[styles.sheet, { backgroundColor: c.surface }]}>
-            <View style={styles.handleWrap}>
-              <View
-                style={[styles.handle, { backgroundColor: c.borderLight }]}
-              />
-            </View>
-
-            <View style={styles.headerRow}>
-              <Text
-                style={{
-                  fontSize: 18,
-                  lineHeight: 24,
-                  fontFamily: "Inter_700Bold",
-                  color: c.text,
-                  flex: 1,
-                }}
-              >
-                {t.psychologist.generateCodes}
-              </Text>
-              <Pressable
-                onPress={onClose}
-                style={({ pressed }) => [
-                  styles.closeBtn,
-                  { backgroundColor: c.surfaceSecondary },
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Ionicons name="close" size={18} color={c.textLight} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              style={styles.body}
-              contentContainerStyle={styles.bodyContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
-              <Text style={[styles.sectionLabel, { color: c.textLight }]}>
-                {t.psychologist.studentNamesLabel}
-              </Text>
-              <View
-                style={[
-                  styles.namesInput,
-                  { borderColor: c.borderLight, backgroundColor: c.bg },
-                ]}
-              >
-                <TextInput
-                  value={namesText}
-                  onChangeText={setNamesText}
-                  multiline
-                  numberOfLines={6}
-                  placeholder={t.psychologist.studentNamesPlaceholder}
-                  style={[styles.namesText, { color: c.text }]}
-                  placeholderTextColor={c.textLight}
-                  textAlignVertical="top"
-                />
-              </View>
-              <Text
-                style={{
-                  fontSize: 11,
-                  lineHeight: 14,
-                  color: c.textLight,
-                  marginTop: 4,
-                  fontFamily: "Inter_500Medium",
-                }}
-              >
-                {studentNames.length} / 100
-              </Text>
-
-              <Text
-                style={[
-                  styles.sectionLabel,
-                  { color: c.textLight, marginTop: spacing.lg },
-                ]}
-              >
-                {t.auth.selectGrade}
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipsRow}
-                keyboardShouldPersistTaps="handled"
-              >
-                <Chip
-                  label={t.psychologist.codeAny}
-                  active={grade === null}
-                  onPress={() => {
-                    hapticLight();
-                    setGrade(null);
-                  }}
-                  c={c}
-                />
-                {GRADES.map((g) => (
-                  <Chip
-                    key={g}
-                    label={String(g)}
-                    active={grade === g}
-                    onPress={() => {
-                      hapticLight();
-                      setGrade(grade === g ? null : g);
-                    }}
-                    c={c}
-                  />
-                ))}
-              </ScrollView>
-
-              <Text
-                style={[
-                  styles.sectionLabel,
-                  { color: c.textLight, marginTop: spacing.lg },
-                ]}
-              >
-                {t.auth.selectClass}
-              </Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipsRow}
-                keyboardShouldPersistTaps="handled"
-              >
-                <Chip
-                  label={t.psychologist.codeAny}
-                  active={classLetter === null}
-                  onPress={() => {
-                    hapticLight();
-                    setClassLetter(null);
-                  }}
-                  c={c}
-                />
-                {CLASS_LETTERS.map((l) => (
-                  <Chip
-                    key={l}
-                    label={l}
-                    active={classLetter === l}
-                    onPress={() => {
-                      hapticLight();
-                      setClassLetter(classLetter === l ? null : l);
-                    }}
-                    c={c}
-                  />
-                ))}
-              </ScrollView>
-            </ScrollView>
-
-            <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
-              <Pressable
-                onPress={() => {
-                  hapticLight();
-                  generateMutation.mutate();
-                }}
-                disabled={!canSubmit}
-                style={[
-                  styles.submitBtn,
-                  { backgroundColor: c.primary },
-                  !canSubmit && { opacity: 0.5 },
-                ]}
-              >
-                {generateMutation.isPending && (
-                  <ActivityIndicator size="small" color="#FFF" />
-                )}
-                <Text style={styles.submitText}>{t.psychologist.generate}</Text>
-              </Pressable>
-            </View>
-          </View>
+        <Text style={[styles.sectionLabel, { color: c.textLight }]}>
+          {t.psychologist.studentNamesLabel}
+        </Text>
+        <View
+          style={[
+            styles.namesInput,
+            { borderColor: c.borderLight, backgroundColor: c.bg },
+          ]}
+        >
+          <BottomSheetTextInput
+            value={namesText}
+            onChangeText={setNamesText}
+            multiline
+            numberOfLines={6}
+            placeholder={t.psychologist.studentNamesPlaceholder}
+            style={[styles.namesText, { color: c.text }]}
+            placeholderTextColor={c.textLight}
+            textAlignVertical="top"
+          />
         </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        <Text
+          style={{
+            fontSize: 11,
+            lineHeight: 14,
+            color: c.textLight,
+            marginTop: 4,
+            fontFamily: "Inter_500Medium",
+          }}
+        >
+          {studentNames.length} / 100
+        </Text>
+
+        <Text
+          style={[
+            styles.sectionLabel,
+            { color: c.textLight, marginTop: spacing.lg },
+          ]}
+        >
+          {t.auth.selectGrade}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Chip
+            label={t.psychologist.codeAny}
+            active={grade === null}
+            onPress={() => {
+              hapticLight();
+              setGrade(null);
+            }}
+            c={c}
+          />
+          {GRADES.map((g) => (
+            <Chip
+              key={g}
+              label={String(g)}
+              active={grade === g}
+              onPress={() => {
+                hapticLight();
+                setGrade(grade === g ? null : g);
+              }}
+              c={c}
+            />
+          ))}
+        </ScrollView>
+
+        <Text
+          style={[
+            styles.sectionLabel,
+            { color: c.textLight, marginTop: spacing.lg },
+          ]}
+        >
+          {t.auth.selectClass}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Chip
+            label={t.psychologist.codeAny}
+            active={classLetter === null}
+            onPress={() => {
+              hapticLight();
+              setClassLetter(null);
+            }}
+            c={c}
+          />
+          {CLASS_LETTERS.map((l) => (
+            <Chip
+              key={l}
+              label={l}
+              active={classLetter === l}
+              onPress={() => {
+                hapticLight();
+                setClassLetter(classLetter === l ? null : l);
+              }}
+              c={c}
+            />
+          ))}
+        </ScrollView>
+      </BottomSheetScrollView>
+
+      <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
+        <Pressable
+          onPress={() => {
+            hapticLight();
+            generateMutation.mutate();
+          }}
+          disabled={!canSubmit}
+          style={[
+            styles.submitBtn,
+            { backgroundColor: c.primary },
+            !canSubmit && { opacity: 0.5 },
+          ]}
+        >
+          {generateMutation.isPending && (
+            <ActivityIndicator size="small" color="#FFF" />
+          )}
+          <Text style={styles.submitText}>{t.psychologist.generate}</Text>
+        </Pressable>
+      </View>
+    </BottomSheetModal>
   );
 }
 
@@ -305,29 +315,6 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheet: {
-    borderTopLeftRadius: radius["3xl"],
-    borderTopRightRadius: radius["3xl"],
-    maxHeight: "85%",
-  },
-  handleWrap: {
-    alignItems: "center",
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -345,7 +332,6 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingHorizontal: spacing.xl,
-    maxHeight: 480,
   },
   bodyContent: {
     paddingBottom: spacing.lg,

@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import {
-  View,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-} from "react-native";
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+  type BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
 import { testDefinitions, type Severity } from "@tirek/shared";
 import { Text, Button } from "../ui";
@@ -35,6 +35,8 @@ export function DiagnosticsFiltersSheet({
   const t = useT();
   const { language } = useLanguage();
   const c = useThemeColors();
+  const ref = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["75%", "90%"], []);
 
   const [testSlug, setTestSlug] = useState<string>(initial.testSlug ?? "");
   const [severity, setSeverity] = useState<string>(
@@ -53,6 +55,9 @@ export function DiagnosticsFiltersSheet({
       setGrade(initial.grade != null ? String(initial.grade) : "");
       setFrom(initial.from ?? "");
       setTo(initial.to ?? "");
+      ref.current?.present();
+    } else {
+      ref.current?.dismiss();
     }
   }, [visible, initial]);
 
@@ -77,142 +82,151 @@ export function DiagnosticsFiltersSheet({
     setTo("");
   }
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.4}
+      />
+    ),
+    [],
+  );
+
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={ref}
+      snapPoints={snapPoints}
+      index={0}
+      onDismiss={onClose}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: c.surface }}
+      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      enablePanDownToClose
     >
-      <View style={styles.wrapper}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={[styles.content, { backgroundColor: c.surface }]}>
-          <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: c.borderLight }]} />
-          </View>
+      <View style={styles.header}>
+        <Text
+          style={{
+            fontSize: 18,
+            lineHeight: 24,
+            fontFamily: "Inter_700Bold",
+            color: c.text,
+            flex: 1,
+          }}
+        >
+          {t.psychologist.filtersTitle}
+        </Text>
+        <Pressable
+          onPress={onClose}
+          style={({ pressed }) => [
+            styles.closeBtn,
+            { backgroundColor: c.surfaceSecondary },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Ionicons name="close" size={18} color={c.textLight} />
+        </Pressable>
+      </View>
 
-          <View style={styles.header}>
-            <Text
-              style={{
-                fontSize: 18,
-                lineHeight: 24,
-                fontFamily: "Inter_700Bold",
-                color: c.text,
-                flex: 1,
-              }}
-            >
-              {t.psychologist.filtersTitle}
+      <BottomSheetScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Section
+          title={t.psychologist.filtersTest}
+          c={c}
+          t={t}
+          value={testSlug}
+          setValue={setTestSlug}
+          options={tests.map((td) => ({
+            value: td.slug,
+            label: language === "kz" ? td.nameKz : td.nameRu,
+          }))}
+        />
+        <Section
+          title={t.psychologist.filtersSeverity}
+          c={c}
+          t={t}
+          value={severity}
+          setValue={setSeverity}
+          options={SEVERITIES.map((s) => ({ value: s, label: s }))}
+        />
+        <Section
+          title={t.psychologist.filtersGrade}
+          c={c}
+          t={t}
+          value={grade}
+          setValue={setGrade}
+          options={GRADES.map((g) => ({
+            value: String(g),
+            label: String(g),
+          }))}
+        />
+        <View style={styles.dateRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.label, { color: c.textLight }]}>
+              {t.psychologist.filtersDateFrom}
             </Text>
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeBtn,
-                { backgroundColor: c.surfaceSecondary },
-                pressed && { opacity: 0.7 },
+            <BottomSheetTextInput
+              value={from}
+              onChangeText={setFrom}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={c.textLight}
+              maxLength={10}
+              style={[
+                styles.input,
+                {
+                  borderColor: c.borderLight,
+                  color: c.text,
+                  backgroundColor: c.bg,
+                },
               ]}
-            >
-              <Ionicons name="close" size={18} color={c.textLight} />
-            </Pressable>
+            />
           </View>
-
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.bodyContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <Section
-              title={t.psychologist.filtersTest}
-              c={c}
-              t={t}
-              value={testSlug}
-              setValue={setTestSlug}
-              options={tests.map((td) => ({
-                value: td.slug,
-                label: language === "kz" ? td.nameKz : td.nameRu,
-              }))}
-            />
-            <Section
-              title={t.psychologist.filtersSeverity}
-              c={c}
-              t={t}
-              value={severity}
-              setValue={setSeverity}
-              options={SEVERITIES.map((s) => ({ value: s, label: s }))}
-            />
-            <Section
-              title={t.psychologist.filtersGrade}
-              c={c}
-              t={t}
-              value={grade}
-              setValue={setGrade}
-              options={GRADES.map((g) => ({
-                value: String(g),
-                label: String(g),
-              }))}
-            />
-            <View style={styles.dateRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.label, { color: c.textLight }]}>
-                  {t.psychologist.filtersDateFrom}
-                </Text>
-                <TextInput
-                  value={from}
-                  onChangeText={setFrom}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={c.textLight}
-                  maxLength={10}
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: c.borderLight,
-                      color: c.text,
-                      backgroundColor: c.bg,
-                    },
-                  ]}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.label, { color: c.textLight }]}>
-                  {t.psychologist.filtersDateTo}
-                </Text>
-                <TextInput
-                  value={to}
-                  onChangeText={setTo}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={c.textLight}
-                  maxLength={10}
-                  style={[
-                    styles.input,
-                    {
-                      borderColor: c.borderLight,
-                      color: c.text,
-                      backgroundColor: c.bg,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          </ScrollView>
-
-          <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
-            <Button
-              title={t.psychologist.filtersReset}
-              variant="secondary"
-              size="md"
-              onPress={reset}
-              style={{ flex: 1 }}
-            />
-            <Button
-              title={t.psychologist.filtersApply}
-              variant="primary"
-              size="md"
-              onPress={apply}
-              style={{ flex: 2 }}
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.label, { color: c.textLight }]}>
+              {t.psychologist.filtersDateTo}
+            </Text>
+            <BottomSheetTextInput
+              value={to}
+              onChangeText={setTo}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={c.textLight}
+              maxLength={10}
+              style={[
+                styles.input,
+                {
+                  borderColor: c.borderLight,
+                  color: c.text,
+                  backgroundColor: c.bg,
+                },
+              ]}
             />
           </View>
         </View>
+      </BottomSheetScrollView>
+
+      <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
+        <Button
+          title={t.psychologist.filtersReset}
+          variant="secondary"
+          size="md"
+          onPress={reset}
+          style={{ flex: 1 }}
+        />
+        <Button
+          title={t.psychologist.filtersApply}
+          variant="primary"
+          size="md"
+          onPress={apply}
+          style={{ flex: 2 }}
+        />
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }
 
@@ -295,26 +309,6 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, justifyContent: "flex-end" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  content: {
-    borderTopLeftRadius: radius["3xl"],
-    borderTopRightRadius: radius["3xl"],
-    maxHeight: "85%",
-  },
-  handleWrap: {
-    alignItems: "center",
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",

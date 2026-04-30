@@ -1,14 +1,14 @@
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { Pressable, StyleSheet, View, type ViewProps } from "react-native";
 import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-  type ViewProps,
-} from "react-native";
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  type BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
 import { H3, Body } from "./Typography";
-import { useThemeColors, radius, spacing } from "../../lib/theme";
+import { useThemeColors, spacing } from "../../lib/theme";
 
 interface HelpSheetProps extends ViewProps {
   visible: boolean;
@@ -30,93 +30,72 @@ export function HelpSheet({
   description,
   onClose,
   children,
-  style,
 }: HelpSheetProps) {
   const c = useThemeColors();
+  const ref = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["50%", "85%"], []);
+
+  useEffect(() => {
+    if (visible) ref.current?.present();
+    else ref.current?.dismiss();
+  }, [visible]);
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.4}
+      />
+    ),
+    [],
+  );
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={ref}
+      snapPoints={snapPoints}
+      index={0}
+      onDismiss={onClose}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: c.surface }}
+      handleIndicatorStyle={{ backgroundColor: c.border }}
+      enablePanDownToClose
     >
-      <Pressable
-        style={styles.backdrop}
-        onPress={onClose}
-        accessibilityLabel="Close help"
-      />
-      <View
-        style={[
-          styles.sheet,
-          { backgroundColor: c.surface },
-          style,
-        ]}
-      >
-        <View style={styles.handle}>
-          <View style={[styles.handleBar, { backgroundColor: c.border }]} />
-        </View>
-
-        <View style={styles.header}>
-          <H3 style={{ flex: 1 }}>{title}</H3>
-          <Pressable
-            onPress={onClose}
-            style={({ pressed }) => [
-              styles.closeBtn,
-              { backgroundColor: c.surfaceSecondary },
-              pressed && { opacity: 0.7 },
-            ]}
-            accessibilityLabel="Close"
-          >
-            <Ionicons name="close" size={18} color={c.textLight} />
-          </Pressable>
-        </View>
-
-        <ScrollView
-          style={styles.body}
-          contentContainerStyle={styles.bodyContent}
-          showsVerticalScrollIndicator={false}
+      <View style={styles.header}>
+        <H3 style={{ flex: 1 }}>{title}</H3>
+        <Pressable
+          onPress={onClose}
+          style={({ pressed }) => [
+            styles.closeBtn,
+            { backgroundColor: c.surfaceSecondary },
+            pressed && { opacity: 0.7 },
+          ]}
+          accessibilityLabel="Close"
         >
-          {description && (
-            <Body style={{ lineHeight: 22 }}>{description}</Body>
-          )}
-          {children}
-        </ScrollView>
+          <Ionicons name="close" size={18} color={c.textLight} />
+        </Pressable>
       </View>
-    </Modal>
+
+      <BottomSheetScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {description && <Body style={{ lineHeight: 22 }}>{description}</Body>}
+        {children}
+      </BottomSheetScrollView>
+    </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheet: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderTopLeftRadius: radius["3xl"],
-    borderTopRightRadius: radius["3xl"],
-    maxHeight: "85%",
-    paddingBottom: spacing["3xl"],
-  },
-  handle: {
-    alignItems: "center",
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  handleBar: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.md,
     gap: spacing.md,
   },
@@ -131,6 +110,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   bodyContent: {
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing["3xl"],
   },
 });

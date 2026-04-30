@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from "react-native";
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  type BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
 import { useT } from "../../lib/hooks/useLanguage";
 import { Text, Button } from "../ui";
-import { useThemeColors, radius, spacing } from "../../lib/theme";
+import { useThemeColors, spacing } from "../../lib/theme";
 import { hapticLight } from "../../lib/haptics";
 import { colors as ds } from "@tirek/shared/design-system";
 
@@ -33,6 +33,8 @@ export function FiltersSheet({
 }: FiltersSheetProps) {
   const t = useT();
   const c = useThemeColors();
+  const ref = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["55%", "85%"], []);
 
   const [draftGrade, setDraftGrade] = useState<number | null>(grade);
   const [draftLetter, setDraftLetter] = useState<string | null>(classLetter);
@@ -41,6 +43,9 @@ export function FiltersSheet({
     if (open) {
       setDraftGrade(grade);
       setDraftLetter(classLetter);
+      ref.current?.present();
+    } else {
+      ref.current?.dismiss();
     }
   }, [open, grade, classLetter]);
 
@@ -54,134 +59,141 @@ export function FiltersSheet({
     setDraftLetter(null);
   }
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.4}
+      />
+    ),
+    [],
+  );
+
   return (
-    <Modal
-      visible={open}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={ref}
+      snapPoints={snapPoints}
+      index={0}
+      onDismiss={onClose}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: c.surface }}
+      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
+      enablePanDownToClose
     >
-      <View style={styles.root}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: c.surface }]}>
-          <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: c.borderLight }]} />
-          </View>
-
-          <View style={styles.headerRow}>
-            <Text
-              style={{
-                fontSize: 18,
-                lineHeight: 24,
-                fontFamily: "Inter_700Bold",
-                color: c.text,
-                flex: 1,
-              }}
-            >
-              {t.common.filters}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeBtn,
-                { backgroundColor: c.surfaceSecondary },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Ionicons name="close" size={18} color={c.textLight} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.bodyContent}
-            showsVerticalScrollIndicator={false}
-          >
-            <Text style={[styles.sectionLabel, { color: c.textLight }]}>
-              {t.psychologist.studentClass}
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipsRow}
-            >
-              <Chip
-                label={t.psychologist.allGrades}
-                active={draftGrade === null}
-                onPress={() => {
-                  hapticLight();
-                  setDraftGrade(null);
-                }}
-                c={c}
-              />
-              {GRADES.map((g) => (
-                <Chip
-                  key={g}
-                  label={String(g)}
-                  active={draftGrade === g}
-                  onPress={() => {
-                    hapticLight();
-                    setDraftGrade(draftGrade === g ? null : g);
-                  }}
-                  c={c}
-                />
-              ))}
-            </ScrollView>
-
-            <Text
-              style={[
-                styles.sectionLabel,
-                { color: c.textLight, marginTop: spacing.lg },
-              ]}
-            >
-              {t.psychologist.classLetterLabel}
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipsRow}
-            >
-              <Chip
-                label={t.psychologist.allClasses}
-                active={draftLetter === null}
-                onPress={() => {
-                  hapticLight();
-                  setDraftLetter(null);
-                }}
-                c={c}
-              />
-              {CLASS_LETTERS.map((l) => (
-                <Chip
-                  key={l}
-                  label={l}
-                  active={draftLetter === l}
-                  onPress={() => {
-                    hapticLight();
-                    setDraftLetter(draftLetter === l ? null : l);
-                  }}
-                  c={c}
-                />
-              ))}
-            </ScrollView>
-          </ScrollView>
-
-          <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
-            <Button
-              title={t.common.reset}
-              variant="secondary"
-              onPress={handleReset}
-              style={{ flex: 1 }}
-            />
-            <Button
-              title={t.common.apply}
-              variant="primary"
-              onPress={handleApply}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </View>
+      <View style={styles.headerRow}>
+        <Text
+          style={{
+            fontSize: 18,
+            lineHeight: 24,
+            fontFamily: "Inter_700Bold",
+            color: c.text,
+            flex: 1,
+          }}
+        >
+          {t.common.filters}
+        </Text>
+        <Pressable
+          onPress={onClose}
+          style={({ pressed }) => [
+            styles.closeBtn,
+            { backgroundColor: c.surfaceSecondary },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Ionicons name="close" size={18} color={c.textLight} />
+        </Pressable>
       </View>
-    </Modal>
+
+      <BottomSheetScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.sectionLabel, { color: c.textLight }]}>
+          {t.psychologist.studentClass}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
+          <Chip
+            label={t.psychologist.allGrades}
+            active={draftGrade === null}
+            onPress={() => {
+              hapticLight();
+              setDraftGrade(null);
+            }}
+            c={c}
+          />
+          {GRADES.map((g) => (
+            <Chip
+              key={g}
+              label={String(g)}
+              active={draftGrade === g}
+              onPress={() => {
+                hapticLight();
+                setDraftGrade(draftGrade === g ? null : g);
+              }}
+              c={c}
+            />
+          ))}
+        </ScrollView>
+
+        <Text
+          style={[
+            styles.sectionLabel,
+            { color: c.textLight, marginTop: spacing.lg },
+          ]}
+        >
+          {t.psychologist.classLetterLabel}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
+        >
+          <Chip
+            label={t.psychologist.allClasses}
+            active={draftLetter === null}
+            onPress={() => {
+              hapticLight();
+              setDraftLetter(null);
+            }}
+            c={c}
+          />
+          {CLASS_LETTERS.map((l) => (
+            <Chip
+              key={l}
+              label={l}
+              active={draftLetter === l}
+              onPress={() => {
+                hapticLight();
+                setDraftLetter(draftLetter === l ? null : l);
+              }}
+              c={c}
+            />
+          ))}
+        </ScrollView>
+      </BottomSheetScrollView>
+
+      <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
+        <Button
+          title={t.common.reset}
+          variant="secondary"
+          onPress={handleReset}
+          style={{ flex: 1 }}
+        />
+        <Button
+          title={t.common.apply}
+          variant="primary"
+          onPress={handleApply}
+          style={{ flex: 1 }}
+        />
+      </View>
+    </BottomSheetModal>
   );
 }
 
@@ -220,29 +232,6 @@ function Chip({
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheet: {
-    borderTopLeftRadius: radius["3xl"],
-    borderTopRightRadius: radius["3xl"],
-    maxHeight: "85%",
-  },
-  handleWrap: {
-    alignItems: "center",
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",

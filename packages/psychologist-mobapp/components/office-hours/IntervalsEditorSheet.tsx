@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Pressable, StyleSheet, Switch, View } from "react-native";
 import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  TextInput,
-  View,
-} from "react-native";
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetTextInput,
+  type BottomSheetBackdropProps,
+} from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, Button } from "../ui";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
@@ -37,6 +36,9 @@ export function IntervalsEditorSheet({
   onSave,
 }: IntervalsEditorSheetProps) {
   const c = useThemeColors();
+  const ref = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ["75%", "92%"], []);
+
   const [dayOff, setDayOff] = useState(initialIntervals.length === 0);
   const [intervals, setIntervals] = useState<OfficeHoursInterval[]>(
     initialIntervals.length > 0 ? initialIntervals : [{ start: "09:00", end: "17:00" }],
@@ -54,6 +56,9 @@ export function IntervalsEditorSheet({
       );
       setNotes(initialNotes ?? "");
       setError(null);
+      ref.current?.present();
+    } else {
+      ref.current?.dismiss();
     }
   }, [open, initialIntervals, initialNotes]);
 
@@ -85,239 +90,233 @@ export function IntervalsEditorSheet({
     onSave(finalIntervals, trimmed.length > 0 ? trimmed : null);
   }
 
-  return (
-    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.root}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={[styles.sheet, { backgroundColor: c.surface }]}>
-          <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: c.borderLight }]} />
-          </View>
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.4}
+      />
+    ),
+    [],
+  );
 
-          <View style={styles.headerRow}>
+  return (
+    <BottomSheetModal
+      ref={ref}
+      snapPoints={snapPoints}
+      index={0}
+      onDismiss={onClose}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={{ backgroundColor: c.surface }}
+      handleIndicatorStyle={{ backgroundColor: c.borderLight }}
+      keyboardBehavior="interactive"
+      keyboardBlurBehavior="restore"
+      enablePanDownToClose
+    >
+      <View style={styles.headerRow}>
+        <Text
+          style={{
+            fontSize: 18,
+            lineHeight: 24,
+            fontFamily: "Inter_700Bold",
+            color: c.text,
+            flex: 1,
+          }}
+        >
+          {title}
+        </Text>
+        <Pressable
+          onPress={onClose}
+          style={({ pressed }) => [
+            styles.closeBtn,
+            { backgroundColor: c.surfaceSecondary },
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <Ionicons name="close" size={18} color={c.textLight} />
+        </Pressable>
+      </View>
+
+      <BottomSheetScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {showDayOffToggle ? (
+          <View
+            style={[
+              styles.dayOffRow,
+              {
+                backgroundColor: c.surfaceSecondary,
+                borderColor: c.borderLight,
+              },
+            ]}
+          >
             <Text
               style={{
-                fontSize: 18,
-                lineHeight: 24,
-                fontFamily: "Inter_700Bold",
+                fontSize: 14,
+                fontFamily: "Inter_600SemiBold",
                 color: c.text,
                 flex: 1,
               }}
             >
-              {title}
+              Выходной
             </Text>
-            <Pressable
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeBtn,
-                { backgroundColor: c.surfaceSecondary },
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Ionicons name="close" size={18} color={c.textLight} />
-            </Pressable>
+            <Switch
+              value={dayOff}
+              onValueChange={(v) => {
+                hapticLight();
+                setDayOff(v);
+                setError(null);
+              }}
+            />
           </View>
+        ) : null}
 
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.bodyContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {showDayOffToggle ? (
-              <View
-                style={[
-                  styles.dayOffRow,
-                  {
-                    backgroundColor: c.surfaceSecondary,
-                    borderColor: c.borderLight,
-                  },
-                ]}
-              >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontFamily: "Inter_600SemiBold",
-                    color: c.text,
-                    flex: 1,
-                  }}
-                >
-                  Выходной
-                </Text>
-                <Switch
-                  value={dayOff}
-                  onValueChange={(v) => {
-                    hapticLight();
-                    setDayOff(v);
-                    setError(null);
-                  }}
-                />
-              </View>
-            ) : null}
-
-            {!dayOff ? (
-              <>
-                <Text style={[styles.label, { color: c.textLight }]}>
-                  Интервалы
-                </Text>
-                <View style={{ gap: spacing.sm }}>
-                  {intervals.map((iv, idx) => (
-                    <View key={idx} style={styles.intervalRow}>
-                      <TextInput
-                        value={iv.start}
-                        onChangeText={(v) => updateInterval(idx, "start", v)}
-                        placeholder="09:00"
-                        placeholderTextColor={c.textLight}
-                        style={[
-                          styles.input,
-                          {
-                            borderColor: c.borderLight,
-                            color: c.text,
-                            backgroundColor: c.bg,
-                          },
-                        ]}
-                        maxLength={5}
-                      />
-                      <Text style={{ color: c.textLight }}>—</Text>
-                      <TextInput
-                        value={iv.end}
-                        onChangeText={(v) => updateInterval(idx, "end", v)}
-                        placeholder="17:00"
-                        placeholderTextColor={c.textLight}
-                        style={[
-                          styles.input,
-                          {
-                            borderColor: c.borderLight,
-                            color: c.text,
-                            backgroundColor: c.bg,
-                          },
-                        ]}
-                        maxLength={5}
-                      />
-                      <Pressable
-                        onPress={() => removeInterval(idx)}
-                        hitSlop={8}
-                        style={({ pressed }) => [
-                          styles.iconBtn,
-                          pressed && { opacity: 0.6 },
-                        ]}
-                      >
-                        <Ionicons
-                          name="trash-outline"
-                          size={18}
-                          color={c.textLight}
-                        />
-                      </Pressable>
-                    </View>
-                  ))}
+        {!dayOff ? (
+          <>
+            <Text style={[styles.label, { color: c.textLight }]}>
+              Интервалы
+            </Text>
+            <View style={{ gap: spacing.sm }}>
+              {intervals.map((iv, idx) => (
+                <View key={idx} style={styles.intervalRow}>
+                  <BottomSheetTextInput
+                    value={iv.start}
+                    onChangeText={(v) => updateInterval(idx, "start", v)}
+                    placeholder="09:00"
+                    placeholderTextColor={c.textLight}
+                    style={[
+                      styles.input,
+                      {
+                        borderColor: c.borderLight,
+                        color: c.text,
+                        backgroundColor: c.bg,
+                      },
+                    ]}
+                    maxLength={5}
+                  />
+                  <Text style={{ color: c.textLight }}>—</Text>
+                  <BottomSheetTextInput
+                    value={iv.end}
+                    onChangeText={(v) => updateInterval(idx, "end", v)}
+                    placeholder="17:00"
+                    placeholderTextColor={c.textLight}
+                    style={[
+                      styles.input,
+                      {
+                        borderColor: c.borderLight,
+                        color: c.text,
+                        backgroundColor: c.bg,
+                      },
+                    ]}
+                    maxLength={5}
+                  />
                   <Pressable
-                    onPress={addInterval}
+                    onPress={() => removeInterval(idx)}
+                    hitSlop={8}
                     style={({ pressed }) => [
-                      styles.addRow,
-                      { borderColor: `${c.primary}33` },
-                      pressed && { opacity: 0.85 },
+                      styles.iconBtn,
+                      pressed && { opacity: 0.6 },
                     ]}
                   >
                     <Ionicons
-                      name="add-circle-outline"
+                      name="trash-outline"
                       size={18}
-                      color={c.primary}
+                      color={c.textLight}
                     />
-                    <Text
-                      style={{
-                        color: c.primary,
-                        fontFamily: "Inter_600SemiBold",
-                        fontSize: 13,
-                      }}
-                    >
-                      Добавить интервал
-                    </Text>
                   </Pressable>
                 </View>
-              </>
-            ) : null}
-
-            <Text style={[styles.label, { color: c.textLight, marginTop: spacing.lg }]}>
-              Заметка (необязательно)
-            </Text>
-            <TextInput
-              value={notes}
-              onChangeText={setNotes}
-              placeholder="напр. конференция"
-              placeholderTextColor={c.textLight}
-              style={[
-                styles.notesInput,
-                {
-                  borderColor: c.borderLight,
-                  color: c.text,
-                  backgroundColor: c.bg,
-                },
-              ]}
-            />
-
-            {error ? (
-              <View
-                style={[
-                  styles.errorBox,
-                  {
-                    backgroundColor: `${c.danger}14`,
-                    borderColor: `${c.danger}33`,
-                  },
+              ))}
+              <Pressable
+                onPress={addInterval}
+                style={({ pressed }) => [
+                  styles.addRow,
+                  { borderColor: `${c.primary}33` },
+                  pressed && { opacity: 0.85 },
                 ]}
               >
                 <Ionicons
-                  name="alert-circle-outline"
-                  size={14}
-                  color={c.danger}
+                  name="add-circle-outline"
+                  size={18}
+                  color={c.primary}
                 />
-                <Text style={{ fontSize: 13, color: c.danger, flex: 1 }}>
-                  {error}
+                <Text
+                  style={{
+                    color: c.primary,
+                    fontFamily: "Inter_600SemiBold",
+                    fontSize: 13,
+                  }}
+                >
+                  Добавить интервал
                 </Text>
-              </View>
-            ) : null}
-          </ScrollView>
+              </Pressable>
+            </View>
+          </>
+        ) : null}
 
-          <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
-            <Button
-              title="Отмена"
-              variant="secondary"
-              onPress={onClose}
-              style={{ flex: 1 }}
+        <Text style={[styles.label, { color: c.textLight, marginTop: spacing.lg }]}>
+          Заметка (необязательно)
+        </Text>
+        <BottomSheetTextInput
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="напр. конференция"
+          placeholderTextColor={c.textLight}
+          style={[
+            styles.notesInput,
+            {
+              borderColor: c.borderLight,
+              color: c.text,
+              backgroundColor: c.bg,
+            },
+          ]}
+        />
+
+        {error ? (
+          <View
+            style={[
+              styles.errorBox,
+              {
+                backgroundColor: `${c.danger}14`,
+                borderColor: `${c.danger}33`,
+              },
+            ]}
+          >
+            <Ionicons
+              name="alert-circle-outline"
+              size={14}
+              color={c.danger}
             />
-            <Button
-              title="Сохранить"
-              variant="primary"
-              onPress={handleSave}
-              loading={saving}
-              style={{ flex: 1 }}
-            />
+            <Text style={{ fontSize: 13, color: c.danger, flex: 1 }}>
+              {error}
+            </Text>
           </View>
-        </View>
+        ) : null}
+      </BottomSheetScrollView>
+
+      <View style={[styles.footer, { borderTopColor: c.borderLight }]}>
+        <Button
+          title="Отмена"
+          variant="secondary"
+          onPress={onClose}
+          style={{ flex: 1 }}
+        />
+        <Button
+          title="Сохранить"
+          variant="primary"
+          onPress={handleSave}
+          loading={saving}
+          style={{ flex: 1 }}
+        />
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, justifyContent: "flex-end" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheet: {
-    borderTopLeftRadius: radius["3xl"],
-    borderTopRightRadius: radius["3xl"],
-    maxHeight: "85%",
-  },
-  handleWrap: {
-    alignItems: "center",
-    paddingTop: 10,
-    paddingBottom: 4,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-  },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
