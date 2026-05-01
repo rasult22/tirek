@@ -8,18 +8,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useT } from "../../lib/hooks/useLanguage";
 import { Text, Input, H3, Body } from "../../components/ui";
 import { SkeletonList } from "../../components/Skeleton";
 import { ErrorState } from "../../components/ErrorState";
-import { FiltersSheet } from "../../components/student/FiltersSheet";
 import { PendingList } from "../../components/student/PendingList";
-import {
-  GenerateCodesSheet,
-  type GenerateCodesPrefill,
-} from "../../components/student/GenerateCodesSheet";
 import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { studentsApi } from "../../lib/api/students";
@@ -146,17 +141,23 @@ export default function StudentsScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const [segment, setSegment] = useState<Segment>("active");
+  const params = useLocalSearchParams<{
+    segment?: string;
+    grade?: string;
+    classLetter?: string;
+  }>();
+  const segment: Segment = params.segment === "pending" ? "pending" : "active";
+  const setSegment = (next: Segment) => {
+    router.setParams({ segment: next });
+  };
+  const grade =
+    params.grade && /^\d+$/.test(params.grade) ? Number(params.grade) : null;
+  const classLetter =
+    params.classLetter && params.classLetter.length > 0
+      ? params.classLetter
+      : null;
   const [search, setSearch] = useState("");
-  const [grade, setGrade] = useState<number | null>(null);
-  const [classLetter, setClassLetter] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [sheetPrefill, setSheetPrefill] = useState<GenerateCodesPrefill | null>(
-    null,
-  );
 
   const hasActiveFilter = grade !== null || classLetter !== null;
 
@@ -216,19 +217,22 @@ export default function StudentsScreen() {
   }
 
   function openAddSheet() {
-    setSheetPrefill(null);
-    setSheetOpen(true);
+    router.push("/generate-codes");
   }
 
-  function openGenerateNew(prefill: GenerateCodesPrefill) {
-    setSheetPrefill(prefill);
-    setSheetOpen(true);
-  }
-
-  function handleSheetSuccess() {
-    setSheetOpen(false);
-    setSheetPrefill(null);
-    setSegment("pending");
+  function openGenerateNew(prefill: {
+    name: string;
+    grade: number | null;
+    classLetter: string | null;
+  }) {
+    router.push({
+      pathname: "/generate-codes",
+      params: {
+        name: prefill.name,
+        grade: prefill.grade != null ? String(prefill.grade) : "",
+        classLetter: prefill.classLetter ?? "",
+      },
+    });
   }
 
   if (isError && segment === "active") {
@@ -253,7 +257,13 @@ export default function StudentsScreen() {
           <Pressable
             onPress={() => {
               hapticLight();
-              setFiltersOpen(true);
+              router.push({
+                pathname: "/students-filters",
+                params: {
+                  grade: grade != null ? String(grade) : "",
+                  classLetter: classLetter ?? "",
+                },
+              });
             }}
             accessibilityLabel={t.common.filters}
             hitSlop={8}
@@ -485,23 +495,6 @@ export default function StudentsScreen() {
         </Pressable>
       </View>
 
-      <FiltersSheet
-        open={filtersOpen}
-        grade={grade}
-        classLetter={classLetter}
-        onClose={() => setFiltersOpen(false)}
-        onApply={({ grade: g, classLetter: l }) => {
-          setGrade(g);
-          setClassLetter(l);
-        }}
-      />
-
-      <GenerateCodesSheet
-        open={sheetOpen}
-        prefill={sheetPrefill}
-        onClose={() => setSheetOpen(false)}
-        onSuccess={handleSheetSuccess}
-      />
     </SafeAreaView>
   );
 }

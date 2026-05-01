@@ -16,4 +16,3 @@ export { HorizontalScrollList } from "./HorizontalScrollList";
 export { DayDivider } from "./DayDivider";
 export { Stepper } from "./Stepper";
 export type { StepperStep } from "./Stepper";
-export { HelpSheet } from "./HelpSheet";
