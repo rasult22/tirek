@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  View,
+  Animated,
+  Dimensions,
+  Easing,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
+  View,
 } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { testDefinitions, type Severity } from "@tirek/shared";
 import { Text, Button } from "../ui";
@@ -25,6 +29,9 @@ interface Props {
 
 const SEVERITIES: Severity[] = ["minimal", "mild", "moderate", "severe"];
 const GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+
+const SHEET_TRAVEL = Dimensions.get("window").height;
+const ANIM_DURATION = 220;
 
 export function DiagnosticsFiltersSheet({
   visible,
@@ -46,15 +53,51 @@ export function DiagnosticsFiltersSheet({
   const [from, setFrom] = useState<string>(initial.from ?? "");
   const [to, setTo] = useState<string>(initial.to ?? "");
 
+  const [mounted, setMounted] = useState(visible);
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const sheetTranslateY = useRef(new Animated.Value(SHEET_TRAVEL)).current;
+
   useEffect(() => {
     if (visible) {
+      setMounted(true);
       setTestSlug(initial.testSlug ?? "");
       setSeverity(typeof initial.severity === "string" ? initial.severity : "");
       setGrade(initial.grade != null ? String(initial.grade) : "");
       setFrom(initial.from ?? "");
       setTo(initial.to ?? "");
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: ANIM_DURATION,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic),
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: 0,
+          duration: ANIM_DURATION,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic),
+        }),
+      ]).start();
+    } else if (mounted) {
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: ANIM_DURATION,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.cubic),
+        }),
+        Animated.timing(sheetTranslateY, {
+          toValue: SHEET_TRAVEL,
+          duration: ANIM_DURATION,
+          useNativeDriver: true,
+          easing: Easing.in(Easing.cubic),
+        }),
+      ]).start(({ finished }) => {
+        if (finished) setMounted(false);
+      });
     }
-  }, [visible, initial]);
+  }, [visible, initial, backdropOpacity, sheetTranslateY, mounted]);
 
   const tests = Object.values(testDefinitions);
 
@@ -77,19 +120,75 @@ export function DiagnosticsFiltersSheet({
     setTo("");
   }
 
+  const dragGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .onStart(() => {
+          sheetTranslateY.stopAnimation();
+        })
+        .onUpdate((e) => {
+          if (e.translationY > 0) {
+            sheetTranslateY.setValue(e.translationY);
+          }
+        })
+        .onEnd((e) => {
+          const shouldClose = e.translationY > 120 || e.velocityY > 800;
+          if (shouldClose) {
+            onClose();
+          } else {
+            Animated.spring(sheetTranslateY, {
+              toValue: 0,
+              useNativeDriver: true,
+              bounciness: 0,
+            }).start();
+          }
+        })
+        .runOnJS(true),
+    [sheetTranslateY, onClose],
+  );
+
+  const animatedBackdropOpacity = Animated.multiply(
+    backdropOpacity,
+    sheetTranslateY.interpolate({
+      inputRange: [0, SHEET_TRAVEL],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    }),
+  );
+
   return (
     <Modal
-      visible={visible}
+      visible={mounted}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       <View style={styles.wrapper}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={[styles.content, { backgroundColor: c.surface }]}>
-          <View style={styles.handleWrap}>
-            <View style={[styles.handle, { backgroundColor: c.borderLight }]} />
-          </View>
+        <Animated.View
+          style={[styles.backdrop, { opacity: animatedBackdropOpacity }]}
+          pointerEvents={visible ? "auto" : "none"}
+        >
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+          />
+        </Animated.View>
+        <Animated.View
+          style={[
+            styles.content,
+            {
+              backgroundColor: c.surface,
+              transform: [{ translateY: sheetTranslateY }],
+            },
+          ]}
+        >
+          <GestureDetector gesture={dragGesture}>
+            <View style={styles.handleWrap}>
+              <View
+                style={[styles.handle, { backgroundColor: c.borderLight }]}
+              />
+            </View>
+          </GestureDetector>
 
           <View style={styles.header}>
             <Text
@@ -210,7 +309,7 @@ export function DiagnosticsFiltersSheet({
               style={{ flex: 2 }}
             />
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -308,7 +407,7 @@ const styles = StyleSheet.create({
   handleWrap: {
     alignItems: "center",
     paddingTop: 10,
-    paddingBottom: 4,
+    paddingBottom: 12,
   },
   handle: {
     width: 40,
