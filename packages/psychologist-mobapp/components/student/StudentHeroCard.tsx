@@ -1,7 +1,6 @@
 import { View, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
-import { Card, StatusBadge, H2, Body, MoodScale, type MoodValue } from "../ui";
+import { Card, StatusBadge, H3, Body, MoodScale, type MoodValue } from "../ui";
 import { useThemeColors, spacing, radius } from "../../lib/theme";
 import { formatRiskReason } from "@tirek/shared";
 import type { RiskReason } from "@tirek/shared/api";
@@ -59,27 +58,26 @@ export function StudentHeroCard({
           </Body>
         </View>
         <View style={styles.info}>
-          <View style={styles.nameRow}>
-            <H2 style={styles.nameText} numberOfLines={1}>
-              {student.name}
-            </H2>
-            {status !== "normal" && <StatusBadge status={status} size="sm" />}
-          </View>
+          <H3 style={styles.nameText} numberOfLines={2}>
+            {student.name}
+          </H3>
           {classText && (
             <Body size="xs" numberOfLines={1} style={{ color: c.textLight }}>
               {classText}
             </Body>
           )}
-          {reasonText && (
-            <View style={styles.reasonRow}>
-              <Ionicons name="warning-outline" size={12} color={reasonColor} />
-              <Body
-                size="xs"
-                numberOfLines={1}
-                style={[styles.reasonText, { color: reasonColor }]}
-              >
-                {reasonText}
-              </Body>
+          {status !== "normal" && (
+            <View style={styles.statusRow}>
+              <StatusBadge status={status} size="sm" />
+              {reasonText && (
+                <Body
+                  size="xs"
+                  numberOfLines={2}
+                  style={[styles.reasonText, { color: reasonColor }]}
+                >
+                  {reasonText}
+                </Body>
+              )}
             </View>
           )}
           {moodValue != null && (
@@ -124,19 +122,15 @@ const styles = StyleSheet.create({
     minWidth: 0,
     gap: 2,
   },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
   nameText: {
     flexShrink: 1,
   },
-  reasonRow: {
+  statusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    marginTop: 2,
+    gap: spacing.sm,
+    marginTop: 4,
+    flexWrap: "wrap",
   },
   reasonText: {
     flexShrink: 1,

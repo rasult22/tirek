@@ -26,6 +26,7 @@ import {
   Card,
   SeverityBadge,
   H3,
+  H4,
   Body,
   EmptyState,
   HorizontalScrollList,
@@ -340,7 +341,7 @@ export default function StudentDetailScreen() {
           {/* Recent tests */}
           <Card>
             <View style={styles.sectionHeader}>
-              <H3>{d.recentTests}</H3>
+              <H4>{d.recentTests}</H4>
             </View>
             {recentTests.length === 0 ? (
               <View style={styles.emptyRow}>
@@ -392,7 +393,7 @@ export default function StudentDetailScreen() {
                 { paddingHorizontal: spacing.lg, marginBottom: 0 },
               ]}
             >
-              <H3>{t.achievements.title}</H3>
+              <H4>{t.achievements.title}</H4>
               {studentAchievements && (
                 <Body
                   size="xs"
@@ -466,7 +467,7 @@ export default function StudentDetailScreen() {
 
           {/* Timeline — chronological with day dividers */}
           <View style={styles.timelineSection}>
-            <H3>{d.timeline}</H3>
+            <H4>{d.timeline}</H4>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}

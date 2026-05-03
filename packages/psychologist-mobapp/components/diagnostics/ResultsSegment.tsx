@@ -22,7 +22,6 @@ import { useT } from "../../lib/hooks/useLanguage";
 import { useThemeColors, radius } from "../../lib/theme";
 import { shadow } from "../../lib/theme/shadows";
 import { hapticLight } from "../../lib/haptics";
-import { colors as ds } from "@tirek/shared/design-system";
 
 interface Props {
   filters: DiagnosticsFilters;
@@ -100,56 +99,61 @@ export function ResultsSegment({ filters }: Props) {
               pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] },
             ]}
           >
-            <View style={[styles.avatar, { backgroundColor: `${c.primary}1A` }]}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "600",
-                  color: c.primary,
-                }}
-              >
-                {(row.studentName ?? "S").charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.cardInfo}>
-              <View style={styles.nameRow}>
+            <View style={styles.topRow}>
+              <View style={[styles.avatar, { backgroundColor: `${c.primary}1A` }]}>
                 <Text
-                  variant="body"
-                  style={{ fontWeight: "600", flexShrink: 1 }}
-                  numberOfLines={1}
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "600",
+                    color: c.primary,
+                  }}
                 >
-                  {row.studentName ?? "Student"}
+                  {(row.studentName ?? "S").charAt(0).toUpperCase()}
                 </Text>
-                {row.studentGrade != null && (
+              </View>
+              <View style={styles.cardInfo}>
+                <View style={styles.nameRow}>
+                  <Text
+                    variant="body"
+                    style={{ fontWeight: "600", flexShrink: 1 }}
+                    numberOfLines={1}
+                  >
+                    {row.studentName ?? "Student"}
+                  </Text>
+                  {row.studentGrade != null && (
+                    <Text variant="caption">
+                      {row.studentGrade}
+                      {row.studentClass ?? ""}
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.metaRow}>
+                  <Text
+                    variant="caption"
+                    numberOfLines={1}
+                    style={{ flexShrink: 1 }}
+                  >
+                    {row.testName ?? row.testSlug ?? row.testId}
+                  </Text>
+                  <Text variant="caption"> · </Text>
                   <Text variant="caption">
-                    {row.studentGrade}
-                    {row.studentClass ?? ""}
+                    {row.completedAt
+                      ? new Date(row.completedAt).toLocaleDateString()
+                      : "—"}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.scoreCol}>
+                {row.totalScore != null && (
+                  <Text
+                    variant="small"
+                    style={{ fontWeight: "700", color: c.text }}
+                  >
+                    {row.totalScore}/{row.maxScore ?? "?"}
                   </Text>
                 )}
+                {row.severity && <SeverityBadge severity={row.severity} />}
               </View>
-              <View style={styles.metaRow}>
-                <Text
-                  variant="caption"
-                  numberOfLines={1}
-                  style={{ flexShrink: 1 }}
-                >
-                  {row.testName ?? row.testSlug ?? row.testId}
-                </Text>
-                <Text variant="caption"> · </Text>
-                <Text variant="caption">
-                  {row.completedAt
-                    ? new Date(row.completedAt).toLocaleDateString()
-                    : "—"}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.scoreCol}>
-              {row.totalScore != null && (
-                <Text variant="small" style={{ fontWeight: "700", color: c.text }}>
-                  {row.totalScore}/{row.maxScore ?? "?"}
-                </Text>
-              )}
-              {row.severity && <SeverityBadge severity={row.severity} />}
             </View>
             <Pressable
               onPress={(e) => {
@@ -161,19 +165,17 @@ export function ResultsSegment({ filters }: Props) {
                   testName: row.testName,
                 });
               }}
+              hitSlop={8}
               style={({ pressed }) => [
                 styles.aiBtn,
-                { backgroundColor: ds.brandSoft },
-                pressed && { opacity: 0.7 },
+                { backgroundColor: c.primary },
+                pressed && { opacity: 0.85 },
               ]}
             >
-              <Ionicons name="sparkles" size={12} color={c.primary} />
+              <Ionicons name="sparkles" size={16} color="#FFF" />
+              <Text style={styles.aiBtnLabel}>Прочитать AI-отчёт</Text>
+              <Ionicons name="chevron-forward" size={16} color="#FFF" />
             </Pressable>
-            <Ionicons
-              name="chevron-forward"
-              size={14}
-              color={`${c.textLight}60`}
-            />
           </Pressable>
         ))}
       </ScrollView>
@@ -242,12 +244,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
     padding: 12,
     borderRadius: radius.lg,
     borderWidth: 1,
+    gap: 10,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   avatar: {
     width: 36,
@@ -261,11 +266,21 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
   scoreCol: { alignItems: "flex-end", gap: 4 },
   aiBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minHeight: 44,
+  },
+  aiBtnLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFF",
+    textAlign: "center",
   },
   empty: {
     flex: 1,
