@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   createAiReportService,
   createReportLanguageResolver,
+  PROMPT_VERSION,
   type AiReportServiceDeps,
   type PersistedReport,
   type PersistedSession,
@@ -456,4 +457,225 @@ test("generateReport: writes status=ready with parsed LLM payload for completed 
   assert.equal(report.errorMessage, null);
   assert.ok(report.generatedAt instanceof Date);
   assert.equal(fakes.llmCalls.length, 1);
+});
+
+// ─── Issue #101: clinical context, server flagged items, zod, prompt version ─
+
+test("generateReport: userPayload includes clinicalContext from test.scoringRules", async () => {
+  const scoringRules = {
+    thresholds: [
+      { min: 0, max: 4, severity: "minimal" },
+      { min: 5, max: 9, severity: "mild" },
+      { min: 10, max: 14, severity: "moderate" },
+      { min: 15, max: 27, severity: "severe" },
+    ],
+    maxScore: 27,
+    maxOptionValue: 3,
+    minOptionValue: 0,
+    flaggedRules: [
+      { questionIndex: 8, minAnswer: 1, reason: "suicidal_ideation" },
+    ],
+  };
+  const { service, fakes } = makeService({
+    fakes: {
+      tests: [
+        {
+          id: "test-1",
+          slug: "phq-a",
+          nameRu: "PHQ-A",
+          description: "Депрессия",
+          questions: [],
+          scoringRules,
+        },
+      ],
+    },
+  });
+
+  await service.generateReport("sess-1");
+
+  assert.equal(fakes.llmCalls.length, 1);
+  const payload = fakes.llmCalls[0].userPayload as {
+    clinicalContext: {
+      thresholds: unknown;
+      maxScore: number;
+      flaggedRules: unknown;
+    };
+  };
+  assert.deepEqual(payload.clinicalContext.thresholds, scoringRules.thresholds);
+  assert.equal(payload.clinicalContext.maxScore, 27);
+  assert.deepEqual(
+    payload.clinicalContext.flaggedRules,
+    scoringRules.flaggedRules,
+  );
+});
+
+test("generateReport: userPayload.result.serverFlaggedItems comes from session.flaggedItems", async () => {
+  const serverFlagged = [
+    { questionIndex: 8, answer: 2, reason: "suicidal_ideation" },
+  ];
+  const { service, fakes } = makeService({
+    fakes: {
+      sessions: [
+        {
+          id: "sess-1",
+          userId: "stu-1",
+          testId: "test-1",
+          assignmentId: null,
+          totalScore: 12,
+          maxScore: 27,
+          severity: "moderate",
+          completedAt: new Date("2026-04-25T08:00:00.000Z"),
+          flaggedItems: serverFlagged,
+        },
+      ],
+    },
+  });
+
+  await service.generateReport("sess-1");
+
+  const payload = fakes.llmCalls[0].userPayload as {
+    result: { serverFlaggedItems: unknown };
+  };
+  assert.deepEqual(payload.result.serverFlaggedItems, serverFlagged);
+});
+
+test("generateReport: when serverFlaggedItems present, system prompt instructs to mirror them as high-severity riskFactors", async () => {
+  const { service, fakes } = makeService({
+    fakes: {
+      sessions: [
+        {
+          id: "sess-1",
+          userId: "stu-1",
+          testId: "test-1",
+          assignmentId: null,
+          totalScore: 12,
+          maxScore: 27,
+          severity: "moderate",
+          completedAt: new Date("2026-04-25T08:00:00.000Z"),
+          flaggedItems: [
+            { questionIndex: 8, answer: 2, reason: "suicidal_ideation" },
+          ],
+        },
+      ],
+    },
+  });
+
+  await service.generateReport("sess-1");
+
+  assert.match(
+    fakes.llmCalls[0].systemPrompt,
+    /serverFlaggedItems[\s\S]*riskFactors[\s\S]*high/i,
+  );
+});
+
+test("generateReport: when serverFlaggedItems empty, system prompt does not include the mirror-as-high directive", async () => {
+  const { service, fakes } = makeService();
+  await service.generateReport("sess-1");
+  assert.doesNotMatch(
+    fakes.llmCalls[0].systemPrompt,
+    /serverFlaggedItems/i,
+  );
+});
+
+test("generateReport: serverFlaggedItems defaults to [] when session.flaggedItems is null/missing", async () => {
+  const { service, fakes } = makeService();
+  await service.generateReport("sess-1");
+  const payload = fakes.llmCalls[0].userPayload as {
+    result: { serverFlaggedItems: unknown };
+  };
+  assert.deepEqual(payload.result.serverFlaggedItems, []);
+});
+
+test("generateReport: when LLM returns malformed JSON (riskFactors as string), writes status=error with Invalid LLM output", async () => {
+  const { service, fakes } = makeService({
+    llmResponse: {
+      content: JSON.stringify({
+        summary: "ok",
+        interpretation: "ok",
+        riskFactors: "not an array",
+        recommendations: [],
+        trend: null,
+        flaggedItems: [],
+      }),
+      tokensUsed: 50,
+    },
+  });
+
+  await service.generateReport("sess-1");
+
+  const report = fakes.reports[0];
+  assert.equal(report.status, "error");
+  assert.match(report.errorMessage ?? "", /Invalid LLM output/);
+  // Should NOT silently write partial payload
+  assert.equal(report.summary, null);
+  assert.equal(report.riskFactors, null);
+});
+
+test("generateReport: success path writes promptVersion equal to PROMPT_VERSION constant", async () => {
+  const llmContent = JSON.stringify({
+    summary: "ok",
+    interpretation: "ok",
+    riskFactors: [],
+    recommendations: [],
+    trend: null,
+    flaggedItems: [],
+  });
+  const { service, fakes } = makeService({
+    llmResponse: { content: llmContent, tokensUsed: 10 },
+  });
+  await service.generateReport("sess-1");
+  const report = fakes.reports[0];
+  assert.equal(report.status, "ready");
+  assert.equal(report.promptVersion, PROMPT_VERSION);
+});
+
+test("generateReport: when test.scoringRules is missing, clinicalContext is null and report still succeeds", async () => {
+  const llmContent = JSON.stringify({
+    summary: "ok",
+    interpretation: "ok",
+    riskFactors: [],
+    recommendations: [],
+    trend: null,
+    flaggedItems: [],
+  });
+  const { service, fakes } = makeService({
+    llmResponse: { content: llmContent, tokensUsed: 1 },
+    fakes: {
+      tests: [
+        {
+          id: "test-1",
+          slug: "phq-a",
+          nameRu: "PHQ-A",
+          description: null,
+          questions: [],
+          // scoringRules is intentionally omitted
+        },
+      ],
+    },
+  });
+  await service.generateReport("sess-1");
+  const payload = fakes.llmCalls[0].userPayload as {
+    clinicalContext: unknown;
+  };
+  assert.equal(payload.clinicalContext, null);
+  assert.equal(fakes.reports[0].status, "ready");
+});
+
+test("generateReport: when LLM returns invalid recommendation type, writes status=error", async () => {
+  const { service, fakes } = makeService({
+    llmResponse: {
+      content: JSON.stringify({
+        summary: "ok",
+        interpretation: "ok",
+        riskFactors: [],
+        recommendations: [{ type: "bogus", text: "x" }],
+        trend: null,
+        flaggedItems: [],
+      }),
+      tokensUsed: 50,
+    },
+  });
+  await service.generateReport("sess-1");
+  assert.equal(fakes.reports[0].status, "error");
+  assert.match(fakes.reports[0].errorMessage ?? "", /Invalid LLM output/);
 });

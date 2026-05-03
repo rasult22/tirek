@@ -142,6 +142,7 @@ export interface DiagnosticAiReport {
   sessionId: string;
   status: AiReportStatus;
   model: string | null;
+  promptVersion: string | null;
   summary: string | null;
   interpretation: string | null;
   riskFactors: AiReportRiskFactor[] | null;

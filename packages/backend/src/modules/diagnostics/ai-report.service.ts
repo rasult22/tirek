@@ -1,29 +1,44 @@
-interface RiskFactor {
-  factor: string;
-  severity: "low" | "moderate" | "high";
-  evidence?: string;
-}
+import { z } from "zod";
 
-interface Recommendation {
-  type: "therapy" | "exercise" | "referral" | "monitoring" | "conversation";
-  text: string;
-}
+const reportPayloadSchema = z.object({
+  summary: z.string(),
+  interpretation: z.string(),
+  riskFactors: z.array(
+    z.object({
+      factor: z.string(),
+      severity: z.enum(["low", "moderate", "high"]),
+      evidence: z.string().optional(),
+    }),
+  ),
+  recommendations: z.array(
+    z.object({
+      type: z.enum([
+        "therapy",
+        "exercise",
+        "referral",
+        "monitoring",
+        "conversation",
+      ]),
+      text: z.string(),
+    }),
+  ),
+  trend: z.string().nullable(),
+  flaggedItems: z.array(
+    z.object({
+      questionIndex: z.number(),
+      reason: z.string(),
+    }),
+  ),
+});
 
-interface FlaggedItem {
-  questionIndex: number;
-  reason: string;
-}
-
-interface ReportPayload {
-  summary: string;
-  interpretation: string;
-  riskFactors: RiskFactor[];
-  recommendations: Recommendation[];
-  trend: string | null;
-  flaggedItems: FlaggedItem[];
-}
+type ReportPayload = z.infer<typeof reportPayloadSchema>;
 
 export const REPORT_MODEL = "gpt-4.1-mini";
+
+// Bump when the system prompt or payload schema materially changes — old
+// reports keep the version they were generated under, so we can reproduce
+// behaviour when investigating a complaint.
+export const PROMPT_VERSION = "v2";
 
 export type ReportLanguage = "ru" | "kz";
 
@@ -43,6 +58,7 @@ export type PersistedReport = {
   generatedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  promptVersion?: string | null;
 };
 
 export type PersistedSession = {
@@ -54,6 +70,7 @@ export type PersistedSession = {
   maxScore: number | null;
   severity: string | null;
   completedAt: Date | null;
+  flaggedItems?: unknown;
 };
 
 export type PersistedTest = {
@@ -62,6 +79,7 @@ export type PersistedTest = {
   nameRu: string;
   description: string | null;
   questions: unknown;
+  scoringRules?: unknown;
 };
 
 export type PersistedAnswer = {
@@ -90,6 +108,7 @@ export type ReportUpdateFields = Partial<{
   tokensUsed: number | null;
   errorMessage: string | null;
   generatedAt: Date | null;
+  promptVersion: string | null;
 }>;
 
 export type LlmCall = (input: {
@@ -136,11 +155,38 @@ export type AiReportServiceDeps = {
   now: () => Date;
 };
 
-export function buildSystemPrompt(language: ReportLanguage): string {
+type ClinicalContext = {
+  thresholds: unknown;
+  maxScore: number | null;
+  flaggedRules: unknown;
+} | null;
+
+export function buildClinicalContext(scoringRules: unknown): ClinicalContext {
+  if (!scoringRules || typeof scoringRules !== "object") return null;
+  const sr = scoringRules as {
+    thresholds?: unknown;
+    maxScore?: unknown;
+    flaggedRules?: unknown;
+  };
+  return {
+    thresholds: Array.isArray(sr.thresholds) ? sr.thresholds : [],
+    maxScore: typeof sr.maxScore === "number" ? sr.maxScore : null,
+    flaggedRules: Array.isArray(sr.flaggedRules) ? sr.flaggedRules : [],
+  };
+}
+
+export function buildSystemPrompt(
+  language: ReportLanguage,
+  opts: { hasServerFlaggedItems?: boolean } = {},
+): string {
   const langDirective =
     language === "kz"
       ? "ҚАЗАҚ тілінде жаз — мектеп психологы үшін есеп құжат, оның интерфейсі қазақ тілінде."
       : "Пиши на РУССКОМ языке — отчёт для школьного психолога с русскоязычным интерфейсом.";
+
+  const serverFlaggedDirective = opts.hasServerFlaggedItems
+    ? `\n- result.serverFlaggedItems — это пункты, помеченные сервером по клиническим правилам (например, суицидальные мысли). КАЖДЫЙ такой пункт ОБЯЗАТЕЛЬНО отрази в riskFactors с severity = "high" и в flaggedItems с тем же questionIndex.`
+    : "";
 
   return `Ты — клинический психолог-ассистент, который помогает школьному психологу интерпретировать результаты психодиагностического теста ученика.
 
@@ -148,13 +194,15 @@ export function buildSystemPrompt(language: ReportLanguage): string {
 
 Язык отчёта: ${langDirective}
 
+Используй clinicalContext.thresholds (диапазоны баллов и их severity-уровни) и clinicalContext.maxScore как клинические нормы теста. Не выдумывай симптомы, которых нет в вопросах: ссылайся в evidence только на реально присутствующие answers[].questionIndex. Severity в riskFactors должна быть согласована с серверным result.severity.
+
 Требования:
 - Только JSON по указанной схеме, без markdown и лишнего текста.
 - Используй профессиональный, но не пугающий язык.
 - Не ставь диагнозов. Формулируй как "признаки", "симптомы совместимы с", "следует обратить внимание".
 - Рекомендации — практичные, применимые в школьной среде. Типы: "therapy" (индивидуальная беседа), "exercise" (упражнения: дыхание, заземление, дневник), "referral" (направление к специалисту), "monitoring" (наблюдение и повторная оценка), "conversation" (разговор с психологом/родителями).
 - riskFactors.severity: "low" | "moderate" | "high".
-- flaggedItems — это questionIndex тех пунктов, ответы на которые особенно тревожны (например, вопросы о суицидальных мыслях или самоповреждении с высоким значением). Если таких нет — пустой массив.
+- flaggedItems — это questionIndex тех пунктов, ответы на которые особенно тревожны (например, вопросы о суицидальных мыслях или самоповреждении с высоким значением). Если таких нет — пустой массив.${serverFlaggedDirective}
 - trend: если previousResults непуст — кратко сравни с предыдущей попыткой ("ухудшение", "улучшение", "стабильно"). Если пуст — верни null.
 - summary — 1-2 предложения, самая суть.
 - interpretation — 3-6 предложений с клинической интерпретацией скора и ключевых паттернов в ответах.
@@ -246,12 +294,18 @@ export function createAiReportService(deps: AiReportServiceDeps) {
           };
         });
 
+        const clinicalContext = buildClinicalContext(test.scoringRules);
+        const serverFlaggedItems = Array.isArray(session.flaggedItems)
+          ? session.flaggedItems
+          : [];
+
         const userPayload = {
           test: {
             slug: test.slug,
             name: test.nameRu,
             description: test.description,
           },
+          clinicalContext,
           student: {
             name: student?.name ?? null,
             grade: student?.grade ?? null,
@@ -262,6 +316,7 @@ export function createAiReportService(deps: AiReportServiceDeps) {
             maxScore: session.maxScore,
             severity: session.severity,
             completedAt: session.completedAt?.toISOString() ?? null,
+            serverFlaggedItems,
           },
           previousResults: history.map((h) => ({
             totalScore: h.totalScore,
@@ -273,32 +328,36 @@ export function createAiReportService(deps: AiReportServiceDeps) {
           reportLanguage: language,
         };
 
-        const systemPrompt = buildSystemPrompt(language);
+        const systemPrompt = buildSystemPrompt(language, {
+          hasServerFlaggedItems: serverFlaggedItems.length > 0,
+        });
 
         const { content, tokensUsed } = await deps.callLLM({
           systemPrompt,
           userPayload,
         });
 
-        const parsed = JSON.parse(content || "{}") as Partial<ReportPayload>;
-
-        const payload: ReportPayload = {
-          summary: typeof parsed.summary === "string" ? parsed.summary : "",
-          interpretation:
-            typeof parsed.interpretation === "string" ? parsed.interpretation : "",
-          riskFactors: Array.isArray(parsed.riskFactors) ? parsed.riskFactors : [],
-          recommendations: Array.isArray(parsed.recommendations)
-            ? parsed.recommendations
-            : [],
-          trend: typeof parsed.trend === "string" ? parsed.trend : null,
-          flaggedItems: Array.isArray(parsed.flaggedItems)
-            ? parsed.flaggedItems
-            : [],
-        };
+        let raw: unknown;
+        try {
+          raw = JSON.parse(content || "{}");
+        } catch (parseErr) {
+          const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+          throw new Error(`Invalid LLM output: not JSON (${msg})`);
+        }
+        const validated = reportPayloadSchema.safeParse(raw);
+        if (!validated.success) {
+          throw new Error(
+            `Invalid LLM output: ${validated.error.issues
+              .map((i) => `${i.path.join(".") || "<root>"}: ${i.message}`)
+              .join("; ")}`,
+          );
+        }
+        const payload: ReportPayload = validated.data;
 
         await deps.updateReport(sessionId, {
           status: "ready",
           model: REPORT_MODEL,
+          promptVersion: PROMPT_VERSION,
           summary: payload.summary,
           interpretation: payload.interpretation,
           riskFactors: payload.riskFactors,
