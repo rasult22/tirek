@@ -18,11 +18,9 @@ import { ThemeProvider } from "../lib/theme";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { NetworkStatus } from "../components/NetworkStatus";
 import { OnlineManager } from "../lib/offline";
-import { initSentry, Sentry } from "../lib/sentry";
 import { checkForUpdate } from "../lib/updates";
 import { useNotifications } from "../lib/notifications";
 
-initSentry();
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const SHEET_OPTIONS = {
@@ -91,4 +89,4 @@ function RootLayout() {
   );
 }
 
-export default Sentry.wrap(RootLayout);
+export default RootLayout;
