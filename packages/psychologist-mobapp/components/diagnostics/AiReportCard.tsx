@@ -222,25 +222,6 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
             </Text>
           )}
         </View>
-        <Pressable
-          onPress={() => regenerate.mutate()}
-          disabled={regenerate.isPending}
-          style={({ pressed }) => [
-            styles.refreshBtn,
-            { borderColor: c.borderLight },
-            pressed && { opacity: 0.7 },
-            regenerate.isPending && { opacity: 0.6 },
-          ]}
-        >
-          {regenerate.isPending ? (
-            <ActivityIndicator size="small" color={c.textLight} />
-          ) : (
-            <Ionicons name="refresh" size={12} color={c.textLight} />
-          )}
-          <Text style={{ fontSize: 11, fontWeight: "600", color: c.textLight }}>
-            Обновить
-          </Text>
-        </Pressable>
       </View>
 
       {/* Summary */}
@@ -492,6 +473,27 @@ export function AiReportCard({ sessionId }: AiReportCardProps) {
           профессиональной оценки специалистом.
         </Text>
       </View>
+
+      {/* Regenerate */}
+      <Pressable
+        onPress={() => regenerate.mutate()}
+        disabled={regenerate.isPending}
+        style={({ pressed }) => [
+          styles.regenerateBtn,
+          { borderColor: c.borderLight, backgroundColor: c.surface },
+          pressed && { opacity: 0.7 },
+          regenerate.isPending && { opacity: 0.6 },
+        ]}
+      >
+        {regenerate.isPending ? (
+          <ActivityIndicator size="small" color={c.textLight} />
+        ) : (
+          <Ionicons name="refresh" size={16} color={c.textLight} />
+        )}
+        <Text style={{ fontSize: 13, fontWeight: "600", color: c.textLight }}>
+          Перегенерировать отчёт
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -551,14 +553,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 1,
   },
-  refreshBtn: {
+  regenerateBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "center",
+    gap: 8,
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginTop: 12,
+    minHeight: 44,
   },
   summary: {
     fontSize: 14,
