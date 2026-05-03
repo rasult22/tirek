@@ -56,6 +56,7 @@ export const ru = {
     noAccount: "Нет аккаунта?",
     psychologistPanel: "Панель психолога",
     invalidCredentials: "Неверный email или пароль",
+    connectionError: "Нет соединения с сервером. Проверьте интернет и попробуйте снова",
     forgotPassword: "Забыли пароль?",
     confirmPassword: "Подтвердите пароль",
     passwordTooShort: "Минимум 6 символов",

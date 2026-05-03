@@ -3,7 +3,6 @@ import { View, StyleSheet, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "./ui";
 import { useThemeColors, radius } from "../lib/theme";
-import { Sentry } from "../lib/sentry";
 
 /* ── Functional fallback that respects theme ── */
 
@@ -62,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    Sentry.captureException(error, { extra: { componentStack: errorInfo.componentStack } });
+    console.error("ErrorBoundary caught:", error, errorInfo.componentStack);
   }
 
   handleReset = () => {

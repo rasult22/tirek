@@ -58,6 +58,7 @@ export const kz: TranslationKeys = {
     noAccount: "Аккаунтыңыз жоқ па?",
     psychologistPanel: "Психолог панелі",
     invalidCredentials: "Қате email немесе құпия сөз",
+    connectionError: "Серверге қосылу мүмкін болмады. Интернетті тексеріп, қайталап көріңіз",
     forgotPassword: "Құпия сөзді ұмыттыңыз ба?",
     confirmPassword: "Құпия сөзді растаңыз",
     passwordTooShort: "Кемінде 6 таңба",
