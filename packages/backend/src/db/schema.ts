@@ -182,6 +182,7 @@ export const diagnosticAiReports = pgTable("diagnostic_ai_reports", {
   flaggedItems: jsonb("flagged_items"), // [{ questionIndex, reason }]
   tokensUsed: integer("tokens_used"),
   errorMessage: text("error_message"),
+  promptVersion: text("prompt_version"), // bumped when prompt/schema changes
   generatedAt: timestamp("generated_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()

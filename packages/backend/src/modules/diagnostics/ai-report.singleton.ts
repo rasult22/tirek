@@ -122,6 +122,7 @@ const realDeps: AiReportServiceDeps = {
         maxScore: diagnosticSessions.maxScore,
         severity: diagnosticSessions.severity,
         completedAt: diagnosticSessions.completedAt,
+        flaggedItems: diagnosticSessions.flaggedItems,
       })
       .from(diagnosticSessions)
       .where(eq(diagnosticSessions.id, id))
@@ -136,6 +137,7 @@ const realDeps: AiReportServiceDeps = {
         nameRu: diagnosticTests.nameRu,
         description: diagnosticTests.description,
         questions: diagnosticTests.questions,
+        scoringRules: diagnosticTests.scoringRules,
       })
       .from(diagnosticTests)
       .where(eq(diagnosticTests.id, id))

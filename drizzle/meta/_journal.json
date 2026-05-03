@@ -120,6 +120,13 @@
       "when": 1780531200000,
       "tag": "0016_push_tokens",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1780790400000,
+      "tag": "0017_diagnostic_ai_reports_prompt_version",
+      "breakpoints": true
     }
   ]
 }
