@@ -50,6 +50,13 @@ export class ConflictError extends AppError {
   }
 }
 
+export class TooManyRequestsError extends AppError {
+  constructor(message = "Too many requests") {
+    super(429, "TOO_MANY_REQUESTS", message);
+    this.name = "TooManyRequestsError";
+  }
+}
+
 export class AIError extends AppError {
   constructor(message = "AI service error") {
     super(500, "AI_ERROR", message);
@@ -62,7 +69,7 @@ export function handleError(c: Context, err: unknown) {
   if (err instanceof AppError) {
     return c.json(
       { error: { code: err.code, message: err.message } },
-      err.statusCode as 400 | 401 | 403 | 404 | 409 | 500,
+      err.statusCode as 400 | 401 | 403 | 404 | 409 | 429 | 500,
     );
   }
 
