@@ -16,6 +16,14 @@ const envSchema = z.object({
   // AI
   OPENAI_API_KEY: z.string().optional(),
 
+  // SMTP (Gmail App Password для пилота — см. issue #104).
+  // Опциональны: без них emailSender не инициализируется и reset-флоу должен это учитывать.
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  EMAIL_FROM: z.string().optional(),
+
   // Ports
   API_PORT: z.coerce.number().default(3000),
   PORT: z.coerce.number().default(4111),
