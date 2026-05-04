@@ -296,6 +296,16 @@ export interface TirekClient {
     }): Promise<AuthResponse>;
     me(): Promise<User>;
     updateProfile(input: Record<string, unknown>): Promise<User>;
+    forgotPassword(input: { email: string }): Promise<{ success: true }>;
+    verifyResetCode(input: {
+      email: string;
+      code: string;
+    }): Promise<{ valid: true }>;
+    resetPassword(input: {
+      email: string;
+      code: string;
+      newPassword: string;
+    }): Promise<AuthResponse>;
   };
 
   // ── Student-side ──────────────────────────────────────────────────
@@ -506,6 +516,21 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
       me: () => request("/auth/me"),
       updateProfile: (data) =>
         request("/auth/profile", { method: "PATCH", body: JSON.stringify(data) }),
+      forgotPassword: (data) =>
+        request("/auth/forgot-password", {
+          method: "POST",
+          body: JSON.stringify(data),
+        }),
+      verifyResetCode: (data) =>
+        request("/auth/verify-reset-code", {
+          method: "POST",
+          body: JSON.stringify(data),
+        }),
+      resetPassword: (data) =>
+        request("/auth/reset-password", {
+          method: "POST",
+          body: JSON.stringify(data),
+        }),
     },
 
     mood: {

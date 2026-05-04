@@ -406,3 +406,160 @@ test("psychologist.diagnostics.assignTest: studentMessage попадает в т
     studentMessage: "Пожалуйста, пройди этот тест на этой неделе",
   });
 });
+
+// ── auth.forgotPassword / verifyResetCode / resetPassword ───────────
+
+test("auth.forgotPassword: POST /auth/forgot-password с body {email}, парсит {success:true}", async () => {
+  const app = new Hono();
+  const calls: Array<{ method: string; path: string; body: unknown }> = [];
+  app.post("/auth/forgot-password", async (c) => {
+    calls.push({
+      method: "POST",
+      path: c.req.path,
+      body: await c.req.json().catch(() => null),
+    });
+    return c.json({ success: true });
+  });
+
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => null,
+    fetch: makeFetch(app),
+  });
+
+  const result = await client.auth.forgotPassword({ email: "u@example.com" });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].path, "/auth/forgot-password");
+  assert.deepEqual(calls[0].body, { email: "u@example.com" });
+  assert.deepEqual(result, { success: true });
+});
+
+test("auth.verifyResetCode: POST /auth/verify-reset-code с body {email,code}, парсит {valid:true}", async () => {
+  const app = new Hono();
+  const calls: Array<{ method: string; path: string; body: unknown }> = [];
+  app.post("/auth/verify-reset-code", async (c) => {
+    calls.push({
+      method: "POST",
+      path: c.req.path,
+      body: await c.req.json().catch(() => null),
+    });
+    return c.json({ valid: true });
+  });
+
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => null,
+    fetch: makeFetch(app),
+  });
+
+  const result = await client.auth.verifyResetCode({
+    email: "u@example.com",
+    code: "123456",
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].path, "/auth/verify-reset-code");
+  assert.deepEqual(calls[0].body, { email: "u@example.com", code: "123456" });
+  assert.deepEqual(result, { valid: true });
+});
+
+test("auth.resetPassword: POST /auth/reset-password с {email,code,newPassword}, парсит AuthResponse (token+user)", async () => {
+  const app = new Hono();
+  const calls: Array<{ method: string; path: string; body: unknown }> = [];
+  app.post("/auth/reset-password", async (c) => {
+    calls.push({
+      method: "POST",
+      path: c.req.path,
+      body: await c.req.json().catch(() => null),
+    });
+    return c.json({
+      token: "jwt-tok",
+      user: {
+        id: "u1",
+        email: "u@example.com",
+        name: "Aliya",
+        role: "student",
+        language: "ru",
+        avatarId: null,
+        grade: 9,
+        classLetter: "Б",
+        schoolId: null,
+        createdAt: "2026-05-04T10:00:00.000Z",
+      },
+    });
+  });
+
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => null,
+    fetch: makeFetch(app),
+  });
+
+  const result = await client.auth.resetPassword({
+    email: "u@example.com",
+    code: "123456",
+    newPassword: "new-secret-123",
+  });
+
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, "POST");
+  assert.equal(calls[0].path, "/auth/reset-password");
+  assert.deepEqual(calls[0].body, {
+    email: "u@example.com",
+    code: "123456",
+    newPassword: "new-secret-123",
+  });
+  assert.equal(result.token, "jwt-tok");
+  assert.equal(result.user.id, "u1");
+  assert.equal(result.user.email, "u@example.com");
+});
+
+test("auth reset endpoints: при getToken=null Authorization header отсутствует", async () => {
+  const app = new Hono();
+  const seenAuth: string[] = [];
+  app.post("/auth/forgot-password", (c) => {
+    seenAuth.push(c.req.header("Authorization") ?? "");
+    return c.json({ success: true });
+  });
+  app.post("/auth/verify-reset-code", (c) => {
+    seenAuth.push(c.req.header("Authorization") ?? "");
+    return c.json({ valid: true });
+  });
+  app.post("/auth/reset-password", (c) => {
+    seenAuth.push(c.req.header("Authorization") ?? "");
+    return c.json({
+      token: "t",
+      user: {
+        id: "u1",
+        email: "u@example.com",
+        name: "x",
+        role: "student",
+        language: "ru",
+        avatarId: null,
+        grade: null,
+        classLetter: null,
+        schoolId: null,
+        createdAt: "2026-05-04T10:00:00.000Z",
+      },
+    });
+  });
+
+  const client = createTirekClient({
+    baseUrl: "http://test",
+    getToken: () => null,
+    fetch: makeFetch(app),
+  });
+
+  await client.auth.forgotPassword({ email: "a@b.c" });
+  await client.auth.verifyResetCode({ email: "a@b.c", code: "123456" });
+  await client.auth.resetPassword({
+    email: "a@b.c",
+    code: "123456",
+    newPassword: "new-pw-123",
+  });
+
+  assert.deepEqual(seenAuth, ["", "", ""]);
+});
