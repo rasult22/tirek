@@ -197,13 +197,10 @@ export default function DashboardScreen() {
             }}
             style={({ pressed }) => [
               styles.profileAvatar,
-              { backgroundColor: `${c.primary}1F` },
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={{ fontSize: 14, fontWeight: "700", color: c.primaryDark }}>
-              {user?.name?.charAt(0)?.toUpperCase() ?? "P"}
-            </Text>
+            <Ionicons name="person-circle" size={40} color={c.primary} />
           </Pressable>
         </View>
 
