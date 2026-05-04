@@ -16,13 +16,11 @@ const envSchema = z.object({
   // AI
   OPENAI_API_KEY: z.string().optional(),
 
-  // SMTP (Gmail App Password для пилота — см. issue #104).
+  // Email (Brevo HTTP API — Railway блокирует исходящий SMTP).
   // Опциональны: без них emailSender не инициализируется и reset-флоу должен это учитывать.
-  SMTP_HOST: z.string().optional(),
-  SMTP_PORT: z.coerce.number().optional(),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASS: z.string().optional(),
+  BREVO_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
+  EMAIL_FROM_NAME: z.string().optional(),
 
   // Ports
   API_PORT: z.coerce.number().default(3000),
