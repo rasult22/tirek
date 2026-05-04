@@ -1,15 +1,33 @@
+import { useEffect } from "react";
 import { Redirect } from "expo-router";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../lib/store/auth-store";
 import { useThemeColors } from "../lib/theme";
+import { authApi } from "../lib/api/auth";
 
 export default function Index() {
   const token = useAuthStore((s) => s.token);
-  const onboardingCompleted = useAuthStore((s) => s.onboardingCompleted);
+  const user = useAuthStore((s) => s.user);
   const hydrated = useAuthStore((s) => s._hasHydrated);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const c = useThemeColors();
 
-  if (!hydrated) {
+  // Issue #112: тянем свежий /me на старте — локальный персист мог быть
+  // записан до появления флага onboardingCompleted, поэтому source-of-truth
+  // принимается с сервера. На время загрузки показываем спиннер, чтобы не мигать.
+  const meQuery = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: () => authApi.me(),
+    enabled: hydrated && !!token,
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (meQuery.data) updateUser(meQuery.data);
+  }, [meQuery.data, updateUser]);
+
+  if (!hydrated || (token && meQuery.isLoading)) {
     return (
       <View style={[styles.loading, { backgroundColor: c.bg }]}>
         <ActivityIndicator size="large" color={c.primary} />
@@ -18,6 +36,8 @@ export default function Index() {
   }
 
   if (token) {
+    const onboardingCompleted =
+      meQuery.data?.onboardingCompleted ?? user?.onboardingCompleted === true;
     if (!onboardingCompleted) {
       return <Redirect href="/(auth)/onboarding" />;
     }

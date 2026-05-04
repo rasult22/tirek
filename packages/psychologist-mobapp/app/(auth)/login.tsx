@@ -44,7 +44,8 @@ export default function LoginScreen() {
       }
       setRoleError(false);
       setAuth(data.token, data.user);
-      router.replace("/(tabs)");
+      // Куда вести (онбординг vs (tabs)) — решает app/index.tsx по user.onboardingCompleted.
+      router.replace("/");
     },
     onMutate: () => {
       setRoleError(false);

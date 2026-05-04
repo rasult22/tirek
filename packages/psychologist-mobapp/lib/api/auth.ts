@@ -11,6 +11,7 @@ export const authApi = {
   me: () => tirekClient.auth.me(),
   updateProfile: (data: Record<string, unknown>) =>
     tirekClient.auth.updateProfile(data),
+  completeOnboarding: () => tirekClient.auth.completeOnboarding(),
   forgotPassword: (data: { email: string }) =>
     tirekClient.auth.forgotPassword(data),
   verifyResetCode: (data: { email: string; code: string }) =>

@@ -20,7 +20,10 @@ export interface User {
   grade: number | null;
   classLetter: string | null;
   schoolId: string | null;
-  createdAt: string;
+  // Issue #112: server-side флаг прохождения онбординга.
+  // login/register/me возвращают всегда; updateProfile тоже включает.
+  onboardingCompleted: boolean;
+  createdAt?: string;
 }
 
 export interface AuthResponse {

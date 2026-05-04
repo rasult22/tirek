@@ -16,6 +16,7 @@ export type PersistedUser = {
   grade: number | null;
   classLetter: string | null;
   schoolId: string | null;
+  onboardedAt: Date | null;
   createdAt: Date;
 };
 
@@ -57,6 +58,11 @@ export type AuthServiceDeps = {
     id: string,
     data: UpdateUserProfileInput,
   ) => Promise<PersistedUser | null>;
+  // Идемпотентно: если onboardedAt уже заполнен, оставляет старое значение.
+  markOnboardedNow: (
+    id: string,
+    when: Date,
+  ) => Promise<PersistedUser | null>;
   findActiveInviteByCode: (
     code: string,
   ) => Promise<PersistedInviteCodeForAuth | null>;
@@ -83,6 +89,7 @@ function publicUser(user: PersistedUser) {
     grade: user.grade,
     classLetter: user.classLetter,
     schoolId: user.schoolId,
+    onboardingCompleted: user.onboardedAt !== null,
   };
 }
 
@@ -222,12 +229,21 @@ export function createAuthService(deps: AuthServiceDeps) {
         grade: user.grade,
         classLetter: user.classLetter,
         schoolId: user.schoolId,
+        onboardingCompleted: user.onboardedAt !== null,
         createdAt: user.createdAt,
       };
     },
 
     async updateProfile(userId: string, body: UpdateUserProfileInput) {
       const user = await deps.updateUserProfile(userId, body);
+      if (!user) {
+        throw new NotFoundError("User not found");
+      }
+      return publicUser(user);
+    },
+
+    async completeOnboarding(userId: string) {
+      const user = await deps.markOnboardedNow(userId, deps.now());
       if (!user) {
         throw new NotFoundError("User not found");
       }

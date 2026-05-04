@@ -27,6 +27,7 @@ function makeApp() {
       grade: 9,
       classLetter: "Б",
       schoolId: null,
+      onboardedAt: null,
       createdAt: new Date("2026-04-01T00:00:00.000Z"),
     },
   ];

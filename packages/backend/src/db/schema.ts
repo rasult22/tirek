@@ -32,6 +32,9 @@ export const users = pgTable("users", {
   grade: integer("grade"),
   classLetter: text("class_letter"),
   schoolId: text("school_id").references(() => schools.id),
+  // Issue #112: момент завершения онбординга. NULL = ещё не прошёл.
+  // Идемпотентно: ставится один раз, в repository.markOnboardedNow только при IS NULL.
+  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

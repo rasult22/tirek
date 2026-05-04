@@ -73,7 +73,9 @@ export default function OnboardingScreen() {
   const t = useT();
   const c = useThemeColors();
   const router = useRouter();
-  const completeOnboarding = useAuthStore((s) => s.completeOnboarding);
+  const markOnboardingCompletedLocal = useAuthStore(
+    (s) => s.markOnboardingCompletedLocal,
+  );
   const updateUser = useAuthStore((s) => s.updateUser);
 
   const ob = t.psychologist.onboarding;
@@ -126,11 +128,18 @@ export default function OnboardingScreen() {
         ),
       );
 
-      return user;
+      // Server-side флаг ставим до локального обновления — если упадёт,
+      // повторный вход снова покажет онбординг.
+      const final = await authApi.completeOnboarding();
+
+      return final;
     },
     onSuccess: (user) => {
-      updateUser({ schoolId: (user as { schoolId?: string | null }).schoolId ?? null });
-      completeOnboarding();
+      updateUser({
+        schoolId: user.schoolId,
+        onboardingCompleted: user.onboardingCompleted,
+      });
+      markOnboardingCompletedLocal();
       router.replace("/(tabs)");
     },
     onError: () => {

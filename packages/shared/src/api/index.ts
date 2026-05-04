@@ -296,6 +296,7 @@ export interface TirekClient {
     }): Promise<AuthResponse>;
     me(): Promise<User>;
     updateProfile(input: Record<string, unknown>): Promise<User>;
+    completeOnboarding(): Promise<User>;
     forgotPassword(input: { email: string }): Promise<{ success: true }>;
     verifyResetCode(input: {
       email: string;
@@ -516,6 +517,8 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
       me: () => request("/auth/me"),
       updateProfile: (data) =>
         request("/auth/profile", { method: "PATCH", body: JSON.stringify(data) }),
+      completeOnboarding: () =>
+        request("/auth/onboarding/complete", { method: "POST" }),
       forgotPassword: (data) =>
         request("/auth/forgot-password", {
           method: "POST",

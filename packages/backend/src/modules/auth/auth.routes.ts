@@ -93,4 +93,14 @@ authRouter.patch("/profile", async (c) => {
   }
 });
 
+// POST /onboarding/complete
+authRouter.post("/onboarding/complete", async (c) => {
+  try {
+    const result = await authService.completeOnboarding(c.var.user.userId);
+    return c.json(result);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 export { authRouter };

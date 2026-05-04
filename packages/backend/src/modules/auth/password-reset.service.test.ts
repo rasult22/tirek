@@ -110,6 +110,7 @@ function fakeUser(over: Partial<PersistedUser> = {}): PersistedUser {
     grade: 9,
     classLetter: "Б",
     schoolId: null,
+    onboardedAt: null,
     createdAt: new Date("2026-04-01T00:00:00.000Z"),
     ...over,
   };

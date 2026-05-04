@@ -134,6 +134,13 @@
       "when": 1781049600000,
       "tag": "0018_password_reset_codes",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1781308800000,
+      "tag": "0019_users_onboarded_at",
+      "breakpoints": true
     }
   ]
 }

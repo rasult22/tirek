@@ -28,7 +28,6 @@ export default function NewPasswordScreen() {
   const router = useRouter();
   const c = useThemeColors();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const completeOnboarding = useAuthStore((s) => s.completeOnboarding);
   const params = useLocalSearchParams<{ email?: string; code?: string }>();
   const email = (params.email ?? "").trim();
   const code = (params.code ?? "").trim();
@@ -42,8 +41,9 @@ export default function NewPasswordScreen() {
       authApi.resetPassword({ email, code, newPassword: password }),
     onSuccess: (data) => {
       setAuth(data.token, data.user);
-      completeOnboarding();
-      router.replace("/(tabs)");
+      // Решение, куда вести юзера (онбординг vs (tabs)), принимает app/index.tsx
+      // на основе user.onboardingCompleted с сервера.
+      router.replace("/");
     },
   });
 

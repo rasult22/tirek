@@ -40,10 +40,19 @@ function makeService(seed?: { inviteCodes?: PersistedInviteCodeForAuth[] }) {
         grade: data.grade ?? null,
         classLetter: data.classLetter ?? null,
         schoolId: data.schoolId ?? null,
+        onboardedAt: null,
         createdAt: new Date("2026-04-25T10:00:00.000Z"),
       };
       fakes.users.push(user);
       return user;
+    },
+    markOnboardedNow: async (id, when) => {
+      const u = fakes.users.find((x) => x.id === id);
+      if (!u) return null;
+      if (u.onboardedAt === null) {
+        u.onboardedAt = when;
+      }
+      return u;
     },
     updateUserProfile: async (id, data) => {
       const u = fakes.users.find((x) => x.id === id);
@@ -132,4 +141,149 @@ test("register (student): created student has schoolId null even though invite i
   });
 
   assert.equal(fakes.users[0].schoolId, null);
+});
+
+// ── Onboarding flag (issue #112) ────────────────────────────────────
+// Источник истины — поле users.onboarded_at на сервере. Public-репрезентация
+// юзера несёт derived boolean onboardingCompleted (= onboardedAt != null),
+// чтобы клиент не таскал raw timestamp.
+
+test("me: onboardingCompleted=false, если onboardedAt === null", async () => {
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-1",
+    email: "psy@school.kz",
+    passwordHash: "hashed:pw",
+    name: "Психолог",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: null,
+    createdAt: new Date("2026-04-25T10:00:00.000Z"),
+  });
+
+  const result = await service.me("u-1");
+
+  assert.equal(result.onboardingCompleted, false);
+});
+
+test("register-psychologist: свежий юзер получает onboardingCompleted=false", async () => {
+  const { service } = makeService();
+
+  const result = await service.registerPsychologist({
+    email: "new-psy@school.kz",
+    password: "secret123",
+    name: "Новый Психолог",
+  });
+
+  assert.equal(result.user.onboardingCompleted, false);
+});
+
+test("completeOnboarding: ставит onboardedAt = now() и возвращает user с onboardingCompleted=true", async () => {
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-4",
+    email: "fresh@school.kz",
+    passwordHash: "hashed:pw",
+    name: "Свежий",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: null,
+    createdAt: new Date("2026-04-25T10:00:00.000Z"),
+  });
+
+  const result = await service.completeOnboarding("u-4");
+
+  assert.equal(result.onboardingCompleted, true);
+  assert.deepEqual(
+    fakes.users[0].onboardedAt,
+    new Date("2026-04-25T10:00:00.000Z"),
+  );
+});
+
+test("completeOnboarding: идемпотентно — повторный вызов не двигает уже выставленный onboardedAt", async () => {
+  const original = new Date("2026-04-26T12:00:00.000Z");
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-5",
+    email: "alreadydone@school.kz",
+    passwordHash: "hashed:pw",
+    name: "Уже Прошёл",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: original,
+    createdAt: new Date("2026-04-25T10:00:00.000Z"),
+  });
+
+  const result = await service.completeOnboarding("u-5");
+
+  assert.equal(result.onboardingCompleted, true);
+  assert.deepEqual(fakes.users[0].onboardedAt, original);
+});
+
+test("completeOnboarding: бросает NotFoundError для несуществующего юзера", async () => {
+  const { service } = makeService();
+
+  await assert.rejects(
+    () => service.completeOnboarding("nope"),
+    /User not found/,
+  );
+});
+
+test("login: возвращает onboardingCompleted из текущего состояния users.onboardedAt", async () => {
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-3",
+    email: "logged@school.kz",
+    passwordHash: "hashed:secret123",
+    name: "Уже Прошёл",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: new Date("2026-04-26T12:00:00.000Z"),
+    createdAt: new Date("2026-04-25T10:00:00.000Z"),
+  });
+
+  const result = await service.login({
+    email: "logged@school.kz",
+    password: "secret123",
+  });
+
+  assert.equal(result.user.onboardingCompleted, true);
+});
+
+test("me: onboardingCompleted=true, если onboardedAt заполнен", async () => {
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-2",
+    email: "psy2@school.kz",
+    passwordHash: "hashed:pw",
+    name: "Психолог 2",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: new Date("2026-04-26T12:00:00.000Z"),
+    createdAt: new Date("2026-04-25T10:00:00.000Z"),
+  });
+
+  const result = await service.me("u-2");
+
+  assert.equal(result.onboardingCompleted, true);
 });

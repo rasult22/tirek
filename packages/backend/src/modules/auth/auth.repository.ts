@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { users } from "../../db/schema.js";
 
@@ -49,6 +49,21 @@ export const authRepository = {
       .set({ ...data, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
+    return user ?? null;
+  },
+
+  // Идемпотентно: SET выполняется только когда onboarded_at IS NULL,
+  // чтобы повторный вызов не двигал дату прохождения.
+  async markOnboardedNow(userId: string, when: Date) {
+    await db
+      .update(users)
+      .set({ onboardedAt: when, updatedAt: when })
+      .where(and(eq(users.id, userId), isNull(users.onboardedAt)));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
     return user ?? null;
   },
 };
