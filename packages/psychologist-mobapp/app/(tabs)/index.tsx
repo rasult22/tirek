@@ -183,7 +183,10 @@ export default function DashboardScreen() {
           <View style={{ flex: 1 }}>
             <H3>
               {t.dashboard.greeting},{" "}
-              {user?.name?.split(" ")[0] ?? ""}!
+              {(() => {
+                const parts = user?.name?.trim().split(/\s+/) ?? [];
+                return parts[1] ?? parts[0] ?? "";
+              })()}!
             </H3>
             <Body size="sm" style={{ marginTop: 4, color: c.textLight }}>
               {t.psychologist.role}
