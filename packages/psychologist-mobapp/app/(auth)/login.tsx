@@ -139,7 +139,14 @@ export default function LoginScreen() {
                 </Pressable>
               </View>
 
-              <Text style={styles.forgot}>{t.auth.forgotPassword}</Text>
+              <View style={styles.forgotRow}>
+                <Pressable
+                  onPress={() => router.push("/(auth)/forgot-password")}
+                  hitSlop={8}
+                >
+                  <Text style={styles.forgotLink}>{t.auth.forgotPassword}</Text>
+                </Pressable>
+              </View>
 
               {hasError && (
                 <View style={styles.errorBox}>
@@ -248,10 +255,13 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
   },
-  forgot: {
-    textAlign: "right",
-    fontSize: 12,
-    color: ds.inkMuted,
+  forgotRow: {
+    alignItems: "flex-end",
+  },
+  forgotLink: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: ds.brand,
   },
   errorBox: {
     backgroundColor: ds.dangerSoft,
