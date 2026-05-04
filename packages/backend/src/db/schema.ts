@@ -454,6 +454,25 @@ export const pushTokens = pgTable("push_tokens", {
     .notNull(),
 });
 
+// ── password_reset_codes (issue #105) ───────────────────────────────
+// 4-знач. код для восстановления пароля. code хранится только bcrypt-хэшем.
+// TTL=15 минут (см. expiresAt). При новом запросе старые активные коды
+// инвалидируются (used_at = now). attempts увеличивается при verifyCode;
+// 5 неудач помечает код used_at и блокирует дальнейшее использование.
+export const passwordResetCodes = pgTable("password_reset_codes", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // ── 25. cbt_entries ────────────────────────────────────────────────
 export const cbtEntries = pgTable("cbt_entries", {
   id: text("id").primaryKey(),
