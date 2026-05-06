@@ -11,7 +11,6 @@ import {
 import { useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import Constants from "expo-constants";
 import { Text, Button, Input, Body } from "../../components/ui";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
@@ -19,7 +18,6 @@ import { useAuthStore } from "../../lib/store/auth-store";
 import { authApi } from "../../lib/api/auth";
 import { useThemeColors, radius, spacing } from "../../lib/theme";
 import { colors as ds } from "@tirek/shared/design-system";
-import { checkForUpdate } from "../../lib/updates";
 import { hapticLight } from "../../lib/haptics";
 import type { Language } from "@tirek/shared";
 
@@ -280,64 +278,6 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            <View
-              style={[
-                styles.row,
-                { borderBottomColor: c.borderLight, borderBottomWidth: 1 },
-              ]}
-            >
-              <View
-                style={[styles.rowIcon, { backgroundColor: ds.brandSoft }]}
-              >
-                <Ionicons
-                  name="information-circle-outline"
-                  size={18}
-                  color={c.primaryDark}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Body style={{ fontFamily: "Inter_600SemiBold" }}>
-                  {t.common.appName}
-                </Body>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    lineHeight: 14,
-                    color: c.textLight,
-                    marginTop: 2,
-                  }}
-                >
-                  v{Constants.expoConfig?.version ?? "1.0.0"}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => {
-                  hapticLight();
-                  checkForUpdate();
-                }}
-                style={({ pressed }) => [
-                  styles.updateBtn,
-                  { borderColor: c.borderLight },
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Ionicons
-                  name="cloud-download-outline"
-                  size={14}
-                  color={c.text}
-                />
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontFamily: "Inter_600SemiBold",
-                    color: c.text,
-                  }}
-                >
-                  {t.profile.update}
-                </Text>
-              </Pressable>
-            </View>
-
             <Pressable
               onPress={() => {
                 hapticLight();
@@ -585,16 +525,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  updateBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
   },
 
   // Danger
