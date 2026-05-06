@@ -238,6 +238,52 @@ interface ClientInternals {
   getToken: () => string | null | Promise<string | null>;
 }
 
+// 401 на этих публичных auth-эндпоинтах = bad credentials, а не token expiry.
+// onUnauthorized (глобальный logout+redirect) НЕ должен срабатывать —
+// иначе экран login перемонтируется и стирает state mutation, юзер не видит ошибку.
+// /auth/me* (включая /auth/me/delete) сюда НЕ попадают: там 401 = реально невалидный токен.
+function isPublicAuthPath(path: string): boolean {
+  return (
+    path === "/auth/login" ||
+    path === "/auth/register" ||
+    path === "/auth/register-psychologist" ||
+    path === "/auth/forgot-password" ||
+    path === "/auth/verify-reset-code" ||
+    path === "/auth/reset-password"
+  );
+}
+
+// Backend возвращает ошибки в форме { error: { code, message } }, см. shared/errors.ts.
+// Старый клиент ожидал плоский { code, error } и из-за этого получал bogus поля.
+async function parseErrorBody(
+  res: Response,
+  fallback: { fallbackCode: string; fallbackMessage: string },
+): Promise<{ code: string; message: string }> {
+  try {
+    const body: unknown = await res.json();
+    if (body && typeof body === "object") {
+      const b = body as Record<string, unknown>;
+      // Новый формат: { error: { code, message } }
+      if (b.error && typeof b.error === "object") {
+        const e = b.error as Record<string, unknown>;
+        return {
+          code: typeof e.code === "string" ? e.code : fallback.fallbackCode,
+          message:
+            typeof e.message === "string" ? e.message : fallback.fallbackMessage,
+        };
+      }
+      // Старый/плоский формат: { code, error } — на всякий случай.
+      return {
+        code: typeof b.code === "string" ? b.code : fallback.fallbackCode,
+        message: typeof b.error === "string" ? b.error : fallback.fallbackMessage,
+      };
+    }
+  } catch {
+    // body не JSON — отдаём fallback.
+  }
+  return { code: fallback.fallbackCode, message: fallback.fallbackMessage };
+}
+
 function makeInternals(opts: CreateTirekClientOptions): ClientInternals {
   const fetchImpl = opts.fetch ?? fetch;
 
@@ -256,19 +302,23 @@ function makeInternals(opts: CreateTirekClientOptions): ClientInternals {
     const res = await rawFetch(path, init);
 
     if (res.status === 401) {
-      opts.onUnauthorized?.();
-      throw new ApiError(401, "UNAUTHORIZED", "Session expired");
+      if (!isPublicAuthPath(path)) {
+        opts.onUnauthorized?.();
+        throw new ApiError(401, "UNAUTHORIZED", "Session expired");
+      }
+      const { code, message } = await parseErrorBody(res, {
+        fallbackCode: "INVALID_CREDENTIALS",
+        fallbackMessage: "Invalid credentials",
+      });
+      throw new ApiError(401, code, message);
     }
 
     if (!res.ok) {
-      const body = await res
-        .json()
-        .catch(() => ({ error: "Unknown error", code: "UNKNOWN" }));
-      throw new ApiError(
-        res.status,
-        body.code ?? "UNKNOWN",
-        body.error ?? "Unknown error",
-      );
+      const { code, message } = await parseErrorBody(res, {
+        fallbackCode: "UNKNOWN",
+        fallbackMessage: "Unknown error",
+      });
+      throw new ApiError(res.status, code, message);
     }
 
     return (await res.json()) as T;
@@ -531,14 +581,11 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
           throw new ApiError(401, "UNAUTHORIZED", "Session expired");
         }
         if (!res.ok) {
-          const body = await res
-            .json()
-            .catch(() => ({ error: "Unknown error", code: "UNKNOWN" }));
-          throw new ApiError(
-            res.status,
-            body.code ?? "UNKNOWN",
-            body.error ?? "Unknown error",
-          );
+          const { code, message } = await parseErrorBody(res, {
+            fallbackCode: "UNKNOWN",
+            fallbackMessage: "Unknown error",
+          });
+          throw new ApiError(res.status, code, message);
         }
       },
       forgotPassword: (data) =>

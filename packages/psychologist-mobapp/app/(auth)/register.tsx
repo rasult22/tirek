@@ -15,7 +15,7 @@ import { Text, Input, Button, Sheet, Body } from "../../components/ui";
 import { colors as ds, radius, spacing } from "@tirek/shared/design-system";
 import { useT, useLanguage } from "../../lib/hooks/useLanguage";
 import { authApi } from "../../lib/api/auth";
-import { ApiError } from "../../lib/api/client";
+import { authErrorMessage } from "../../lib/api/errors";
 import { useAuthStore } from "../../lib/store/auth-store";
 import { useThemeColors } from "../../lib/theme";
 import type { Language } from "@tirek/shared";
@@ -219,9 +219,7 @@ export default function RegisterScreen() {
             {registerMutation.isError && (
               <View style={styles.errorBox}>
                 <Text style={styles.errorText}>
-                  {registerMutation.error instanceof ApiError
-                    ? t.auth.invalidCredentials
-                    : t.auth.connectionError}
+                  {authErrorMessage(registerMutation.error, t)}
                 </Text>
               </View>
             )}
