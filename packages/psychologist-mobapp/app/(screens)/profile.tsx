@@ -6,7 +6,6 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Modal,
   Alert,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
@@ -38,7 +37,6 @@ export default function ProfileScreen() {
   const [editName, setEditName] = useState(user?.name ?? "");
   const [showLogout, setShowLogout] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [deleteEmail, setDeleteEmail] = useState("");
 
   const saveMutation = useMutation({
     mutationFn: () => authApi.updateProfile({ name: editName }),
@@ -56,12 +54,12 @@ export default function ProfileScreen() {
   };
 
   const deleteMutation = useMutation({
-    mutationFn: () => authApi.deleteAccount({ confirmEmail: deleteEmail }),
+    // confirmEmail подставляется автоматически — UI-ввода нет.
+    // Защита API-уровня от replay украденного токена сохраняется.
+    mutationFn: () =>
+      authApi.deleteAccount({ confirmEmail: user?.email ?? "" }),
     onSuccess: () => {
-      // Анонимизация на сервере уже произошла; локальное состояние сбрасываем
-      // и редиректим на login. Тост показываем через Alert до навигации.
       setShowDelete(false);
-      setDeleteEmail("");
       logout();
       queryClient.clear();
       Alert.alert(t.profile.deleteAccountSuccess);
@@ -71,9 +69,6 @@ export default function ProfileScreen() {
       Alert.alert(t.profile.deleteAccountError);
     },
   });
-
-  const canConfirmDelete =
-    deleteEmail.trim().toLowerCase() === (user?.email ?? "").trim().toLowerCase();
 
   const startEdit = () => {
     setEditName(user?.name ?? "");
@@ -372,7 +367,6 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => {
               hapticLight();
-              setDeleteEmail("");
               setShowDelete(true);
             }}
             style={({ pressed }) => [
@@ -413,96 +407,15 @@ export default function ProfileScreen() {
         variant="danger"
       />
 
-      <Modal
-        visible={showDelete}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDelete(false)}
-      >
-        <KeyboardAvoidingView
-          style={styles.deleteOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <Pressable
-            style={styles.deleteBackdrop}
-            onPress={() => setShowDelete(false)}
-          />
-          <View style={[styles.deleteDialog, { backgroundColor: c.surface }]}>
-            <View
-              style={[styles.iconWrap, { backgroundColor: `${c.danger}1A` }]}
-            >
-              <Ionicons
-                name="alert-circle-outline"
-                size={24}
-                color={c.danger}
-              />
-            </View>
-            <Text
-              style={{
-                fontSize: 18,
-                lineHeight: 24,
-                fontFamily: "Inter_700Bold",
-                color: c.text,
-                textAlign: "center",
-                marginTop: spacing.md,
-              }}
-            >
-              {t.profile.deleteAccountTitle}
-            </Text>
-            <Text
-              style={{
-                fontSize: 14,
-                lineHeight: 20,
-                color: c.textLight,
-                textAlign: "center",
-                marginTop: 6,
-              }}
-            >
-              {t.profile.deleteAccountWarning}
-            </Text>
-            <Text
-              style={[
-                styles.fieldLabel,
-                {
-                  color: c.textLight,
-                  marginTop: spacing.lg,
-                  alignSelf: "stretch",
-                },
-              ]}
-            >
-              {t.profile.deleteAccountConfirmEmail}
-            </Text>
-            <Input
-              value={deleteEmail}
-              onChangeText={setDeleteEmail}
-              placeholder={t.profile.deleteAccountConfirmEmailPlaceholder}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              editable={!deleteMutation.isPending}
-            />
-            <View style={styles.editActions}>
-              <Button
-                title={t.common.cancel}
-                variant="secondary"
-                onPress={() => setShowDelete(false)}
-                size="md"
-                style={{ flex: 1 }}
-                disabled={deleteMutation.isPending}
-              />
-              <Button
-                title={t.profile.deleteAccountConfirm}
-                variant="danger"
-                onPress={() => deleteMutation.mutate()}
-                disabled={!canConfirmDelete || deleteMutation.isPending}
-                loading={deleteMutation.isPending}
-                size="md"
-                style={{ flex: 1 }}
-              />
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <ConfirmDialog
+        open={showDelete}
+        onConfirm={() => deleteMutation.mutate()}
+        onCancel={() => setShowDelete(false)}
+        title={t.profile.deleteAccountTitle}
+        description={t.profile.deleteAccountWarning}
+        confirmLabel={t.profile.deleteAccountConfirm}
+        variant="danger"
+      />
     </>
   );
 }
@@ -629,31 +542,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: radius.xl,
     borderWidth: 1,
-  },
-
-  // Delete account modal
-  deleteOverlay: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing["2xl"],
-  },
-  deleteBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  deleteDialog: {
-    width: "100%",
-    maxWidth: 360,
-    borderRadius: radius.xl,
-    padding: spacing["2xl"],
-    alignItems: "center",
-  },
-  iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

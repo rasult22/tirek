@@ -370,8 +370,6 @@ export const ru = {
     deleteAccountTitle: "Удалить аккаунт",
     deleteAccountWarning:
       "Это действие необратимо. Ваш аккаунт будет деактивирован, ученики потеряют связь с вами.",
-    deleteAccountConfirmEmail: "Введите email для подтверждения",
-    deleteAccountConfirmEmailPlaceholder: "your@email.kz",
     deleteAccountConfirm: "Удалить аккаунт",
     deleteAccountSuccess: "Аккаунт удалён",
     deleteAccountError: "Не удалось удалить аккаунт",

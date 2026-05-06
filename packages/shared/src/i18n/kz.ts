@@ -372,8 +372,6 @@ export const kz: TranslationKeys = {
     deleteAccountTitle: "Аккаунтты жою",
     deleteAccountWarning:
       "Бұл әрекетті қайтару мүмкін емес. Аккаунтыңыз өшіріледі, оқушылар сізбен байланысын жоғалтады.",
-    deleteAccountConfirmEmail: "Растау үшін email енгізіңіз",
-    deleteAccountConfirmEmailPlaceholder: "your@email.kz",
     deleteAccountConfirm: "Аккаунтты жою",
     deleteAccountSuccess: "Аккаунт жойылды",
     deleteAccountError: "Аккаунтты жою мүмкін болмады",
