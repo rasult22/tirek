@@ -6,6 +6,8 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Alert,
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,6 +37,8 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(user?.name ?? "");
   const [showLogout, setShowLogout] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteEmail, setDeleteEmail] = useState("");
 
   const saveMutation = useMutation({
     mutationFn: () => authApi.updateProfile({ name: editName }),
@@ -50,6 +54,26 @@ export default function ProfileScreen() {
     queryClient.clear();
     router.replace("/(auth)/login");
   };
+
+  const deleteMutation = useMutation({
+    mutationFn: () => authApi.deleteAccount({ confirmEmail: deleteEmail }),
+    onSuccess: () => {
+      // Анонимизация на сервере уже произошла; локальное состояние сбрасываем
+      // и редиректим на login. Тост показываем через Alert до навигации.
+      setShowDelete(false);
+      setDeleteEmail("");
+      logout();
+      queryClient.clear();
+      Alert.alert(t.profile.deleteAccountSuccess);
+      router.replace("/(auth)/login");
+    },
+    onError: () => {
+      Alert.alert(t.profile.deleteAccountError);
+    },
+  });
+
+  const canConfirmDelete =
+    deleteEmail.trim().toLowerCase() === (user?.email ?? "").trim().toLowerCase();
 
   const startEdit = () => {
     setEditName(user?.name ?? "");
@@ -342,6 +366,40 @@ export default function ProfileScreen() {
               color={c.danger}
             />
           </Pressable>
+
+          {/* Delete account — App Store 5.1.1(v), issue #113 */}
+          <View style={{ height: spacing.sm }} />
+          <Pressable
+            onPress={() => {
+              hapticLight();
+              setDeleteEmail("");
+              setShowDelete(true);
+            }}
+            style={({ pressed }) => [
+              styles.dangerRow,
+              {
+                backgroundColor: c.surface,
+                borderColor: `${c.danger}33`,
+              },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <View
+              style={[styles.rowIcon, { backgroundColor: `${c.danger}1A` }]}
+            >
+              <Ionicons name="trash-outline" size={18} color={c.danger} />
+            </View>
+            <Body
+              style={{
+                fontFamily: "Inter_600SemiBold",
+                flex: 1,
+                color: c.danger,
+              }}
+            >
+              {t.profile.deleteAccount}
+            </Body>
+            <Ionicons name="chevron-forward" size={16} color={c.danger} />
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -354,6 +412,97 @@ export default function ProfileScreen() {
         confirmLabel={t.auth.logout}
         variant="danger"
       />
+
+      <Modal
+        visible={showDelete}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDelete(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.deleteOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <Pressable
+            style={styles.deleteBackdrop}
+            onPress={() => setShowDelete(false)}
+          />
+          <View style={[styles.deleteDialog, { backgroundColor: c.surface }]}>
+            <View
+              style={[styles.iconWrap, { backgroundColor: `${c.danger}1A` }]}
+            >
+              <Ionicons
+                name="alert-circle-outline"
+                size={24}
+                color={c.danger}
+              />
+            </View>
+            <Text
+              style={{
+                fontSize: 18,
+                lineHeight: 24,
+                fontFamily: "Inter_700Bold",
+                color: c.text,
+                textAlign: "center",
+                marginTop: spacing.md,
+              }}
+            >
+              {t.profile.deleteAccountTitle}
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                lineHeight: 20,
+                color: c.textLight,
+                textAlign: "center",
+                marginTop: 6,
+              }}
+            >
+              {t.profile.deleteAccountWarning}
+            </Text>
+            <Text
+              style={[
+                styles.fieldLabel,
+                {
+                  color: c.textLight,
+                  marginTop: spacing.lg,
+                  alignSelf: "stretch",
+                },
+              ]}
+            >
+              {t.profile.deleteAccountConfirmEmail}
+            </Text>
+            <Input
+              value={deleteEmail}
+              onChangeText={setDeleteEmail}
+              placeholder={t.profile.deleteAccountConfirmEmailPlaceholder}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              editable={!deleteMutation.isPending}
+            />
+            <View style={styles.editActions}>
+              <Button
+                title={t.common.cancel}
+                variant="secondary"
+                onPress={() => setShowDelete(false)}
+                size="md"
+                style={{ flex: 1 }}
+                disabled={deleteMutation.isPending}
+              />
+              <Button
+                title={t.profile.deleteAccountConfirm}
+                variant="danger"
+                onPress={() => deleteMutation.mutate()}
+                disabled={!canConfirmDelete || deleteMutation.isPending}
+                loading={deleteMutation.isPending}
+                size="md"
+                style={{ flex: 1 }}
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </>
   );
 }
@@ -480,5 +629,31 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: radius.xl,
     borderWidth: 1,
+  },
+
+  // Delete account modal
+  deleteOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing["2xl"],
+  },
+  deleteBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  deleteDialog: {
+    width: "100%",
+    maxWidth: 360,
+    borderRadius: radius.xl,
+    padding: spacing["2xl"],
+    alignItems: "center",
+  },
+  iconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

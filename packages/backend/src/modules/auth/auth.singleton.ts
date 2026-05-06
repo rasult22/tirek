@@ -22,6 +22,8 @@ export const authService = createAuthService({
     authRepository.updateProfile(id, data) as Promise<PersistedUser | null>,
   markOnboardedNow: (id, when) =>
     authRepository.markOnboardedNow(id, when) as Promise<PersistedUser | null>,
+  softDeleteUser: (id, when) =>
+    authRepository.softDelete(id, when) as Promise<PersistedUser | null>,
   findActiveInviteByCode: async (code) => {
     const [row] = await db
       .select()

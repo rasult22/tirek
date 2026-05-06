@@ -368,6 +368,15 @@ export const kz: TranslationKeys = {
     themeLight: "Жарық",
     themeDark: "Қараңғы",
     update: "Жаңарту",
+    deleteAccount: "Аккаунтты жою",
+    deleteAccountTitle: "Аккаунтты жою",
+    deleteAccountWarning:
+      "Бұл әрекетті қайтару мүмкін емес. Аккаунтыңыз өшіріледі, оқушылар сізбен байланысын жоғалтады.",
+    deleteAccountConfirmEmail: "Растау үшін email енгізіңіз",
+    deleteAccountConfirmEmailPlaceholder: "your@email.kz",
+    deleteAccountConfirm: "Аккаунтты жою",
+    deleteAccountSuccess: "Аккаунт жойылды",
+    deleteAccountError: "Аккаунтты жою мүмкін болмады",
   },
   journal: {
     title: "Күнделік",

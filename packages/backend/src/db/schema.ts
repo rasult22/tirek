@@ -35,6 +35,10 @@ export const users = pgTable("users", {
   // Issue #112: момент завершения онбординга. NULL = ещё не прошёл.
   // Идемпотентно: ставится один раз, в repository.markOnboardedNow только при IS NULL.
   onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
+  // Issue #113: soft delete (App Store 5.1.1(v)). NULL = активен.
+  // Login и /me фильтруют deleted_at IS NULL; ставится в softDeleteUser
+  // вместе с анонимизацией email/name/password_hash.
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

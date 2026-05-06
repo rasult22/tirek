@@ -297,6 +297,7 @@ export interface TirekClient {
     me(): Promise<User>;
     updateProfile(input: Record<string, unknown>): Promise<User>;
     completeOnboarding(): Promise<User>;
+    deleteAccount(input: { confirmEmail: string }): Promise<void>;
     forgotPassword(input: { email: string }): Promise<{ success: true }>;
     verifyResetCode(input: {
       email: string;
@@ -519,6 +520,27 @@ export function createTirekClient(opts: CreateTirekClientOptions): TirekClient {
         request("/auth/profile", { method: "PATCH", body: JSON.stringify(data) }),
       completeOnboarding: () =>
         request("/auth/onboarding/complete", { method: "POST" }),
+      deleteAccount: async (data) => {
+        // Backend отвечает 204 No Content — request() ждёт JSON, поэтому идём через rawFetch.
+        const res = await rawFetch("/auth/me/delete", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+        if (res.status === 401) {
+          opts.onUnauthorized?.();
+          throw new ApiError(401, "UNAUTHORIZED", "Session expired");
+        }
+        if (!res.ok) {
+          const body = await res
+            .json()
+            .catch(() => ({ error: "Unknown error", code: "UNKNOWN" }));
+          throw new ApiError(
+            res.status,
+            body.code ?? "UNKNOWN",
+            body.error ?? "Unknown error",
+          );
+        }
+      },
       forgotPassword: (data) =>
         request("/auth/forgot-password", {
           method: "POST",

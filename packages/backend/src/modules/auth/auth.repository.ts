@@ -66,4 +66,23 @@ export const authRepository = {
       .limit(1);
     return user ?? null;
   },
+
+  // Issue #113: анонимизация для App Store 5.1.1(v).
+  // Email затирается на deleted-{id}@deleted.tirek.kz, чтобы освободить оригинальный
+  // адрес для повторной регистрации; passwordHash → '!deleted' (никакой реальный
+  // bcrypt-hash не схлопнется в эту строку, login невозможен).
+  async softDelete(userId: string, when: Date) {
+    const [user] = await db
+      .update(users)
+      .set({
+        email: `deleted-${userId}@deleted.tirek.kz`,
+        name: "Deleted user",
+        passwordHash: "!deleted",
+        deletedAt: when,
+        updatedAt: when,
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user ?? null;
+  },
 };

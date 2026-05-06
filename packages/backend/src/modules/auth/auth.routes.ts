@@ -103,4 +103,15 @@ authRouter.post("/onboarding/complete", async (c) => {
   }
 });
 
+// POST /me/delete — soft delete (App Store 5.1.1(v), issue #113)
+authRouter.post("/me/delete", async (c) => {
+  try {
+    const body = await c.req.json();
+    await authService.deleteAccount(c.var.user.userId, body);
+    return c.body(null, 204);
+  } catch (err) {
+    return handleError(c, err);
+  }
+});
+
 export { authRouter };

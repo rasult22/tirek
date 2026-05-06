@@ -71,6 +71,7 @@ export const directChatRepository = {
     studentId: string,
     pagination: PaginationParams,
   ) {
+    // issue #113: conversations с soft-deleted психологом не показываем ученику.
     return db
       .select({
         id: conversations.id,
@@ -84,17 +85,29 @@ export const directChatRepository = {
       })
       .from(conversations)
       .innerJoin(users, eq(users.id, conversations.psychologistId))
-      .where(eq(conversations.studentId, studentId))
+      .where(
+        and(
+          eq(conversations.studentId, studentId),
+          isNull(users.deletedAt),
+        ),
+      )
       .orderBy(desc(conversations.lastMessageAt))
       .limit(pagination.limit)
       .offset(pagination.offset);
   },
 
   async countConversationsByStudent(studentId: string) {
+    // issue #113: считаем только conversations, где психолог не удалён.
     const [row] = await db
       .select({ value: dbCount() })
       .from(conversations)
-      .where(eq(conversations.studentId, studentId));
+      .innerJoin(users, eq(users.id, conversations.psychologistId))
+      .where(
+        and(
+          eq(conversations.studentId, studentId),
+          isNull(users.deletedAt),
+        ),
+      );
     return Number(row?.value ?? 0);
   },
 
@@ -244,6 +257,7 @@ export const directChatRepository = {
   },
 
   async findLinkedPsychologist(studentId: string) {
+    // issue #113: deleted (soft) психолог не должен показываться ученику.
     const [link] = await db
       .select({
         psychologistId: studentPsychologist.psychologistId,
@@ -252,7 +266,12 @@ export const directChatRepository = {
       })
       .from(studentPsychologist)
       .innerJoin(users, eq(users.id, studentPsychologist.psychologistId))
-      .where(eq(studentPsychologist.studentId, studentId))
+      .where(
+        and(
+          eq(studentPsychologist.studentId, studentId),
+          isNull(users.deletedAt),
+        ),
+      )
       .limit(1);
     return link ?? null;
   },

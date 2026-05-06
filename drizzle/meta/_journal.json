@@ -141,6 +141,13 @@
       "when": 1781308800000,
       "tag": "0019_users_onboarded_at",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1781568000000,
+      "tag": "0020_users_deleted_at",
+      "breakpoints": true
     }
   ]
 }

@@ -41,10 +41,20 @@ function makeService(seed?: { inviteCodes?: PersistedInviteCodeForAuth[] }) {
         classLetter: data.classLetter ?? null,
         schoolId: data.schoolId ?? null,
         onboardedAt: null,
+        deletedAt: null,
         createdAt: new Date("2026-04-25T10:00:00.000Z"),
       };
       fakes.users.push(user);
       return user;
+    },
+    softDeleteUser: async (id, when) => {
+      const u = fakes.users.find((x) => x.id === id);
+      if (!u) return null;
+      u.email = `deleted-${id}@deleted.tirek.kz`;
+      u.name = "Deleted user";
+      u.passwordHash = "!deleted";
+      u.deletedAt = when;
+      return u;
     },
     markOnboardedNow: async (id, when) => {
       const u = fakes.users.find((x) => x.id === id);
@@ -162,6 +172,7 @@ test("me: onboardingCompleted=false, если onboardedAt === null", async () =>
     classLetter: null,
     schoolId: null,
     onboardedAt: null,
+    deletedAt: null,
     createdAt: new Date("2026-04-25T10:00:00.000Z"),
   });
 
@@ -196,6 +207,7 @@ test("completeOnboarding: ставит onboardedAt = now() и возвращае
     classLetter: null,
     schoolId: null,
     onboardedAt: null,
+    deletedAt: null,
     createdAt: new Date("2026-04-25T10:00:00.000Z"),
   });
 
@@ -223,6 +235,7 @@ test("completeOnboarding: идемпотентно — повторный выз
     classLetter: null,
     schoolId: null,
     onboardedAt: original,
+    deletedAt: null,
     createdAt: new Date("2026-04-25T10:00:00.000Z"),
   });
 
@@ -255,6 +268,7 @@ test("login: возвращает onboardingCompleted из текущего со
     classLetter: null,
     schoolId: null,
     onboardedAt: new Date("2026-04-26T12:00:00.000Z"),
+    deletedAt: null,
     createdAt: new Date("2026-04-25T10:00:00.000Z"),
   });
 
@@ -280,10 +294,133 @@ test("me: onboardingCompleted=true, если onboardedAt заполнен", asyn
     classLetter: null,
     schoolId: null,
     onboardedAt: new Date("2026-04-26T12:00:00.000Z"),
+    deletedAt: null,
     createdAt: new Date("2026-04-25T10:00:00.000Z"),
   });
 
   const result = await service.me("u-2");
 
   assert.equal(result.onboardingCompleted, true);
+});
+
+// ── Soft delete (issue #113) ────────────────────────────────────────
+// App Store 5.1.1(v): пользователь должен иметь возможность удалить аккаунт
+// изнутри приложения. Hard delete не подходит (привязанные ученики и история);
+// делаем анонимизацию: email / name / passwordHash затираются, deletedAt=now().
+
+test("deleteAccount: анонимизирует email/name/passwordHash и ставит deletedAt = now()", async () => {
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-del",
+    email: "psy@school.kz",
+    passwordHash: "hashed:secret123",
+    name: "Психолог Удаляемый",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: null,
+    deletedAt: null,
+    createdAt: new Date("2026-04-25T10:00:00.000Z"),
+  });
+
+  await service.deleteAccount("u-del", { confirmEmail: "psy@school.kz" });
+
+  const u = fakes.users[0];
+  assert.equal(u.email, "deleted-u-del@deleted.tirek.kz");
+  assert.equal(u.name, "Deleted user");
+  assert.equal(u.passwordHash, "!deleted");
+  assert.deepEqual(u.deletedAt, new Date("2026-04-25T10:00:00.000Z"));
+});
+
+test("deleteAccount: confirmEmail не совпадает с текущим email → ValidationError, БД не меняется", async () => {
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-del-2",
+    email: "real@school.kz",
+    passwordHash: "hashed:secret123",
+    name: "Психолог",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: null,
+    deletedAt: null,
+    createdAt: new Date("2026-04-25T10:00:00.000Z"),
+  });
+
+  await assert.rejects(
+    () => service.deleteAccount("u-del-2", { confirmEmail: "wrong@school.kz" }),
+    /confirm email/i,
+  );
+
+  const u = fakes.users[0];
+  assert.equal(u.email, "real@school.kz");
+  assert.equal(u.deletedAt, null);
+});
+
+test("deleteAccount: несуществующий userId → NotFoundError", async () => {
+  const { service } = makeService();
+
+  await assert.rejects(
+    () => service.deleteAccount("ghost", { confirmEmail: "anything@x.kz" }),
+    /User not found/,
+  );
+});
+
+test("login: deleted user → UnauthorizedError даже если пароль валидный (защита через deletedAt, не через verifyPassword)", async () => {
+  // Edge-case: даже если каким-то образом hash валиден (старый toggle, future-proof
+  // для случая, если репозиторий позже сохранит реальный hash), deletedAt должен
+  // блокировать login. Сообщение — то же самое, что для bad password (факт удаления
+  // не раскрывается).
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-gone",
+    email: "still-real@school.kz",
+    passwordHash: "hashed:secret123",
+    name: "Психолог",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: new Date("2026-04-20T10:00:00.000Z"),
+    deletedAt: new Date("2026-04-25T10:00:00.000Z"),
+    createdAt: new Date("2026-04-15T10:00:00.000Z"),
+  });
+
+  await assert.rejects(
+    () =>
+      service.login({
+        email: "still-real@school.kz",
+        password: "secret123",
+      }),
+    /Invalid email or password/,
+  );
+});
+
+test("me: deleted user → NotFoundError (старый токен ведёт на logout у клиента)", async () => {
+  const { service, fakes } = makeService();
+  fakes.users.push({
+    id: "u-zombie",
+    email: "deleted-u-zombie@deleted.tirek.kz",
+    passwordHash: "!deleted",
+    name: "Deleted user",
+    role: "psychologist",
+    language: "ru",
+    avatarId: null,
+    grade: null,
+    classLetter: null,
+    schoolId: null,
+    onboardedAt: new Date("2026-04-20T10:00:00.000Z"),
+    deletedAt: new Date("2026-04-25T10:00:00.000Z"),
+    createdAt: new Date("2026-04-15T10:00:00.000Z"),
+  });
+
+  await assert.rejects(() => service.me("u-zombie"), /User not found/);
 });

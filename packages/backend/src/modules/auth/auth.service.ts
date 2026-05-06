@@ -17,6 +17,7 @@ export type PersistedUser = {
   classLetter: string | null;
   schoolId: string | null;
   onboardedAt: Date | null;
+  deletedAt: Date | null;
   createdAt: Date;
 };
 
@@ -60,6 +61,12 @@ export type AuthServiceDeps = {
   ) => Promise<PersistedUser | null>;
   // Идемпотентно: если onboardedAt уже заполнен, оставляет старое значение.
   markOnboardedNow: (
+    id: string,
+    when: Date,
+  ) => Promise<PersistedUser | null>;
+  // Анонимизирует юзера для App Store 5.1.1(v): email/name/passwordHash затираются,
+  // deletedAt=when. Возвращает null, если юзер не найден.
+  softDeleteUser: (
     id: string,
     when: Date,
   ) => Promise<PersistedUser | null>;
@@ -195,7 +202,8 @@ export function createAuthService(deps: AuthServiceDeps) {
       }
 
       const user = await deps.findUserByEmail(email);
-      if (!user) {
+      if (!user || user.deletedAt !== null) {
+        // deletedAt: то же сообщение, чтобы не раскрывать факт удаления.
         throw new UnauthorizedError("Invalid email or password");
       }
 
@@ -215,7 +223,7 @@ export function createAuthService(deps: AuthServiceDeps) {
 
     async me(userId: string) {
       const user = await deps.findUserById(userId);
-      if (!user) {
+      if (!user || user.deletedAt !== null) {
         throw new NotFoundError("User not found");
       }
 
@@ -248,6 +256,20 @@ export function createAuthService(deps: AuthServiceDeps) {
         throw new NotFoundError("User not found");
       }
       return publicUser(user);
+    },
+
+    async deleteAccount(
+      userId: string,
+      body: { confirmEmail?: string },
+    ) {
+      const user = await deps.findUserById(userId);
+      if (!user) {
+        throw new NotFoundError("User not found");
+      }
+      if (body.confirmEmail !== user.email) {
+        throw new ValidationError("Confirm email does not match current email");
+      }
+      await deps.softDeleteUser(userId, deps.now());
     },
   };
 }
