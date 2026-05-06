@@ -376,6 +376,9 @@ export const ru = {
     deleteAccountConfirm: "Удалить аккаунт",
     deleteAccountSuccess: "Аккаунт удалён",
     deleteAccountError: "Не удалось удалить аккаунт",
+    privacyPolicy: "Политика конфиденциальности",
+    termsAndConditions: "Условия использования",
+    legalEnglishNote: "Официальный текст документа доступен на английском языке.",
   },
   journal: {
     title: "Дневник",

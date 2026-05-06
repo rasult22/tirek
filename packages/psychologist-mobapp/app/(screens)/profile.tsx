@@ -280,7 +280,12 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            <View style={styles.row}>
+            <View
+              style={[
+                styles.row,
+                { borderBottomColor: c.borderLight, borderBottomWidth: 1 },
+              ]}
+            >
               <View
                 style={[styles.rowIcon, { backgroundColor: ds.brandSoft }]}
               >
@@ -332,6 +337,65 @@ export default function ProfileScreen() {
                 </Text>
               </Pressable>
             </View>
+
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                router.push("/(screens)/privacy-policy");
+              }}
+              style={({ pressed }) => [
+                styles.row,
+                { borderBottomColor: c.borderLight, borderBottomWidth: 1 },
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <View
+                style={[styles.rowIcon, { backgroundColor: ds.brandSoft }]}
+              >
+                <Ionicons
+                  name="shield-checkmark-outline"
+                  size={18}
+                  color={c.primaryDark}
+                />
+              </View>
+              <Body style={{ fontFamily: "Inter_600SemiBold", flex: 1 }}>
+                {t.profile.privacyPolicy}
+              </Body>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={c.textLight}
+              />
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                hapticLight();
+                router.push("/(screens)/terms");
+              }}
+              style={({ pressed }) => [
+                styles.row,
+                pressed && { opacity: 0.7 },
+              ]}
+            >
+              <View
+                style={[styles.rowIcon, { backgroundColor: ds.brandSoft }]}
+              >
+                <Ionicons
+                  name="document-text-outline"
+                  size={18}
+                  color={c.primaryDark}
+                />
+              </View>
+              <Body style={{ fontFamily: "Inter_600SemiBold", flex: 1 }}>
+                {t.profile.termsAndConditions}
+              </Body>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={c.textLight}
+              />
+            </Pressable>
           </View>
 
           {/* Logout — at the bottom, danger-styled */}

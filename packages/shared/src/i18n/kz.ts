@@ -378,6 +378,9 @@ export const kz: TranslationKeys = {
     deleteAccountConfirm: "Аккаунтты жою",
     deleteAccountSuccess: "Аккаунт жойылды",
     deleteAccountError: "Аккаунтты жою мүмкін болмады",
+    privacyPolicy: "Құпиялылық саясаты",
+    termsAndConditions: "Пайдалану шарттары",
+    legalEnglishNote: "Құжаттың ресми мәтіні ағылшын тілінде ұсынылған.",
   },
   journal: {
     title: "Күнделік",
