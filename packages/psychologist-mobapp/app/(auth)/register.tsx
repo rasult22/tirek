@@ -140,6 +140,9 @@ export default function RegisterScreen() {
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                autoComplete="new-password"
+                textContentType="newPassword"
+                passwordRules="minlength: 6;"
               />
               <Pressable
                 onPress={() => setShowPassword(!showPassword)}
@@ -208,6 +211,8 @@ export default function RegisterScreen() {
               onChangeText={setConfirmPassword}
               secureTextEntry
               autoCapitalize="none"
+              autoComplete="off"
+              textContentType="oneTimeCode"
             />
 
             {confirmPassword.length > 0 && password !== confirmPassword && (
