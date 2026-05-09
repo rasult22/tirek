@@ -6,6 +6,7 @@ import { useThemeColors } from "../../lib/theme";
 import { useT } from "../../lib/hooks/useLanguage";
 import { crisisApi } from "../../lib/api/crisis";
 import { directChatApi } from "../../lib/api/direct-chat";
+import { useAuthStore } from "../../lib/store/auth-store";
 import type { ComponentProps } from "react";
 
 type IoniconsName = ComponentProps<typeof Ionicons>["name"];
@@ -29,17 +30,20 @@ export default function TabsLayout() {
   const c = useThemeColors();
   const t = useT();
   const insets = useSafeAreaInsets();
+  const token = useAuthStore((s) => s.token);
 
   const { data: counts } = useQuery({
     queryKey: ["crisis", "counts"],
     queryFn: crisisApi.getCounts,
     refetchInterval: 30_000,
+    enabled: !!token,
   });
 
   const { data: unreadData } = useQuery({
     queryKey: ["direct-chat", "unread-count"],
     queryFn: directChatApi.unreadCount,
     refetchInterval: 30_000,
+    enabled: !!token,
   });
 
   const alertCount = counts?.red ?? 0;

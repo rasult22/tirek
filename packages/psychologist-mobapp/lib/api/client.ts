@@ -12,7 +12,10 @@ export const tirekClient = createTirekClient({
   baseUrl: BASE_URL,
   getToken: () => useAuthStore.getState().token,
   onUnauthorized: () => {
+    // Если токена уже нет — юзер уже разлогинился, не надо повторно редиректить.
+    // Иначе фоновые запросы после logout входят в цикл redirect → refetch → 401.
+    if (!useAuthStore.getState().token) return;
     useAuthStore.getState().logout();
-    router.replace("/login");
+    router.replace("/(auth)/login");
   },
 });
